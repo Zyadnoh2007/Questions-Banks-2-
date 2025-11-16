@@ -9,7 +9,7 @@
   <!--    جزء الـ CSS (الثيم الجديد)     -->
   <!-- =============================== -->
   <style>
-    /* (جديد) إضافة خط المرع لضمان دعم العربية */
+    /* إضافة خط المرع لضمان دعم العربية */
     @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
     
     :root {
@@ -24,7 +24,7 @@
 
     body {
       box-sizing: border-box;
-      /* (جديد) إضافة خط المرع كأولوية */
+      /* إضافة خط المرع كأولوية */
       font-family: 'Almarai', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       padding: 0;
@@ -54,6 +54,11 @@
       font-size: 2.5rem;
       margin: 0;
     }
+     .header p {
+      font-size: 1.1rem;
+      color: var(--text-light);
+    }
+
 
     /* --- Tab Navigation --- */
     .tab-container {
@@ -207,7 +212,7 @@
       transition: width 0.3s ease;
     }
 
-    /* --- (جديد) تنسيق كارت السؤال --- */
+    /* --- كارت السؤال (من الثيم الجديد) --- */
     .question-card {
       background: #f7fafc;
       border-radius: 15px;
@@ -228,9 +233,9 @@
       color: var(--text-dark);
       margin-bottom: 25px;
       line-height: 1.6;
-      /* (ملاحظة) الأسئلة الإنجليزية تحتاج هذا السطر */
-      /* text-align: left; */
-      /* direction: ltr; */
+      /* الأسئلة بالإنجليزية، لذا نجعلها من اليسار لليمين */
+      text-align: left;
+      direction: ltr;
     }
 
     .answer-options {
@@ -238,7 +243,6 @@
       grid-template-columns: 1fr;
       gap: 10px;
       max-width: 600px;
-      /* (ملاحظة) تم جعل الهوامش تلقائية للتوسيط */
       margin: 0 auto;
     }
 
@@ -251,9 +255,9 @@
       cursor: pointer;
       transition: all 0.3s ease;
       font-weight: bold;
-      /* (ملاحظة) الأسئلة الإنجليزية تحتاج هذا السطر */
-      /* text-align: left; */
-      /* direction: ltr; */
+      /* الأسئلة بالإنجليزية، لذا نجعلها من اليسار لليمين */
+      text-align: left;
+      direction: ltr;
       width: 100%;
     }
 
@@ -261,12 +265,21 @@
       border-color: var(--primary-color);
     }
     
-    /* (جديد) تنسيق الزر المختار */
     .answer-btn.selected {
       background: #e9d8ff;
       border-color: var(--secondary-color);
       color: var(--text-dark);
     }
+    
+    /* أزرار الصح والخطأ */
+    .tf-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
 
     /* --- Quiz Navigation --- */
     .quiz-navigation {
@@ -301,14 +314,25 @@
       cursor: pointer;
       margin-bottom: 20px;
       font-weight: bold;
-      /* (ملاحظة) هذا الكود من الثيم الجديد يضع زر العودة في الأسفل */
-      /* (ملاحظة) إذا أردته في الأعلى، سنحتاج لتعديل الـ CSS */
+      /* هذا الكود يضع زر العودة في الأسفل */
       position: static; 
       display: block;
       margin: 0 auto 20px auto;
       max-width: 200px;
       text-align: center;
     }
+    
+    /* تعديل زر العودة داخل الاختبار ليصبح في الأعلى */
+    .quiz-container .back-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        margin: 0;
+        max-width: 150px;
+        padding: 8px 15px;
+        font-size: 0.9rem;
+    }
+
 
     .back-btn:hover {
       background: var(--text-dark);
@@ -346,7 +370,6 @@
       border-right: 5px solid #e2e8f0;
     }
     
-    /* (جديد) تنسيقات المراجعة */
     .review-option {
       background: white;
       border: 2px solid #e2e8f0;
@@ -354,8 +377,8 @@
       border-radius: 10px;
       font-size: 1.1rem;
       font-weight: bold;
-      /* text-align: left; */
-      /* direction: ltr; */
+      text-align: left;
+      direction: ltr;
       width: 100%;
       margin-bottom: 10px;
       opacity: 0.7;
@@ -393,16 +416,17 @@
 
     @media (max-width: 768px) {
       .tab-container {
-         /* (ملاحظة) الثيم الجديد يفضل هذا الشكل للموبايل */
         flex-direction: column;
       }
-
       .tab-btn {
         width: 100%;
       }
-
       .tab-content {
         grid-template-columns: 1fr;
+      }
+      .quiz-container .back-btn {
+        position: static;
+        margin: 0 auto 20px auto;
       }
     }
   </style>
@@ -412,7 +436,7 @@
 
   <!-- =============================== -->
   <!--           جزء الـ HTML            -->
-  <!-- (نفس الهيكل، مع كلاسات الثيم الجديد) -->
+  <!--      (نظيف وبدون onclick)      -->
   <!-- =============================== -->
   <div class="container">
     <div class="header">
@@ -533,6 +557,7 @@
     <!-- Review Screen -->
     <div id="review-container" class="review-container">
       <h2 class="quiz-title">مراجعة الإجابات</h2>
+      <button class="back-btn go-back">← العودة للنتائج</button>
       <div id="review-content">
         <!-- Review content will be rendered here by JS -->
       </div>
@@ -547,10 +572,10 @@
 
   <!-- =============================== -->
   <!--        جزء الـ JavaScript        -->
-  <!-- (البرمجة الوظيفية + التعديلات لتناسب الثيم) -->
+  <!--   (البرمجة الوظيفية + التعديلات)   -->
   <!-- =============================== -->
   <script>
-    // --- (البيانات) بنك الأسئلة الأصلي ---
+    // --- بنك الأسئلة ---
     const quizData = {
       microbiology: {
         morphology: {
@@ -597,7 +622,7 @@
             { q: "Organisms that use light as an energy source are called:", type: "mcq", options: ["Chemotrophs", "Phototrophs", "Autotrophs", "Heterotrophs"], a: 1 },
             { q: "Organisms that use organic compounds as a carbon source are:", type: "mcq", options: ["Autotrophs", "Heterotrophs", "Lithotrophs", "Phototrophs"], a: 1 },
             { q: "The 'lag phase' is a period of:", type: "mcq", options: ["Rapid cell division", "No metabolic activity", "Adaptation and synthesis", "Cell death"], a: 2 },
-            { q: "Which transport mechanism requires energy (ATP)?", type: "mcq", options: ["Simple diffusion", "Facultated diffusion", "Active transport", "Osmosis"], a: 2 },
+            { q: "Which transport mechanism requires energy (ATP)?", type: "mcq", options: ["Simple diffusion", "Facilitated diffusion", "Active transport", "Osmosis"], a: 2 },
             { q: "Facultative anaerobes primarily use... if O2 is present.", type: "mcq", options: ["Fermentation", "Aerobic respiration", "Anaerobic respiration", "Photosynthesis"], a: 1 },
             { q: "Most bacteria grow best at a pH of:", type: "mcq", options: ["1-3", "4-5", "6.5-7.5", "9-11"], a: 2 }
           ]
@@ -814,7 +839,6 @@
           ]
         }
       },
-      // (البيانات) الأقسام الفارغة ستعرض "قريباً"
       fundamental: {},
       biochemistry: {},
       clinical: {}
@@ -827,20 +851,25 @@
     let userAnswers = []; // Store answers {qIndex: 0, answer: 1, isCorrect: true}
     let quizTitle = "";
 
-    // --- (جديد) تعديل الوظائف لتتناسب مع الثيم الجديد ---
+    /**
+     * Shuffles an array in place.
+     */
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
 
     /**
-     * Handles switching between the different subject tabs.
-     * @param {string} tabName The ID of the tab content to show.
+     * Handles switching tabs.
      */
     function openTab(tabName) {
-      const tabContents = document.querySelectorAll(".tab-content");
-      tabContents.forEach(content => {
+      document.querySelectorAll(".tab-content").forEach(content => {
         content.classList.remove("active");
       });
-
-      const tabBtns = document.querySelectorAll(".tab-btn");
-      tabBtns.forEach(btn => {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
         btn.classList.remove("active");
       });
 
@@ -848,8 +877,7 @@
       if(tabToShow) {
         tabToShow.classList.add("active");
       }
-
-      const activeBtn = Array.from(tabBtns).find(btn => btn.dataset.tab === tabName);
+      const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
       if (activeBtn) {
         activeBtn.classList.add("active");
       }
@@ -857,13 +885,10 @@
 
     /**
      * Starts a selected quiz.
-     * @param {string} bank The subject bank (e.g., 'microbiology').
-     * @param {string} quizId The specific quiz ID (e.g., 'morphology').
      */
     function startQuiz(bank, quizId) {
-      if (!quizData[bank] || !quizData[bank][quizId]) {
-          console.error("Quiz not found!", bank, quizId);
-          // (جديد) نعرض الأقسام الفارغة
+      if (!quizData[bank] || !quizData[bank][quizId] || !quizData[bank][quizId].questions) {
+          console.error("Quiz not found or empty!", bank, quizId);
           const tabToShow = document.getElementById(bank);
           if(tabToShow) {
             tabToShow.innerHTML = '<p class="coming-soon">الأسئلة قادمة قريباً...</p>';
@@ -889,17 +914,6 @@
     }
     
     /**
-     * Utility function to shuffle an array.
-     */
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    /**
      * (تعديل) يعرض السؤال الحالي بالـ HTML المتوافق مع الثيم الجديد
      */
     function displayQuestion() {
@@ -912,33 +926,31 @@
       const questionContainer = document.getElementById("question-container");
       const userAnswer = userAnswers[currentQuestionIndex];
 
-      let optionsHTML = '<div class="answer-options">'; // (تعديل) كلاس الثيم الجديد
-
+      let optionsHTML = '';
+      
       if (questionData.type === "mcq") {
+        optionsHTML = '<div class="answer-options">';
         optionsHTML += questionData.options.map((option, index) => {
-          let btnClass = "answer-btn"; // (تعديل) كلاس الثيم الجديد
-          // (تعديل) الثيم الجديد يستخدم 'selected' فقط، وليس 'correct'/'wrong' أثناء الإجابة
+          let btnClass = "answer-btn";
           if (userAnswer !== null && userAnswer.answer === index) {
             btnClass += " selected";
           }
-          return `<button class="${btnClass}" data-option-index="${index}">
-                        ${option}
-                      </button>`;
+          return `<button class="${btnClass}" data-option-index="${index}">${option}</button>`;
         }).join('');
+         optionsHTML += '</div>';
       } else if (questionData.type === "tf") {
-          // (تعديل) الثيم الجديد يعاملهم كأزرار عادية
-          optionsHTML += `
-            <button class="answer-btn ${userAnswer !== null && userAnswer.answer === true ? 'selected' : ''}" data-tf-value="true">
-                صح
-            </button>
-            <button class="answer-btn ${userAnswer !== null && userAnswer.answer === false ? 'selected' : ''}" data-tf-value="false">
-                خطأ
-            </button>
-          `;
+        optionsHTML = '<div class="tf-options">'; // Use the specific TF wrapper
+        optionsHTML += `
+          <button class="answer-btn ${userAnswer !== null && userAnswer.answer === true ? 'selected' : ''}" data-tf-value="true">
+            صح
+          </button>
+          <button class="answer-btn ${userAnswer !== null && userAnswer.answer === false ? 'selected' : ''}" data-tf-value="false">
+            خطأ
+          </button>
+        `;
+         optionsHTML += '</div>';
       }
-      optionsHTML += '</div>';
-
-      // (تعديل) استخدام هيكل الـ HTML الخاص بالثيم الجديد
+     
       questionContainer.innerHTML = `
             <div class="question-card">
               <div class="question-number">السؤال ${currentQuestionIndex + 1}</div>
@@ -958,7 +970,7 @@
         document.querySelectorAll('.answer-btn').forEach(btn => {
             if (btn.dataset.optionIndex) {
                  btn.addEventListener('click', () => {
-                    selectOption(parseInt(btn.dataset.optionIndex));
+                    selectOption(parseInt(btn.dataset.optionIndex, 10));
                 });
             } else if (btn.dataset.tfValue) {
                 btn.addEventListener('click', () => {
@@ -988,16 +1000,12 @@
       document.getElementById("quiz-selection").style.display = "block"; 
       
       const activeTabBtn = document.querySelector('.tab-btn.active');
-      if (activeTabBtn) {
-          const tabId = activeTabBtn.dataset.tab; 
-          openTab(tabId);
-      } else {
-          openTab('microbiology'); // Default
-      }
+      const tabId = activeTabBtn ? activeTabBtn.dataset.tab : 'microbiology';
+      openTab(tabId);
     }
 
     /**
-     * (تعديل) منطق اختيار الإجابة (MCQ) ليتناسب مع الثيم الجديد
+     * (تعديل) منطق اختيار الإجابة (MCQ) - يخزن الإجابة ويعيد العرض
      */
     function selectOption(optionIndex) {
       const question = currentQuiz[currentQuestionIndex];
@@ -1005,12 +1013,11 @@
         answer: optionIndex,
         isCorrect: (optionIndex === question.a)
       };
-      // (تعديل) نعيد العرض فقط لإظهار "selected"
-      displayQuestion(); 
+      displayQuestion(); // Just re-render to show the "selected" class
     }
 
     /**
-     * (تعديل) منطق اختيار الإجابة (TF) ليتناسب مع الثيم الجديد
+     * (تعديل) منطق اختيار الإجابة (TF) - يخزن الإجابة ويعيد العرض
      */
     function selectTF(isTrue) {
       const question = currentQuiz[currentQuestionIndex];
@@ -1018,8 +1025,7 @@
         answer: isTrue,
         isCorrect: (isTrue === question.a)
       };
-      // (تعديل) نعيد العرض فقط لإظهار "selected"
-      displayQuestion();
+      displayQuestion(); // Just re-render to show the "selected" class
     }
 
     /**
@@ -1039,8 +1045,8 @@
      */
     function nextQuestion() {
       if (userAnswers[currentQuestionIndex] == null) {
-          // (اختياري) يمكنك إضافة تنبيه هنا إذا أردت
-          // alert("الرجاء اختيار إجابة أولاً");
+          // (اختياري) يمكنك إلغاء التعليق عن هذا السطر لإجبار المستخدم على الإجابة
+          // console.log("الرجاء اختيار إجابة أولاً");
           // return;
       }
         
@@ -1069,11 +1075,11 @@
      */
     function showResults() {
       let score = 0;
-      for (const answer of userAnswers) {
+      userAnswers.forEach(answer => {
         if (answer && answer.isCorrect) {
           score++;
         }
-      }
+      });
 
       const total = currentQuiz.length;
       const percentage = (score / total) * 100;
@@ -1090,7 +1096,6 @@
       } else if (percentage < 50) {
         message = "تحتاج للمزيد من المراجعة. بالتوفيق المرة القادمة!";
       }
-
       messageEl.textContent = message;
 
       document.getElementById("quiz-container").style.display = "none";
@@ -1103,7 +1108,7 @@
      */
     function showReview() {
       const reviewContent = document.getElementById("review-content");
-      reviewContent.innerHTML = ""; // Clear previous review
+      reviewContent.innerHTML = ""; 
 
       currentQuiz.forEach((question, index) => {
         const userAnswer = userAnswers[index];
@@ -1114,7 +1119,7 @@
         
         if (question.type === "mcq") {
           optionsReviewHtml = question.options.map((option, i) => {
-            let className = 'review-option'; // (تعديل) كلاس الثيم الجديد
+            let className = 'review-option';
             if (i === correctAnswer) {
               className += ' correct';
             } else if (userAnswer && i === userAnswer.answer && !isCorrect) {
@@ -1125,21 +1130,19 @@
         } else if (question.type === "tf") {
           optionsReviewHtml = `
             <div class="review-option ${correctAnswer === true ? 'correct' : ''} ${userAnswer && userAnswer.answer === true && !isCorrect ? 'user-incorrect' : ''}">
-                صح
+              صح
             </div>
             <div class="review-option ${correctAnswer === false ? 'correct' : ''} ${userAnswer && userAnswer.answer === false && !isCorrect ? 'user-incorrect' : ''}">
-                خطأ
+              خطأ
             </div>
           `;
         }
 
-        // (تعديل) استخدام هيكل المراجعة الخاص بالثيم الجديد
         reviewContent.innerHTML += `
             <div class="review-question">
-                <div class="question-number">السؤال ${index + 1}</div>
-                <div class="question-text">${question.q}</div>
-                ${optionsReviewHtml}
-                <!-- (ملاحظة) تم حذف خانة الشرح لأنها غير موجودة في بيانات الأسئلة الأصلية -->
+              <div class="question-number">السؤال ${index + 1}</div>
+              <div class="question-text">${question.q}</div>
+              ${optionsReviewHtml}
             </div>
         `;
       });
@@ -1152,6 +1155,7 @@
      * (البرمجة الوظيفية) يربط كل المستمعين عند تحميل الصفحة
      */
     function initializeEventListeners() {
+      console.log("Initializing event listeners...");
       // 1. Tab buttons
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1175,15 +1179,15 @@
       document.querySelectorAll('.go-back').forEach(btn => {
         btn.addEventListener('click', goBack);
       });
+      console.log("Event listeners initialized.");
     }
 
     // --- Initial Load ---
     document.addEventListener("DOMContentLoaded", () => {
-        // (جديد) التحقق من الأقسام الفارغة
+        // التحقق من الأقسام الفارغة
         document.querySelectorAll('.tab-content').forEach(tab => {
             if(tab.children.length === 0) {
                 const bankId = tab.id;
-                // إذا لم يكن التبويب الافتراضي، نضع رسالة "قريباً"
                 if(bankId !== 'microbiology' && bankId !== 'anatomy' && bankId !== 'physiology') {
                    tab.innerHTML = '<p class="coming-soon">الأسئلة قادمة قريباً...</p>';
                 }
