@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>منصة الاختبارات</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    :root {
+      --primary-color: #667eea;
+      --secondary-color: #764ba2;
+      --card-bg: rgba(255, 255, 255, 0.98);
+      --text-dark: #2d3748;
+      --text-light: #718096;
+      --shadow-light: 0 8px 25px rgba(0, 0, 0, 0.1);
+      --shadow-heavy: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* --- Header --- */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: var(--shadow-heavy);
+    }
+
+    .header h1 {
+      color: var(--text-dark);
+      font-size: 2.5rem;
+      margin: 0;
+    }
+
+    /* --- Tab Navigation --- */
+    .tab-container {
+      display: flex;
+      flex-wrap: wrap;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      padding: 10px;
+      margin-bottom: 30px;
+      box-shadow: var(--shadow-light);
+    }
+
+    .tab-btn {
+      flex-grow: 1;
+      text-align: center;
+      padding: 15px 10px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      color: var(--text-light);
+      border-radius: 10px;
+      transition: all 0.3s ease;
+      min-width: 150px;
+    }
+
+    .tab-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    /* --- Tab Content (Quiz Selection) --- */
+    .tab-content {
+      display: none;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+    }
+
+    .tab-content.active {
+      display: grid;
+    }
+
+    .coming-soon {
+      grid-column: 1 / -1;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--text-dark);
+      background: var(--card-bg);
+      padding: 50px;
+      border-radius: 15px;
+    }
+
+    /* --- Quiz Card --- */
+    .quiz-card {
+      background: var(--card-bg);
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: var(--shadow-light);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      border: 3px solid transparent;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .quiz-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      border-color: var(--primary-color);
+    }
+
+    .quiz-card h3 {
+      color: var(--text-dark);
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .quiz-card p {
+      color: var(--text-light);
+      text-align: center;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .start-btn {
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    /* --- Quiz Container --- */
+    .quiz-container {
+      display: none;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: var(--shadow-heavy);
+      margin-bottom: 30px;
+    }
+    .quiz-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .quiz-title {
+      color: var(--text-dark);
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      background: #e2e8f0;
+      height: 8px;
+      border-radius: 4px;
+      margin: 20px 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* --- Question Card --- */
+    .question-card {
+      background: #f7fafc;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      border-right: 5px solid var(--primary-color);
+    }
+
+    .question-number {
+      color: var(--primary-color);
+      font-weight: bold;
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+    }
+
+    .question-text {
+      font-size: 1.3rem;
+      color: var(--text-dark);
+      margin-bottom: 25px;
+      line-height: 1.6;
+      text-align: left;
+      direction: ltr;
+    }
+
+    .answer-options {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .answer-btn {
+      background: white;
+      border: 2px solid #e2e8f0;
+      padding: 15px 20px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      text-align: left;
+      direction: ltr;
+      width: 100%;
+    }
+
+    .answer-btn:hover {
+      border-color: var(--primary-color);
+    }
+
+    .answer-btn.selected {
+      background: #e9d8ff;
+      border-color: var(--secondary-color);
+      color: var(--text-dark);
+    }
+
+    /* --- Quiz Navigation --- */
+    .quiz-navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .nav-btn {
+      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: bold;
+      min-width: 140px;
+    }
+
+    .nav-btn:disabled {
+      background: #a0aec0;
+      cursor: not-allowed;
+    }
+
+    .back-btn {
+      background: var(--text-light);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+
+    .back-btn:hover {
+      background: var(--text-dark);
+    }
+
+
+    /* --- Results --- */
+    .results {
+      text-align: center;
+      display: none;
+    }
+
+    .score {
+      font-size: 3rem;
+      color: var(--primary-color);
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    /* --- Review Container --- */
+    .review-container {
+      display: none;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: var(--shadow-heavy);
+      margin-bottom: 30px;
+    }
+
+    .review-question {
+      background: #f7fafc;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 20px;
+      border-right: 5px solid #e2e8f0;
+    }
+
+    .review-option {
+      background: white;
+      border: 2px solid #e2e8f0;
+      padding: 15px 20px;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      text-align: left;
+      direction: ltr;
+      width: 100%;
+      margin-bottom: 10px;
+      opacity: 0.7;
+    }
+
+    .review-option.correct {
+      background: #c6f6d5;
+      border-color: #48bb78;
+      opacity: 1;
+    }
+
+    .review-option.user-incorrect {
+      background: #fed7d7;
+      border-color: #f56565;
+      text-decoration: line-through;
+      opacity: 1;
+    }
+
+    .review-explanation {
+      margin-top: 15px;
+      padding: 15px;
+      background: #e9d8ff;
+      border-right: 5px solid var(--secondary-color);
+      border-radius: 10px;
+      color: var(--text-dark);
+      direction: ltr;
+      text-align: left;
+      }
+    /* --- Footer --- */
+    .footer {
+      text-align: center;
+      margin-top: 50px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .footer p {
+      color: #4a5568;
+      font-size: 1.1rem;
+      margin: 0;
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .tab-container {
+        flex-direction: column;
+      }
+
+      .tab-btn {
+        width: 100%;
+      }
+
+      .tab-content {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <style>
+    @view-transition {
+      navigation: auto;
+    }
+  </style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 id="site-title">منصة الاختبارات</h1>
+      <p>اختبر معلوماتك في المواد الطبية</p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-container">
+      <button class="tab-btn active" onclick="openTab('microbiology')">Microbiology Bank</button>
+      <button class="tab-btn" onclick="openTab('fundamental')">Fundamental Bank</button>
+      <button class="tab-btn" onclick="openTab('biochemistry')">Biochemistry Bank</button>
+      <button class="tab-btn" onclick="openTab('anatomy')">Anatomy Bank</button>
+      <button class="tab-btn" onclick="openTab('physiology')">Physiology Bank</button>
+      <button class="tab-btn" onclick="openTab('clinical')">Clinical Bank</button>
+    </div>
+
+    <!-- Tab Content (Quiz Selection Area) -->
+    <div id="quiz-selection">
+      <!-- Microbiology Tab -->
+      <div id="microbiology" class="tab-content active">
+        <div class="quiz-card" onclick="startQuiz('microbiology', 'morphology')">
+          <h3>Bacterial Morphology</h3>
+          <p>19 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" onclick="startQuiz('microbiology', 'physiology')">
+          <h3>Bacterial Physiology</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" onclick="startQuiz('microbiology', 'flora')">
+          <h3>Normal Flora</h3>
+          <p>18 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" onclick="startQuiz('microbiology', 'sterilization')">
+          <h3>Sterilization & Disinfection</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" onclick="startQuiz('microbiology', 'chemotherapy')">
+          <h3>Antimicrobial Chemotherapy</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- T/F Quiz Moved Here -->
+        <div class="quiz-card" onclick="startQuiz('microbiology', 'general_tf')">
+          <h3>اختبار معلومات أساسية (صح وخطأ)</h3>
+          <p>18 سؤال صح وخطأ</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+      </div>
+
+      <!-- Other Tabs (Coming Soon) -->
+      <div id="fundamental" class="tab-content">
+        <p class="coming-soon">الأسئلة قادمة قريباً...</p>
+      </div>
+      <div id="biochemistry" class="tab-content">
+        <p class="coming-soon">الأسئلة قادمة قريباً...</p>
+      </div>
+      <div id="anatomy" class="tab-content">
+        <p class="coming-soon">الأسئلة قادمة قريباً...</p>
+      </div>
+      <div id="physiology" class="tab-content">
+        <p class="coming-soon">الأسئلة قادمة قريباً...</p>
+      </div>
+      <div id="clinical" class="tab-content">
+        <p class="coming-soon">الأسئلة قادمة قريباً...</p>
+      </div>
+    </div>
+    <!-- Quiz Container -->
+    <div id="quiz-container" class="quiz-container"><button class="back-btn" onclick="goBack()">← العودة للقائمة</button>
+      <div class="quiz-header">
+        <h2 id="current-quiz-title" class="quiz-title"></h2>
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <p id="question-counter"></p>
+      </div>
+      <div id="question-container">
+        <!-- Questions will be rendered here by JS -->
+      </div>
+      <div class="quiz-navigation">
+        <button id="prev-btn" class="nav-btn" onclick="prevQuestion()">→ السؤال السابق</button>
+        <button id="next-btn" class="nav-btn" onclick="nextQuestion()">السؤال التالي</button>
+      </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results" class="quiz-container results">
+      <h3>انتهى الاختبار!</h3>
+      <div id="final-score" class="score"></div>
+      <p id="score-message"></p>
+      <button id="review-btn" class="start-btn" onclick="showReview()">مراجعة الإجابات</button>
+      <button class="start-btn" onclick="goBack()">العودة للرئيسية</button>
+    </div>
+
+    <!-- Review Screen -->
+    <div id="review-container" class="review-container">
+      <h2 class="quiz-title">مراجعة الإجابات</h2>
+      <div id="review-content">
+        <!-- Review content will be rendered here by JS -->
+      </div>
+      <button class="start-btn" onclick="goBack()">العودة للرئيسية</button>
+    </div>
+
+    <div class="footer">
+      <p>Created by Zeyad & Yusuf</p>
+    </div>
+  </div>
+
+  <script>
+    // --- DATABASE ---
+    // All questions are stored here, organized by subject and quiz
+    const quizzes = {
+      microbiology: {
+        morphology: {
+          title: "Bacterial Morphology",
+          type: "mcq",
+          questions: [
+            { question: "What is the most accurate definition of microbiology?", options: ["The study of all living organisms visible to the naked eye.", "The branch of biology dealing with the smallest living organisms, which cannot be seen by the naked human eye.", "The study of chemical processes within and related to living organisms.", "The branch of medicine concerned with the diagnosis and treatment of infectious diseases."], correct: 1, explanation: "Microbiology focuses on organisms too small to be seen without a microscope." },
+            { question: "Which of the following is a branch of microbiology?", options: ["Hematology", "Histology", "Mycology", "Cardiology"], correct: 2, explanation: "Mycology is the study of fungi, which is a branch of microbiology." },
+            { question: "A key structural difference between prokaryotic and eukaryotic cells is that prokaryotic cells:", options: ["Have a true nucleus surrounded by a nuclear membrane.", "Contain multiple linear chromosomes within their nucleus.", "Possess membrane-bound organelles like mitochondria.", "Lack a nuclear membrane and membrane-bound organelles."], correct: 3, explanation: "Prokaryotes (like bacteria) lack a true nucleus and membrane-bound organelles, unlike eukaryotes (like human cells)." },
+            { question: "Which of the following is a characteristic found in eukaryotic human cells but NOT in prokaryotic bacterial cells?", options: ["Cytoplasm", "70S ribosomes", "A cell wall containing peptidoglycan", "80S ribosomes"], correct: 3, explanation: "Eukaryotic cells have 80S ribosomes, while prokaryotic cells have 70S ribosomes." },
+            { question: "The genetic material in a bacterial cell is typically:", options: ["Multiple linear DNA molecules within a nucleus.", "A single circular DNA molecule in the nucleoid.", "Composed only of RNA.", "Packaged with histones in a defined nucleus."], correct: 1, explanation: "Bacteria have a single, circular chromosome located in a region called the nucleoid, not enclosed by a membrane." },
+            { question: "Which of the following is NOT one of the three basic shapes of bacteria?", options: ["Coccus (sphere-shaped)", "Bacillus (rod-shaped)", "Spirochete (spiral-shaped)", "Cuboidal (cube-shaped)"], correct: 3, explanation: "The three basic bacterial shapes are coccus, bacillus, and spiral (spirochete/spirillum)." },
+            { question: "A chain of rod-shaped bacteria is referred to as:", options: ["Staphylobacilli", "Diplobacilli", "Streptobacilli", "Coccobacilli"], correct: 2, explanation: "Strepto- means 'chain' and bacilli means 'rods'." },
+            { question: "What is the unit of measurement used in bacteriology?", options: ["Millimeter (mm)", "Micrometer (µm)", "Nanometer (nm)", "Centimeter (cm)"], correct: 1, explanation: "Bacteria are typically measured in micrometers (µm)." },
+            { question: "Which structure is considered an essential component of all bacterial cells?", options: ["Capsule", "Flagella", "Cell wall", "Plasmid"], correct: 2, explanation: "While not all bacteria have capsules, flagella, or plasmids, a cell wall is a fundamental component for most (with few exceptions)." },
+            { question: "The bacterial structure that is an invagination of the cytoplasmic membrane and is important during cell division is the:", options: ["Mesosome", "Ribosome", "Pilus", "Inclusion"], correct: 0, explanation: "Mesosomes are invaginations of the plasma membrane involved in cell division and other processes." },
+            { question: "Which of the following is a function of the bacterial cell wall?", options: ["Protein synthesis", "Active transport of molecules", "Providing rigid support and determining Gram stain reaction", "Transfer of DNA between cells"], correct: 2, explanation: "The cell wall provides structural integrity and is the basis for Gram staining." },
+            { question: "Plasmids in bacterial cells are best described as:", options: ["The main circular chromosome housing essential genes.", "Sites for protein synthesis.", "Extrachromosomal, circular DNA molecules capable of independent replication.", "Non-replicating pieces of DNA that can move within the genome."], correct: 2, explanation: "Plasmids are small, circular DNA molecules separate from the main chromosome and often carry non-essential genes (like antibiotic resistance)." },
+            { question: "Compared to a human cell, a bacterial cell is unique in possessing:", options: ["A cytoplasmic membrane.", "A peptidoglycan cell wall.", "Ribosomes for protein synthesis.", "Genetic material in the form of DNA."], correct: 1, explanation: "Only bacteria (prokaryotes) have a cell wall made of peptidoglycan." },
+            { question: "Which cellular component is typically found in human cells but absent in most bacterial cells?", options: ["Cytoplasm", "Phospholipid bilayer membrane", "Mitochondria", "Proteins"], correct: 2, explanation: "Mitochondria are membrane-bound organelles found in eukaryotes (human cells) but not prokaryotes (bacteria)." },
+            { question: "How do viruses fundamentally differ from bacteria?", options: ["Viruses are prokaryotic organisms.", "Viruses can reproduce independently on a culture plate.", "Viruses are acellular and must replicate inside a living host cell.", "Viruses have their own metabolic machinery."], correct: 2, explanation: "Viruses are not cells (acellular) and are obligate intracellular parasites, meaning they need a host cell to replicate." },
+            { question: "Which of the following statements is TRUE for bacteria but FALSE for viruses?", options: ["They contain both DNA and RNA.", "They can be seen with a light microscope.", "They have a cellular structure.", "All of the above."], correct: 3, explanation: "Bacteria are cells, can be seen with a light microscope, and contain both DNA and RNA. Viruses are acellular, require an electron microscope, and contain *either* DNA or RNA, but not both." },
+            { question: "Bacterial endospores are highly resistant structures... Which process is NOT achievable by standard boiling due to their presence?", options: ["Disinfection", "Sterilization", "Sanitization", "Antisepsis"], correct: 1, explanation: "Boiling (100°C) is disinfection, but it cannot kill endospores. Sterilization (which kills spores) requires higher temperatures, like an autoclave (121°C)." },
+            { question: "The primary medical importance of bacterial capsules is that they:", options: ["Are the main site for energy production.", "Act as organs of motility.", "Protect bacteria from phagocytosis, making them a virulence factor.", "Transfer DNA between bacterial cells."], correct: 2, explanation: "The capsule is a protective layer that helps bacteria evade the host's immune cells (phagocytosis)." },
+            { question: "Pili (fimbriae) in bacteria are primarily involved in:", options: ["Cell motility.", "Adherence to host cell surfaces and DNA transfer.", "Protein synthesis.", "Forming a protective barrier against antibiotics."], correct: 1, explanation: "Pili are used for attachment (adherence) and a specialized type (sex pilus) is used for DNA transfer (conjugation)." }
+          ]
+        },
+        physiology: {
+          title: "Bacterial Physiology",
+          type: "mcq",
+          questions: [
+            { question: "What is the best definition of bacterial physiology?", options: ["The study of bacterial genetic mutation and evolution.", "The study of the physical structure and shape of bacteria.", "The study of how bacteria live, grow, and survive.", "The study of how the immune system responds to bacteria."], correct: 2, explanation: "Physiology is the study of the life processes, growth, and metabolism of bacteria." },
+            { question: "Bacterial growth is defined as an increase in:", options: ["The size of individual bacterial cells.", "The complexity of bacterial organelles.", "The number of bacterial cells in a population.", "The metabolic waste products produced."], correct: 2, explanation: "In microbiology, 'growth' refers to an increase in the population number, not the size of individual cells." },
+            { question: "Which of the following is a CORRECT pair of a bacterial growth requirement and its function?", options: ["Carbon - builds proteins and genetic material.", "Nitrogen - primary source of energy and structure.", "Growth factors - ready-made organic compounds for bacteria that cannot synthesize them.", "Moisture - acts as the primary energy source for metabolism."], correct: 2, explanation: "Growth factors are specific nutrients (like vitamins or amino acids) that fastidious bacteria cannot make themselves." },
+            { question: "A bacterium that can synthesize all its organic compounds from atmospheric CO2 and N2 is classified as a(n):", options: ["Heterotroph", "Capnophile", "Mesophile", "Autotroph"], correct: 3, explanation: "Autotrophs ('self-feeders') can create their own organic compounds from inorganic sources like CO2." },
+            { question: "Most human pathogenic bacteria are classified as:", options: ["Obligate aerobes", "Mesophiles", "Psychrophiles", "Autotrophs"], correct: 1, explanation: "Mesophiles are organisms that grow best at moderate temperatures (20-45°C), which includes human body temperature (37°C)." },
+            { question: "A bacterium that grows best in the presence of a small amount of oxygen but is inhibited by atmospheric oxygen levels is a:", options: ["Facultative anaerobe", "Microaerophile", "Obligate aerobe", "Aerotolerant anaerobe"], correct: 1, explanation: "Microaerophiles require oxygen, but at lower concentrations than are present in the atmosphere." },
+            { question: "Neisseria species require higher-than-atmospheric concentrations of CO2 for growth. They are best described as:", options: ["Microaerophilic", "Capnophilic", "Anaerobic", "Facultative"], correct: 1, explanation: "Capnophiles are bacteria that require an increased concentration of carbon dioxide (CO2) for growth." },
+            { question: "Which of the following is NOT a major category of bacterial products discussed?", options: ["Enzymes", "Pigments", "Antibodies", "Toxins"], correct: 2, explanation: "Antibodies are produced by the host's immune system (plasma cells), not by bacteria." },
+            { question: "The golden yellow color of a Staphylococcus aureus colony is an example of a(n):", options: ["Exotoxin", "Endopigment", "Exopigment", "Enzyme"], correct: 1, explanation: "An endopigment is a colored substance that remains *inside* the bacterial cell, giving the colony its color." },
+            { question: "Bacterial enzymes can serve all the following functions EXCEPT:", options: ["Acting as biological catalysts for metabolic reactions.", "Serving as a primary structural component of the cell wall.", "Functioning as virulence factors to cause disease.", "Aiding in laboratory diagnosis and identification."], correct: 1, explanation: "The primary structural component of the cell wall is peptidoglycan, not enzymes." },
+            { question: "The muscle spasms characteristic of Tetanus are caused by a neurotoxin produced by:", options: ["Streptococcus pyogenes", "Clostridium tetani", "Staphylococcus aureus", "Pseudomonas aeruginosa"], correct: 1, explanation: "Clostridium tetani produces tetanus toxin (a neurotoxin) that causes rigid paralysis." },
+            { question: "The rash of Scarlet Fever is caused by an erythrogenic toxin produced by:", options: ["Escherichia coli", "Clostridium perfringens", "Streptococcus pyogenes", "Bacillus anthracis"], correct: 2, explanation: "Scarlet fever is caused by Streptococcus pyogenes (Group A Strep) that produces an erythrogenic toxin." },
+            { question: "Scalded Skin Syndrome and Toxic Shock Syndrome are caused by toxins produced by:", options: ["Clostridium difficile", "Staphylococcus aureus", "Mycobacterium tuberculosis", "Neisseria meningitidis"], correct: 1, explanation: "Staphylococcus aureus produces exfoliative toxins (causing SSSS) and TSST-1 (causing TSS)." },
+            { question: "Endotoxins, such as Lipid A, are associated with:", options: ["Gram-positive bacteria only.", "Gram-negative bacteria, as part of their lipopolysaccharide (LPS).", "Both Gram-positive and Gram-negative bacteria equally.", "The cytoplasm of all bacteria."], correct: 1, explanation: "Endotoxin (Lipid A) is an integral part of the outer membrane's LPS in Gram-negative bacteria." },
+            { question: "Which of the following is a characteristic of EXOTOXINS but NOT ENDOTOXINS?", options: ["They have weak antigenicity.", "They are proteins.", "They are released only upon cell lysis.", "They cause non-specific symptoms like fever."], correct: 1, explanation: "Exotoxins are secreted proteins, whereas endotoxins are lipopolysaccharides (LPS) released on cell death." },
+            { question: "During which phase of the bacterial growth curve are bacteria metabolically active but not yet dividing...?", options: ["Lag Phase", "Log Phase", "Stationary Phase", "Decline Phase"], correct: 0, explanation: "In the Lag Phase, bacteria are adapting to the new environment and synthesizing enzymes, but not yet dividing." },
+            { question: "The phase of the bacterial growth curve characterized by rapid, exponential cell division is the:", options: ["Lag Phase", "Log Phase", "Stationary Phase", "Decline Phase"], correct: 1, explanation: "The Log Phase (Logarithmic/Exponential Phase) is when the population doubles at a constant rate." },
+            { question: "In the bacterial growth curve, the stationary phase begins primarily because:", options: ["All bacteria have developed resistance.", "Nutrients are exhausted and waste toxins have accumulated.", "The bacteria are optimally adapted to the environment.", "The temperature becomes unfavorable."], correct: 1, explanation: "Stationary phase is reached when nutrient depletion or toxic waste buildup stops the population from growing further." },
+            { question: "During which phase of the bacterial growth curve does the number of dying cells exceed the number of new cells...?", options: ["Lag Phase", "Log Phase", "Stationary Phase", "Decline Phase"], correct: 3, explanation: "In the Decline (Death) Phase, conditions are so unfavorable that cells die off faster than they can reproduce." },
+            { question: "Clinically, the 'Acute Stage' of an infectious disease typically corresponds to which phase of the bacterial growth curve?", options: ["Lag Phase (Incubation Period)", "Log Phase", "Stationary Phase", "Decline Phase (Convalescence)"], correct: 1, explanation: "The Log Phase, with rapid bacterial multiplication, corresponds to the acute stage of disease when symptoms are most severe." }
+          ]
+        },
+        flora: {
+          title: "Normal Flora",
+          type: "mcq",
+          questions: [
+            { question: "What is the most accurate definition of Normal Flora?", options: ["Pathogenic microorganisms that cause disease in healthy individuals.", "A mixture of microorganisms regularly found at specific anatomical sites of the human body.", "Microorganisms that are only temporarily present on the body from environmental exposure.", "Sterile microorganisms used in probiotic supplements."], correct: 1, explanation: "Normal flora (or microbiota) are the microbes that live on and in us without normally causing disease." },
+            { question: "The term 'Microbiota' specifically refers to:", options: ["The genetic material of all microorganisms in a habitat.", "The collection of living microorganisms themselves in a particular environment.", "The environmental conditions surrounding microorganisms.", "Only the harmful bacteria present in the body."], correct: 1, explanation: "Microbiota refers to the community of living microbes themselves." },
+            { question: "Which of the following body sites is normally STERILE in a healthy individual?", options: ["The skin surface", "The large intestine", "The cerebrospinal fluid (CSF)", "The vaginal mucosa"], correct: 2, explanation: "Internal fluids and tissues like CSF, blood, and the lower respiratory tract are normally sterile." },
+            { question: "Which bacterium is a dominant and beneficial resident of the healthy adult female genital tract?", options: ["Escherichia coli", "Candida albicans", "Lactobacillus species", "Staphylococcus aureus"], correct: 2, explanation: "Lactobacillus species produce lactic acid, maintaining a low pH that protects against pathogens." },
+            { question: "The body site with the highest density and diversity of normal flora is the:", options: ["Stomach", "Skin", "Large Intestine", "Lower Respiratory Tract (Lungs)"], correct: 2, explanation: "The large intestine (colon) contains the vast majority of the human body's normal flora." },
+            { question: "What is the key characteristic of Resident Flora?", options: ["It temporarily inhabits the body for hours to months.", "It is acquired only from hospital environments.", "It permanently colonizes the body and reestablishes quickly if disturbed.", "It is always pathogenic and causes disease."], correct: 2, explanation: "Resident flora are the long-term, stable microbial community of a body site." },
+            { question: "Transient flora differs from resident flora in that transient flora:", options: ["Provides continuous protective benefits.", "Is acquired from the environment and does not permanently establish.", "Has a stable and fixed population at a body site.", "Is acquired during and shortly after birth."], correct: 1, explanation: "Transient flora are temporary microbes picked up from the environment that do not permanently colonize." },
+            { question: "Which of the following is a primary benefit of normal flora known as 'Competitive Exclusion'?", options: ["Producing antibiotics that can be used in medicine.", "Occupying niches and competing for nutrients, preventing pathogen colonization.", "Causing disease in immunocompromised hosts.", "Breaking down medical implants and prosthetics."], correct: 1, explanation: "Competitive exclusion means the normal flora 'out-compete' pathogens for space and resources." },
+            { question: "Which vitamin, essential for blood clotting, is synthesized by intestinal normal flora?", options: ["Vitamin A", "Vitamin B12", "Vitamin C", "Vitamin K"], correct: 3, explanation: "Bacteria in the gut, like E. coli, synthesize Vitamin K, which is essential for blood clotting." },
+            { question: "An opportunistic infection occurs when:", options: ["A new pathogen is introduced from an external source.", "A member of the normal flora causes disease in a compromised host or abnormal site.", "The immune system successfully eliminates a pathogen.", "Resident flora is permanently eradicated from the body."], correct: 1, explanation: "Opportunistic pathogens are microbes (often normal flora) that cause disease when the host's defenses are weakened or when they get into a sterile body site." },
+            { question: "A patient develops a urinary tract infection (UTI) caused by Escherichia coli. This is an example of:", options: ["Vitamin synthesis by normal flora.", "An opportunistic infection.", "Competitive exclusion.", "Mutualistic symbiosis."], correct: 1, explanation: "E. coli is normal flora in the gut, but it becomes an opportunistic pathogen when it enters the urinary tract." },
+            { question: "The term 'Dysbiosis' refers to:", options: ["A balanced and healthy microbial community.", "The presence of microorganisms on a sterile body site.", "A disturbance or imbalance in the normal flora.", "The relationship where both organisms benefit."], correct: 2, explanation: "Dysbiosis is an imbalance in the microbial community, often linked to disease." },
+            { question: "What is a critical nursing action to help prevent antibiotic-associated dysbiosis, such as C. difficile infection?", options: ["Encouraging the use of broad-spectrum antibiotics for all infections.", "Advocating for the appropriate use and duration of antibiotic therapy.", "Recommending frequent use of strong antibacterial soaps for all patient hygiene.", "Avoiding hand hygiene to preserve the patient's normal skin flora."], correct: 1, explanation: "Appropriate antibiotic use (stewardship) is key to preventing the disruption of normal flora that allows C. difficile to overgrow." },
+            { question: "A patient on broad-spectrum antibiotics develops watery diarrhea. The nurse should suspect:", options: ["Improved antibiotic efficacy.", "An opportunistic infection like C. difficile.", "Enhanced vitamin K synthesis.", "Successful competitive exclusion of pathogens."], correct: 1, explanation: "Broad-spectrum antibiotics wipe out normal gut flora, allowing C. difficile to multiply and cause diarrhea." },
+            { question: "Which of the following best describes the nurse's role in maintaining healthy flora?", options: ["Eliminating all microorganisms from the patient's environment.", "Using aseptic technique to prevent infection while preserving beneficial flora.", "Avoiding patient education on antibiotic use.", "Focusing only on killing pathogens, regardless of the impact on normal flora."], correct: 1, explanation: "Nurses must balance infection control (aseptic technique) with practices that support the patient's protective normal flora." },
+            { question: "The symbiotic relationship where both the human host and the microorganism benefit (e.g., E. coli in the colon) is called:", options: ["Commensalism", "Mutualism", "Parasitism", "Dysbiosis"], correct: 1, explanation: "Mutualism is when both partners benefit (we get Vitamin K, E. coli gets a home)." },
+            { question: "Which factor can disrupt the balance of normal flora and lead to dysbiosis?", options: ["A balanced diet", "Proper hand hygiene", "Broad-spectrum antibiotic therapy", "Adequate hydration"], correct: 2, explanation: "Broad-spectrum antibiotics are a major cause of dysbiosis because they kill beneficial bacteria along with pathogens." },
+            { question: "Why is it important for nurses to understand the concept of normal flora?", options: ["To prescribe appropriate antibiotics to patients.", "To identify all microorganisms as threats that must be eliminated.", "To provide care that prevents infection while preserving beneficial microbes.", "To avoid using aseptic techniques during procedures."], correct: 2, explanation: "This understanding guides practices like hand hygiene, aseptic technique, and antibiotic stewardship." }
+          ]
+        },
+        sterilization: {
+          title: "Sterilization & Disinfection",
+          type: "mcq",
+          questions: [
+            { question: "What is the correct sequential order for the three essential steps of decontamination?", options: ["Disinfection → Cleaning → Sterilization", "Cleaning → Disinfection → Sterilization", "Sterilization → Cleaning → Disinfection", "Cleaning → Sterilization → Disinfection"], correct: 1, explanation: "The correct sequence is cleaning first to remove debris, then disinfection, and finally sterilization for maximum effectiveness." },
+            { question: "Which process is defined as the 'complete destruction of all microorganisms, including bacterial spores'?", options: ["Cleaning", "High-level disinfection", "Sterilization", "Antisepsis"], correct: 2, explanation: "Sterilization is the only process that destroys all forms of microbial life including resistant bacterial spores." },
+            { question: "Why must cleaning always be performed before disinfection or sterilization?", options: ["To make the items look presentable.", "To remove organic debris that can shield microorganisms.", "To activate the chemical disinfectants.", "To dry the instruments completely."], correct: 1, explanation: "Organic debris can create a protective barrier that shields microorganisms from the action of disinfectants and sterilants." },
+            { question: "The standard autoclave cycle for routine instrument sterilization is:", options: ["134°C for 3 minutes", "170°C for 1 hour", "121°C for a minimum of 15 minutes", "100°C for 30 minutes"], correct: 2, explanation: "121°C for 15 minutes is the standard accepted cycle for steam sterilization (autoclaving)." },
+            { question: "Which of the following is a method of physical sterilization?", options: ["Using 2% Glutaraldehyde", "Ethylene Oxide gas", "Hot Air Oven", "Chlorine-based disinfectants"], correct: 2, explanation: "Hot Air Oven uses dry heat and is classified as a physical method, as opposed to chemical methods (Glutaraldehyde, ETO)." },
+            { question: "What is the key difference between a disinfectant and an antiseptic?", options: ["Disinfectants are only bacteriostatic.", "Antiseptics are used on inanimate objects.", "Disinfectants are toxic to living tissues.", "Antiseptics are always more concentrated."], correct: 2, explanation: "Disinfectants are for inanimate objects (surfaces) and are toxic. Antiseptics are for living tissues (skin)." },
+            { question: "Which of the following is an example of an antiseptic?", options: ["Phenol used on hospital floors.", "Bleach for cleaning blood spills.", "70% Alcohol for hand hygiene.", "Glutaraldehyde for endoscopes."], correct: 2, explanation: "70% Alcohol is safe for skin contact and commonly used as an antiseptic for hand hygiene." },
+            { question: "A nurse is preparing a patient's skin for a surgical incision. Which agent should she use?", options: ["A disinfectant like household bleach.", "An antiseptic like Betadine (povidone-iodine).", "A high-level disinfectant like glutaraldehyde.", "A sterilant like ethylene oxide gas."], correct: 1, explanation: "Betadine (povidone-iodine) is an antiseptic used for skin preparation (a living tissue)." },
+            { question: "According to the Spaulding Classification, which category requires sterilization as it enters sterile tissues or the bloodstream?", options: ["Non-critical items", "Semi-critical items", "Critical items", "Environmental items"], correct: 2, explanation: "Critical items (e.g., surgical instruments) must be sterile because they penetrate sterile tissues." },
+            { question: "A blood pressure cuff that contacts intact skin is classified as:", options: ["Critical", "Semi-critical", "Non-critical", "High-risk"], correct: 2, explanation: "Items that contact only intact skin are non-critical and require cleaning/low-level disinfection." },
+            { question: "Which of the following items requires High-Level Disinfection (HLD)?", options: ["Surgical scalpel", "Laparoscope", "Vaginal speculum", "Both B and C"], correct: 3, explanation: "Items that contact mucous membranes (semi-critical) like endoscopes (Laparoscope) and speculums require at least HLD." },
+            { question: "A stethoscope is considered a non-critical item because it:", options: ["Contacts mucous membranes.", "Enters the vascular system.", "Contacts intact skin only.", "Is used in sterile procedures."], correct: 2, explanation: "Like a blood pressure cuff, a stethoscope is non-critical because it touches intact skin." },
+            { question: "What is the most appropriate method for sterilizing a box of plastic disposable syringes?", options: ["Hot Air Oven", "Autoclave", "Ionizing Radiation (Gamma rays)", "Boiling"], correct: 2, explanation: "Heat-sensitive plastics are sterilized by manufacturers using methods like ionizing radiation (cold sterilization)." },
+            { question: "For a heat-sensitive fiber-optic endoscope, which low-temperature sterilization method could be used?", options: ["Autoclaving at 121°C", "Boiling for 30 minutes", "Ethylene Oxide (ETO) Gas", "Hot Air Oven at 170°C"], correct: 2, explanation: "Heat-sensitive items cannot be autoclaved. ETO gas is a low-temperature chemical sterilization method." },
+            { question: "Which method is used to mechanically remove microorganisms from heat-sensitive fluids like serum?", options: ["Autoclaving", "Filtration", "Chemical disinfection", "Boiling"], correct: 1, explanation: "Filtration physically removes microbes from liquids that would be destroyed by heat." },
+            { question: "Which of the following is the GOLD STANDARD for monitoring the effectiveness of a sterilization cycle?", options: ["Mechanical monitoring (checking time and temperature gauges)", "Chemical monitoring (using indicator tape)", "Biological monitoring (using spore tests)", "Visual inspection of the packages"], correct: 2, explanation: "Only biological monitoring (spore tests) confirms that the most resistant organisms (spores) have been killed." },
+            { question: "What is the recommended disinfectant and contact time for managing a blood spill on the floor?", options: ["70% Alcohol for 1 minute", "Chlorine solution (bleach) for 15 minutes", "Soap and water with immediate rinsing", "Hydrogen Peroxide for 5 minutes"], correct: 1, explanation: "Chlorine solution (e.g., 1:10 bleach) is the standard for disinfecting blood spills due to its effectiveness against bloodborne pathogens." },
+            { question: "The Hot Air Oven is most appropriate for sterilizing which of the following?", options: ["Surgical dressings and gowns", "Culture media containing sugars", "Glass Petri dishes and pipettes", "Rubber catheters and tubing"], correct: 2, explanation: "Hot air ovens (dry heat) are used for glassware, oils, and powders. Steam (autoclave) would wet dressings and destroy media." },
+            { question: "Which level of disinfection is required to kill Mycobacterium tuberculosis?", options: ["Low-level disinfection", "Intermediate-level disinfection", "High-level disinfection", "Sterilization"], correct: 1, explanation: "M. tuberculosis is used as the benchmark for intermediate-level disinfectants." },
+            { question: "The primary reason boiling is not considered a sterilization method is that it:", options: ["Is too slow and inefficient.", "Requires specialized equipment.", "Does not destroy bacterial spores.", "Is only effective for metal instruments."], correct: 2, explanation: "Boiling (100°C) kills most vegetative bacteria but fails to kill heat-resistant endospores." }
+          ]
+        },
+        chemotherapy: {
+          title: "Antimicrobial Chemotherapy",
+          type: "mcq",
+          questions: [
+            { question: "What is the best definition of an antimicrobial drug?", options: ["A substance that only kills bacteria.", "A naturally occurring substance that stimulates the immune system.", "A synthetic or naturally occurring substance that kills or inhibits the growth of microorganisms.", "A drug used exclusively to treat viral infections."], correct: 2, explanation: "Antimicrobial is a broad term for any substance that harms microorganisms." },
+            { question: "The primary goal of antimicrobial chemotherapy is to:", options: ["Boost the patient's white blood cell count.", "Eliminate or inhibit the pathogenic microorganism without harming the host.", "Provide nutritional support to the patient during an infection.", "Replace the host's immune system functions."], correct: 1, explanation: "This is the principle of 'selective toxicity' - harm the microbe, not the host." },
+            { question: "Antibiotics classified as 'Bacteriostatic' primarily:", options: ["Kill bacteria directly.", "Prevent bacteria from multiplying.", "Destroy the bacterial cell wall.", "Inhibit viral replication."], correct: 1, explanation: "Bacteriostatic agents inhibit growth, relying on the host's immune system to clear the infection." },
+            { question: "An antibiotic that is effective against a wide range of Gram-positive and Gram-negative bacteria is classified as:", options: ["Narrow-spectrum", "Bactericidal", "Broad-spectrum", "Synthetic"], correct: 2, explanation: "Broad-spectrum antibiotics cover a wide variety of bacteria." },
+            { question: "Which of the following is a classification of antibiotics based on their source?", options: ["Bactericidal vs. Bacteriostatic", "Broad-spectrum vs. Narrow-spectrum", "Naturally occurring vs. Synthetic", "Inhibition of protein synthesis vs. Inhibition of cell wall synthesis"], correct: 2, explanation: "Antibiotics can be natural (from fungi/bacteria), semi-synthetic, or fully synthetic." },
+            { question: "Penicillins and Cephalosporins exert their antibacterial effect by:", options: ["Inhibiting protein synthesis at the 50S ribosomal subunit.", "Damaging the bacterial plasma membrane.", "Inhibiting the final cross-linking step in peptidoglycan synthesis.", "Inhibiting nucleic acid synthesis."], correct: 2, explanation: "These are B-lactam antibiotics that interfere with the synthesis of the peptidoglycan cell wall." },
+            { question: "Which class of antibiotics works by binding to the 30S ribosomal subunit and impairing proofreading...?", options: ["Macrolides", "Tetracyclines", "Aminoglycosides", "Sulfonamides"], correct: 2, explanation: "Aminoglycosides (like Streptomycin) cause misreading of mRNA on the 30S subunit." },
+            { question: "The mechanism of action of Polymyxin B is:", options: ["Inhibition of metabolic pathway synthesis.", "Disruption of the bacterial cell membrane.", "Inhibition of RNA synthesis.", "Inhibition of cell wall synthesis."], correct: 1, explanation: "Polymyxin B acts like a detergent, disrupting the integrity of the bacterial cell membrane." },
+            { question: "Sulfamethoxazole and Trimethoprim are examples of drugs that work by:", options: ["Inhibiting folic acid synthesis.", "Inhibiting DNA gyrase.", "Binding to penicillin-binding proteins (PBPs).", "Disrupting the cell membrane."], correct: 0, explanation: "These are sulfonamides (sulfa drugs) that inhibit the metabolic pathway for folic acid synthesis." },
+            { question: "The antibiotic that inhibits protein synthesis by binding to the 50S ribosomal subunit... is:", options: ["Tetracycline", "Ciprofloxacin", "Chloramphenicol", "Streptomycin"], correct: 2, explanation: "Chloramphenicol binds to the 50S subunit. Tetracyclines and Aminoglycosides bind to the 30S." },
+            { question: "Which of the following is a mechanism of antimicrobial resistance?", options: ["Increased drug permeability.", "Production of drug-inactivating enzymes like B-lactamase.", "Enhanced drug accumulation inside the bacterial cell.", "Increased affinity of the drug for its target."], correct: 1, explanation: "B-lactamase is an enzyme produced by bacteria that destroys penicillin and other B-lactam antibiotics." },
+            { question: "Resistance to Tetracycline can occur due to:", options: ["Production of B-lactamase.", "Modification of the drug target on the 30S ribosomal subunit.", "Increased permeability of the bacterial membrane.", "Altered PABA synthesis pathway."], correct: 1, explanation: "Resistance can occur by modifying the 30S target (so tetracycline can't bind) or by an efflux pump that pumps the drug out." },
+            { question: "A bacterium becomes resistant to Sulfa drugs because it:", options: ["Produces an enzyme that destroys the drug.", "Alters its penicillin-binding proteins (PBPs).", "Uses pre-formed folic acid from the host instead of synthesizing it from PABA.", "Develops an efflux pump for Aminoglycosides."], correct: 2, explanation: "If the bacterium can get folic acid from its environment (the host), it no longer needs the metabolic pathway that the sulfa drug blocks." },
+            { question: "Genetic mutation leading to a change in Penicillin-Binding Proteins (PBPs) is an example of:", options: ["Non-genetic resistance.", "Resistance due to metabolic inactivity.", "Genetic resistance via mutation.", "Resistance due to loss of a target structure."], correct: 2, explanation: "This is the mechanism of resistance for MRSA (Methicillin-resistant Staph aureus)." },
+            { question: "Which of the following is a complication of broad-spectrum antibiotic therapy?", options: ["Enhanced antibody production.", "Superinfection due to suppression of normal bacterial flora.", "Increased permeability of bacterial cells.", "Stimulation of viral replication."], correct: 1, explanation: "Killing the normal flora allows opportunistic pathogens (like C. difficile or Candida) to overgrow, causing a superinfection." },
+            { question: "A known side effect of Aminoglycosides (like Streptomycin) is:", options: ["Greyish teeth coloration.", "Nephrotoxicity and Ototoxicity.", "Agranulocytosis.", "Severe allergic rash."], correct: 1, explanation: "Aminoglycosides can be toxic to the kidneys (nephrotoxicity) and the auditory nerve (ototoxicity)." },
+            { question: "The complication 'Agranulocytosis and Aplastic Anemia' is associated with the use of:", options: ["Tetracycline", "Penicillin", "Chloramphenicol", "Ciprofloxacin"], correct: 2, explanation: "Chloramphenicol can cause severe, rare bone marrow suppression (aplastic anemia)." },
+            { question: "Prolonged use of antibiotics can lead to drug resistance primarily because it:", options: ["Boosts the patient's immune system too much.", "Selects for pre-existing resistant bacterial mutants.", "Converts all bacteria into dormant spores.", "Inactivates the antibiotic in the bloodstream."], correct: 1, explanation: "Antibiotics don't *cause* resistance, they *select* for it by killing off all the susceptible bacteria, leaving only the resistant ones to multiply." },
+            { question: "Which practice is recommended to limit the development of antimicrobial resistance?", options: ["Using broad-spectrum antibiotics for all infections.", "Avoiding antibiotic susceptibility tests.", "Maintaining high drug levels throughout the treatment course.", "Stopping antibiotics as soon as symptoms improve."], correct: 2, explanation: "Ensuring full-dose treatment (maintaining high drug levels) helps kill all bacteria, including weaker mutants, preventing resistance. Stopping early is a major cause of resistance." },
+            { question: "An allergic reaction to an antimicrobial drug is an example of:", options: ["Drug toxicity.", "Superinfection.", "Hypersensitivity.", "Metabolic inhibition."], correct: 2, explanation: "An allergy is a hypersensitivity reaction of the host's immune system to the drug." }
+          ]
+        },
+        // T/F Quiz Moved Here
+        general_tf: {
+          title: "اختبار معلومات أساسية (صح وخطأ)",
+          type: "truefalse",
+          questions: [
+            { question: "The muscular system works independently from the skeletal system.", correct: false, explanation: "False. The skeletal system works with muscles to enable movement." },
+            { question: "The endocrine system produces hormones through glands.", correct: true, explanation: "True. The endocrine system regulates long-term changes through hormones produced by glands." },
+            { question: "The cardiovascular system manages breathing and oxygen exchange.", correct: false, explanation: "False. The respiratory system manages this. The cardiovascular system pumps the blood containing the oxygen." },
+            { question: "The integumentary system acts as the body's outer covering.", correct: true, explanation: "True. The integumentary system includes the skin, hair, and nails." },
+            { question: "The lymphatic system helps in filtering and returning fluid to the bloodstream.", correct: true, explanation: "True. This is one of its key functions, along with defending against infection." },
+            { question: "COVID-19 can cause a loss of taste or smell.", correct: true, explanation: "True. Loss of taste or smell is a well-known symptom linked with COVID-19." },
+            { question: "A heart attack always comes with a high fever.", correct: false, explanation: "False. Fever is not a typical or required symptom of a heart attack." },
+            { question: "Mononucleosis may cause an enlarged liver or spleen.", correct: true, explanation: "True. This is a known and serious potential complication of mononucleosis." },
+            { question: "Influenza develops gradually over several days.", correct: false, explanation: "False. Influenza (the flu) typically has a rapid onset, while a common cold develops gradually." },
+            { question: "Diabetes causes increased hunger and slow-healing sores.", correct: true, explanation: "True. These, along with increased thirst and frequent urination, are classic signs of diabetes." },
+            { question: "Nurses now perform some duties that traditionally belonged to junior doctors.", correct: true, explanation: "True. The role of nursing has expanded to include a wider range of duties." },
+            { question: "The workload of nurses has decreased because patients often self-diagnose.", correct: false, explanation: "False. Patient self-diagnosis often complicates care and increases the nurse's workload." },
+            { question: "Financial incentives like paying tuition fees have been successful in increasing nursing graduates.", correct: true, explanation: "True. This is a strategy used by governments and hospitals to increase the number of nursing graduates." },
+            { question: "Traditional nursing roles, like helping patients go to the toilet, are no longer relevant today.", correct: false, explanation: "False. These fundamental care roles are still relevant, in addition to new, more complex tasks." },
+            { question: "Technology in healthcare has simplified the nurse's role by reducing their responsibilities.", correct: false, explanation: "False. New technology often increases the nurse's workload and responsibilities (e.g., interpreting more results)." },
+            { question: "The liver only filters blood and has no role in digestion.", correct: false, explanation: "False. The liver plays a crucial role in digestion by producing bile." },
+            { question: "Bones provide structure and protect internal organs.", correct: true, explanation: "True. This is a primary function of the skeletal system." },
+            { question: "Lungs pump blood throughout the body.", correct: false, explanation: "False. The heart pumps blood throughout the body. The lungs are for gas exchange." }
+          ]
+        }
+      },
+      // Other subjects are now empty and will show "Coming Soon"
+      fundamental: {},
+      biochemistry: {},
+      anatomy: {},
+      physiology: {},
+      clinical: {}
+    };
+
+    // --- GLOBAL STATE ---
+    let currentQuiz = null; // Holds the quiz object (title, type, questions)
+    let currentQuizQuestions = []; // Holds just the array of questions
+    let currentQuestionIndex = 0;
+    let userAnswers = []; // Stores the user's answer index for each question
+
+    // --- DOM Elements ---
+    const quizSelectionEl = document.getElementById('quiz-selection');
+    const quizContainerEl = document.getElementById('quiz-container');
+    const resultsEl = document.getElementById('results');
+    const reviewEl = document.getElementById('review-container');
+    const questionContainerEl = document.getElementById('question-container');
+    const quizTitleEl = document.getElementById('current-quiz-title');
+    const questionCounterEl = document.getElementById('question-counter');
+    const progressFillEl = document.getElementById('progress-fill');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+
+    // --- TAB NAVIGATION LOGIC ---
+    function openTab(tabName) {
+      // Hide all tab content
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(content => content.classList.remove('active'));
+
+      // Deactivate all tab buttons
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+
+      // Show the selected tab content
+      document.getElementById(tabName).classList.add('active');
+
+      // Activate the selected tab button
+      document.querySelector(.tab-btn[onclick="openTab('${tabName}')"]).classList.add('active');
+    }
+
+    // --- QUIZ LOGIC ---
+    function startQuiz(subject, quizId) {
+      // Load quiz data
+      currentQuiz = quizzes[subject][quizId];
+      currentQuizQuestions = currentQuiz.questions;
+      currentQuestionIndex = 0;
+      userAnswers = new Array(currentQuizQuestions.length).fill(null);
+
+      // Update UI
+      quizTitleEl.textContent = currentQuiz.title;
+      quizSelectionEl.style.display = 'none';
+      resultsEl.style.display = 'none';
+      reviewEl.style.display = 'none';
+      quizContainerEl.style.display = 'block';
+
+      // Show the first question
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const question = currentQuizQuestions[currentQuestionIndex];
+      const totalQuestions = currentQuizQuestions.length;
+      const userAnswer = userAnswers[currentQuestionIndex];
+      // Update header
+      questionCounterEl.textContent = السؤال ${currentQuestionIndex + 1} من ${totalQuestions};
+      progressFillEl.style.width = ${((currentQuestionIndex + 1) / totalQuestions) * 100}%;
+
+      let optionsHtml = '';
+      if (currentQuiz.type === 'mcq') {
+        optionsHtml = question.options.map((option, index) =>
+          `<button 
+             class="answer-btn ${userAnswer === index ? 'selected' : ''}" 
+             onclick="selectAnswer(${index})">
+             ${option}
+           </button>`
+        ).join('');
+      } else if (currentQuiz.type === 'truefalse') {
+        optionsHtml = `
+          <button 
+            class="answer-btn ${userAnswer === true ? 'selected' : ''}" 
+            onclick="selectAnswer(true)">
+            صح ✓
+          </button>
+          <button 
+            class="answer-btn ${userAnswer === false ? 'selected' : ''}" 
+            onclick="selectAnswer(false)">
+            خطأ ✗
+          </button>
+        `;
+      }
+
+      questionContainerEl.innerHTML = `
+        <div class="question-card">
+          <div class="question-number">السؤال ${currentQuestionIndex + 1}</div>
+          <div class="question-text">${question.question}</div>
+          <div class="answer-options">
+            ${optionsHtml}
+          </div>
+        </div>
+      `;
+
+      // Update navigation buttons
+      prevBtn.disabled = currentQuestionIndex === 0;
+      nextBtn.textContent = (currentQuestionIndex === totalQuestions - 1) ? 'إنهاء الاختبار' : 'السؤال التالي';
+    }
+
+    function selectAnswer(index) {
+      userAnswers[currentQuestionIndex] = index;
+      renderQuestion(); // Re-render to show the "selected" state
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+      } else {
+        finishQuiz(); // Last question, so finish
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        renderQuestion();
+      }
+    }
+
+    function finishQuiz() {
+      // Calculate score
+      let score = 0;
+      for (let i = 0; i < currentQuizQuestions.length; i++) {
+        if (userAnswers[i] === currentQuizQuestions[i].correct) {
+          score++;
+        }
+      }
+      const total = currentQuizQuestions.length;
+      const percentage = Math.round((score / total) * 100);
+
+      // Display score
+      document.getElementById('final-score').textContent = `${score}/${total}`;
+      let message = '';
+      if (percentage >= 80) message = 'ممتاز! أداء رائع 🌟';
+      else if (percentage >= 60) message = 'جيد جداً! استمر في التعلم 👍';
+      else if (percentage >= 40) message = 'جيد، يمكنك تحسين أدائك 📚';
+      else message = 'تحتاج للمزيد من المراجعة 💪';
+      document.getElementById('score-message').textContent = message;
+
+      // Update UI
+      quizContainerEl.style.display = 'none';
+      resultsEl.style.display = 'block';
+    }
+
+    function showReview() {
+      let reviewHtml = '';
+      for (let i = 0; i < currentQuizQuestions.length; i++) {
+        const question = currentQuizQuestions[i];
+        const userAnswer = userAnswers[i];
+        const correctAnswer = question.correct;
+        const isCorrect = userAnswer === correctAnswer;
+        let optionsReviewHtml = '';
+        if (currentQuiz.type === 'mcq') {
+          optionsReviewHtml = question.options.map((option, index) => {
+            let className = 'review-option';
+            if (index === correctAnswer) {
+              className += ' correct';
+            } else if (index === userAnswer && !isCorrect) {
+              className += ' user-incorrect';
+            }
+            return <div class="${className}">${option}</div>;
+          }).join('');
+        } else if (currentQuiz.type === 'truefalse') {
+          optionsReviewHtml = `
+            <div class="review-option ${correctAnswer === true ? 'correct' : ''} ${userAnswer === true && !isCorrect ? 'user-incorrect' : ''}">
+              صح ✓
+            </div>
+            <div class="review-option ${correctAnswer === false ? 'correct' : ''} ${userAnswer === false && !isCorrect ? 'user-incorrect' : ''}">
+              خطأ ✗
+            </div>
+          `;
+        }
+
+        reviewHtml += `
+          <div class="review-question">
+            <div class="question-number">السؤال ${i + 1}</div>
+            <div class="question-text">${question.question}</div>
+            ${optionsReviewHtml}
+            <div class="review-explanation">
+              <strong>الشرح:</strong> ${question.explanation}
+            </div>
+          </div>
+        `;
+      }
+
+      document.getElementById('review-content').innerHTML = reviewHtml;
+
+      // Update UI
+      resultsEl.style.display = 'none';
+      reviewEl.style.display = 'block';
+    }
+
+    function goBack() {
+      // Hide all quiz-related containers
+      quizContainerEl.style.display = 'none';
+      resultsEl.style.display = 'none';
+      reviewEl.style.display = 'none';
+
+      // Show the main tab/selection container
+      quizSelectionEl.style.display = 'block';
+      // Ensure the correct tab is visible (the one that was active)
+      const activeTabBtn = document.querySelector('.tab-btn.active');
+      openTab(activeTabBtn.getAttribute('onclick').match(/'(.*?)'/)[1]);
+    }
+
+    // --- SDK Implementation ---
+    const defaultConfig = {
+      site_title: "منصة الاختبارات"
+    };
+
+    async function onConfigChange(config) {
+      document.getElementById('site-title').textContent = config.site_title  defaultConfig.site_title;
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ["site_title", config.site_title  defaultConfig.site_title]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    // Initialize the default tab on load
+    document.addEventListener('DOMContentLoaded', () => {
+      openTab('microbiology');
+    });
+  </script>
+</body>
+
+</html>
