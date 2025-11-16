@@ -419,6 +419,50 @@
       margin: 0;
       font-weight: bold;
     }
+    
+    /* --- (جديد) تنسيقات التلميح (Hint) --- */
+    .hint-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .hint-btn {
+      background: #f7fafc;
+      border: 2px solid var(--primary-color);
+      color: var(--primary-color);
+      padding: 8px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    .hint-btn:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+    .hint-text {
+      display: none; /* مخفي افتراضياً */
+      margin-top: 10px;
+      padding: 15px;
+      background: #f7fafc;
+      border-right: 5px solid #e2e8f0;
+      border-radius: 10px;
+      color: var(--text-dark);
+      font-style: italic;
+    }
+    /* عند تفعيل الحاوية، يظهر التلميح */
+    .hint-container.active .hint-text {
+      display: block;
+    }
+
+    /* --- (جديد) تنسيق عداد الوقت --- */
+    #quiz-timer {
+      color: var(--primary-color);
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-top: 10px;
+      direction: ltr; /* لضمان عرض الوقت بشكل صحيح */
+    }
+
 
     @media (max-width: 768px) {
       .tab-container {
@@ -526,9 +570,7 @@
         </div>
       </div>
       
-      <!-- =========================================== -->
-      <!-- (!!!) هذا هو الجزء الذي تم تعديله (!!!) -->
-      <!-- =========================================== -->
+      <!-- Clinical Tab -->
       <div id="clinical" class="tab-content">
         <!-- Card 1 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_1">
@@ -576,9 +618,6 @@
           <p>4 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
       </div>
-      <!-- =========================================== -->
-      <!--       نهاية الجزء الذي تم تعديله          -->
-      <!-- =========================================== -->
 
     </div>
 
@@ -591,6 +630,8 @@
           <div id="progress-fill" class="progress-fill"></div>
         </div>
         <p id="question-counter"></p>
+        <!-- (جديد) إضافة عداد الوقت -->
+        <div id="quiz-timer">00:00</div>
       </div>
       <div id="question-container">
         <!-- Questions will be rendered here by JS -->
@@ -632,21 +673,20 @@
   <!--        جزء الـ JavaScript        -->
   <!-- =============================== -->
   
-  <!-- (تعديل!) 1. تحميل ملف الأسئلة أولاً -->
+  <!-- 1. تحميل ملف الأسئلة أولاً -->
   <script src="questions.js"></script>
   
-  <!-- (تعديل!) 2. تشغيل السكريبت الرئيسي -->
+  <!-- 2. تشغيل السكريبت الرئيسي -->
   <script>
-    // --- (ملاحظة) ---
-    // تم حذف 'const quizData = { ... }' من هنا
-    // لأنه أصبح موجوداً في 'questions.js'
-    // --- (ملاحظة) ---
-
     // --- Global State ---
     let currentQuiz = [];
     let currentQuestionIndex = 0;
     let userAnswers = []; // Store answers {qIndex: 0, answer: 1, isCorrect: true}
     let quizTitle = "";
+    
+    // (جديد) متغيرات العداد
+    let timerInterval = null;
+    let secondsElapsed = 0;
 
     /**
      * Shuffles an array in place.
@@ -657,6 +697,20 @@
         [array[i], array[j]] = [array[j], array[i]];
       }
       return array;
+    }
+
+    /**
+     * (جديد) دالة لتحديث عداد الوقت كل ثانية
+     */
+    function updateTimer() {
+      secondsElapsed++;
+      const minutes = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+      const seconds = (secondsElapsed % 60).toString().padStart(2, '0');
+      
+      const timerElement = document.getElementById("quiz-timer");
+      if (timerElement) {
+        timerElement.textContent = `${minutes}:${seconds}`;
+      }
     }
 
     /**
@@ -707,6 +761,12 @@
       quizTitle = quiz.title;
       currentQuestionIndex = 0;
       userAnswers = new Array(currentQuiz.length).fill(null); 
+
+      // (جديد) بدء/تصفير عداد الوقت
+      if (timerInterval) clearInterval(timerInterval); // إيقاف أي عداد قديم
+      secondsElapsed = 0;
+      document.getElementById("quiz-timer").textContent = "00:00";
+      timerInterval = setInterval(updateTimer, 1000); // بدء عداد جديد
 
       document.getElementById("current-quiz-title").textContent = quizTitle;
       document.getElementById("quiz-selection").style.display = "none";
@@ -761,6 +821,14 @@
               <div class="question-number">السؤال ${currentQuestionIndex + 1}</div>
               <div class="question-text">${questionData.q}</div>
               ${optionsHTML}
+
+              <!-- (جديد) إضافة حاوية التلميح (تظهر فقط لو السؤال فيه تلميح) -->
+              ${questionData.hint ? `
+                <div class="hint-container">
+                    <button class="hint-btn">إظهار التلميح</button>
+                    <p class="hint-text">${questionData.hint}</p>
+                </div>
+              ` : ''}
             </div>
         `;
 
@@ -769,9 +837,10 @@
     }
     
     /**
-     * يربط المستمعين لأزرار الإجابات
+     * يربط المستمعين لأزرار الإجابات والتلميح
      */
     function attachQuestionListeners() {
+        // 1. مستمعين أزرار الإجابات
         document.querySelectorAll('.answer-btn').forEach(btn => {
             if (btn.dataset.optionIndex) {
                  btn.addEventListener('click', () => {
@@ -783,6 +852,17 @@
                 });
             }
         });
+
+        // 2. (جديد) مستمع لزر التلميح
+        const hintBtn = document.querySelector('.hint-btn');
+        if (hintBtn) {
+            hintBtn.addEventListener('click', (e) => {
+                // تفعيل الحاوية لإظهار النص
+                e.target.closest('.hint-container').classList.add('active');
+                // إخفاء الزر نفسه بعد الضغط عليه
+                e.target.style.display = 'none';
+            });
+        }
     }
 
 
@@ -799,6 +879,11 @@
      * Returns the user to the main quiz selection screen.
      */
     function goBack() {
+      // (جديد) إيقاف العداد عند العودة للقائمة
+      if (timerInterval) clearInterval(timerInterval);
+      secondsElapsed = 0;
+      document.getElementById("quiz-timer").textContent = "00:00";
+
       document.getElementById("quiz-container").style.display = "none";
       document.getElementById("results").style.display = "none";
       document.getElementById("review-container").style.display = "none";
@@ -810,7 +895,7 @@
     }
     
     /**
-     * (جديد) وظيفة للرجوع من شاشة المراجعة إلى شاشة النتائج
+     * وظيفة للرجوع من شاشة المراجعة إلى شاشة النتائج
      */
     function showResultsScreen() {
         document.getElementById("review-container").style.display = "none";
@@ -888,6 +973,9 @@
      * Calculates and displays the final score.
      */
     function showResults() {
+      // (جديد) إيقاف العداد عند إظهار النتائج
+      if (timerInterval) clearInterval(timerInterval);
+
       let score = 0;
       userAnswers.forEach(answer => {
         if (answer && answer.isCorrect) {
@@ -910,7 +998,10 @@
       } else if (percentage < 50) {
         message = "تحتاج للمزيد من المراجعة. بالتوفيق المرة القادمة!";
       }
-      messageEl.textContent = message;
+
+      // (جديد) إضافة الوقت المستغرق لرسالة النتيجة
+      const finalTime = document.getElementById("quiz-timer").textContent;
+      messageEl.textContent = `${message} | الوقت المستغرق: ${finalTime}`;
 
       document.getElementById("quiz-container").style.display = "none";
       document.getElementById("review-container").style.display = "none";
@@ -989,7 +1080,7 @@
       document.getElementById('next-btn').addEventListener('click', nextQuestion);
       document.getElementById('review-btn').addEventListener('click', showReview);
       
-      // 4. (جديد) زر العودة من المراجعة للنتائج
+      // 4. زر العودة من المراجعة للنتائج
        document.getElementById('back-to-results').addEventListener('click', showResultsScreen);
 
 
@@ -1002,15 +1093,14 @@
 
     // --- Initial Load ---
     document.addEventListener("DOMContentLoaded", () => {
-        // (تعديل) هذا الكود أصبح يتحقق من الأقسام التي لا تحتوي على كروت مضافة يدوياً
+        // ... (نفس الكود الخاص بالتحقق من التاب) ...
         document.querySelectorAll('.tab-content').forEach(tab => {
-            // (تعديل) .children.length > 1 لتجاهل رسالة "قريباً"
             if(tab.children.length > 1 || tab.children[0]?.classList.contains('quiz-card')) {
-                // هذا التاب يحتوي على كروت، لا تفعل شيئاً
+                // This tab has cards, do nothing
             } else if (tab.children.length === 1 && tab.children[0]?.classList.contains('coming-soon')) {
-                // هذا التاب يحتوي فقط على رسالة "قريباً"، اتركه كما هو
+                // This tab already has the "coming soon" message
             } else {
-                // هذا التاب فارغ تماماً (مثل fundamental و biochemistry في الكود الأصلي)
+                // This tab is empty
                 tab.innerHTML = '<p class="coming-soon">الأسئلة قادمة قريباً...</p>';
             }
         });
