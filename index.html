@@ -179,6 +179,8 @@
       padding: 30px;
       box-shadow: var(--shadow-heavy);
       margin-bottom: 30px;
+      /* (تعديل) إضافة position relative ليتم وضع زر العودة بداخله */
+      position: relative;
     }
     .quiz-header {
       text-align: center;
@@ -360,6 +362,8 @@
       padding: 30px;
       box-shadow: var(--shadow-heavy);
       margin-bottom: 30px;
+      /* (تعديل) إضافة position relative ليتم وضع زر العودة بداخله */
+      position: relative;
     }
 
     .review-question {
@@ -382,6 +386,8 @@
       width: 100%;
       margin-bottom: 10px;
       opacity: 0.7;
+      /* (إضافة) منع التفاعل مع أزرار المراجعة */
+      pointer-events: none;
     }
 
     .review-option.correct {
@@ -519,9 +525,61 @@
           <p>15 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
       </div>
+      
+      <!-- =========================================== -->
+      <!-- (!!!) هذا هو الجزء الذي تم تعديله (!!!) -->
+      <!-- =========================================== -->
       <div id="clinical" class="tab-content">
-        <p class="coming-soon">الأسئلة قادمة قريباً...</p>
+        <!-- Card 1 -->
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_1">
+          <h3>Hand Hygiene & PPE - Part 1</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- Card 2 -->
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_2">
+          <h3>Hand Hygiene & PPE - Part 2</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- Card 3 -->
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_3">
+          <h3>Hand Hygiene & PPE - Part 3</h3>
+          <p>6 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- Card 4 -->
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_4">
+          <h3>Patient Positioning - Part 1</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- Card 5 -->
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_5">
+          <h3>Patient Positioning - Part 2</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- Card 6 -->
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_6">
+          <h3>Patient Positioning - Part 3</h3>
+          <p>6 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- Card 7 -->
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_7">
+          <h3>Body Mechanics - Part 1</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- Card 8 -->
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_8">
+          <h3>Body Mechanics - Part 2</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- Card 9 -->
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_9">
+          <h3>Body Mechanics - Part 3</h3>
+          <p>4 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
       </div>
+      <!-- =========================================== -->
+      <!--       نهاية الجزء الذي تم تعديله          -->
+      <!-- =========================================== -->
+
     </div>
 
     <!-- Quiz Container -->
@@ -881,16 +939,14 @@
             } else if (userAnswer && i === userAnswer.answer && !isCorrect) {
               className += ' user-incorrect';
             }
-            // (إضافة) منع التفاعل مع أزرار المراجعة
-            className += ' disabled'; 
             return `<div class="${className}">${option}</div>`;
           }).join('');
         } else if (question.type === "tf") {
           optionsReviewHtml = `
-            <div class="review-option ${correctAnswer === true ? 'correct' : ''} ${userAnswer && userAnswer.answer === true && !isCorrect ? 'user-incorrect' : ''} disabled">
+            <div class="review-option ${correctAnswer === true ? 'correct' : ''} ${userAnswer && userAnswer.answer === true && !isCorrect ? 'user-incorrect' : ''}">
               صح
             </div>
-            <div class="review-option ${correctAnswer === false ? 'correct' : ''} ${userAnswer && userAnswer.answer === false && !isCorrect ? 'user-incorrect' : ''} disabled">
+            <div class="review-option ${correctAnswer === false ? 'correct' : ''} ${userAnswer && userAnswer.answer === false && !isCorrect ? 'user-incorrect' : ''}">
               خطأ
             </div>
           `;
@@ -946,14 +1002,16 @@
 
     // --- Initial Load ---
     document.addEventListener("DOMContentLoaded", () => {
-        // التحقق من الأقسام الفارغة
+        // (تعديل) هذا الكود أصبح يتحقق من الأقسام التي لا تحتوي على كروت مضافة يدوياً
         document.querySelectorAll('.tab-content').forEach(tab => {
-            if(tab.children.length === 0) {
-                const bankId = tab.id;
-                // (تعديل) التأكد من أن الأقسام المليانة بس هي اللي متتعرضش فيها الرسالة
-                if(bankId !== 'microbiology' && bankId !== 'anatomy' && bankId !== 'physiology') {
-                   tab.innerHTML = '<p class="coming-soon">الأسئلة قادمة قريباً...</p>';
-                }
+            // (تعديل) .children.length > 1 لتجاهل رسالة "قريباً"
+            if(tab.children.length > 1 || tab.children[0]?.classList.contains('quiz-card')) {
+                // هذا التاب يحتوي على كروت، لا تفعل شيئاً
+            } else if (tab.children.length === 1 && tab.children[0]?.classList.contains('coming-soon')) {
+                // هذا التاب يحتوي فقط على رسالة "قريباً"، اتركه كما هو
+            } else {
+                // هذا التاب فارغ تماماً (مثل fundamental و biochemistry في الكود الأصلي)
+                tab.innerHTML = '<p class="coming-soon">الأسئلة قادمة قريباً...</p>';
             }
         });
         
@@ -964,5 +1022,4 @@
 
 </body>
 </html>
-
 
