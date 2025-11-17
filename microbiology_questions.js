@@ -1,5 +1,4 @@
-
-window.microbiologyData = {
+Window.microbiologyData = {
   morphology: {
     title: "Bacterial Morphology",
     questions: [
@@ -123,26 +122,26 @@ window.microbiologyData = {
     ]
   },
   general_tf: {
-    title: "اختبار معلومات أساسية (صح وخطأ)",
+    title: "Basic Knowledge Test (True/False)",
     questions: [
-      { q: "البكتيريا موجبة الجرام (Gram-positive) يظهر لونها أحمر بعد الصبغة.", type: "tf", a: false, hint: "اللون الأحمر (السافرنين) هو الصبغة المضادة. موجبة الجرام تحتفظ باللون البنفسجي الأول." },
-      { q: "البكتيريا سالبة الجرام (Gram-negative) تحتوي على طبقة رقيقة من الببتيدوجلايكان.", type: "tf", a: true, hint: "ولهذا السبب تفقد اللون البنفسجي بسهولة وتأخذ اللون الأحمر." },
-      { q: "الـ Mycoplasma هي البكتيريا الوحيدة التي لا تمتلك جدار خلوي.", type: "tf", a: true, hint: "لهذا السبب، المضادات الحيوية التي تستهدف جدار الخلية (مثل البنسلين) لا تؤثر عليها." },
-      { q: "الأبواغ (Spores) هي وسيلة للتكاثر البكتيري.", type: "tf", a: false, hint: "هي وسيلة للبقاء (Survival) في الظروف القاسية، وليست للتكاث." },
-      { q: "البكتيريا (Mesophiles) تنمو بشكل أفضل في درجة حرارة 37 درجة مئوية.", type: "tf", a: true, hint: "Meso تعني 'متوسط'، وهي درجة حرارة جسم الإنسان." },
-      { q: "البكتيريا اللاهوائية الإجبارية (Obligate anaerobes) تموت في وجود الأكسجين.", type: "tf", a: true, hint: "الأكسجين سام بالنسبة لها لأنها تفتقر للإنزيمات (مثل الكاتالاز) لتحييده." },
-      { q: "التعقيم (Sterilization) هو القضاء على جميع أشكال الحياة الميكروبية بما في ذلك الأبواغ.", type: "tf", a: true, hint: "هذا هو الفرق الرئيسي بين التعقيم والتطهير." },
-      { q: "التطهير (Disinfection) يقتل الأبواغ البكتيرية.", type: "tf", a: false, hint: "التطهير يقتل معظم الميكروبات، لكنه لا يقضي على الأبواغ المقاومة." },
-      { q: "الأوتوكلاف (Autoclave) يستخدم حرارة جافة (Dry heat) للتعقيم.", type: "tf", a: false, hint: "الأوتوكلاف يستخدم بخار (حرارة رطبة) تحت ضغط. الفرن (Oven) هو الذي يستخدم حرارة جافة." },
-      { q: "البنسلين يعمل عن طريق تثبيط تصنيع البروتين في البكتيريا.", type: "tf", a: false, hint: "البنسلين يهاجم جدار الخلية (Cell wall)." },
-      { q: "التتراسيكلين (Tetracycline) يعمل عن طريق تثبيط وحدة 30S الريبوسومية.", type: "tf", a: true, hint: "مضادات حيوية أخرى (مثل الماكروليدات) تستهدف وحدة 50S." },
-      { q: "البلازميدات (Plasmids) هي جزء أساسي من الكروموسوم البكتيري.", type: "tf", a: false, hint: "هي قطع DNA إضافية (Extrachromosomal) خارج الكروموسوم." },
-      { q: "الأهداب (Pili) تستخدم للحركة البكتيرية.", type: "tf", a: false, hint: "الأسواط (Flagella) هي التي تستخدم للحركة. الأهداب تستخدم للالتصاق." },
-      { q: "الكبسولة (Capsule) تساعد البكتيريا على مقاومة عملية البلعمة (Phagocytosis).", type: "tf", a: true, hint: "تجعل البكتيريا 'زلقة' ويصعب على خلايا المناعة ابتلاعها." },
-      { q: "مرحلة الـ Log Phase هي أسرع مرحلة في نمو البكتيريا.", type: "tf", a: true, hint: "تُعرف أيضاً بالمرحلة الأسية (Exponential) حيث تتضاعف البكتيريا بأقصى سرعة." },
-      { q: "المطهر (Antiseptic) يستخدم لتطهير الأسطح والأدوات غير الحية.", type: "tf", a: false, hint: "المطهر (Antiseptic) يستخدم على الأنسجة الحية (مثل الجلد). المعقم (Disinfectant) هو الذي يستخدم للأسطح." },
-      { q: "الـ Endotoxin (السم الداخلي) يوجد فقط في البكتيريا موجبة الجرام.", type: "tf", a: false, hint: "يوجد في البكتيريا سالبة الجرام (Gram-negative) كجزء من غشائها الخارجي (LPS)." },
-      { q: "الفلورا الطبيعية (Normal Flora) توجد في الدم بشكل طبيعي.", type: "tf", a: false, hint: "الدم يجب أن يكون معقماً (Sterile). وجود بكتيريا في الدم يعني عدوى." }
+      { q: "Gram-positive bacteria stain red after staining.", type: "tf", a: false, hint: "اللون الأحمر (السافرنين) هو الصبغة المضادة. موجبة الجرام تحتفظ باللون البنفسجي الأول." },
+      { q: "Gram-negative bacteria contain a thin layer of peptidoglycan.", type: "tf", a: true, hint: "ولهذا السبب تفقد اللون البنفسجي بسهولة وتأخذ اللون الأحمر." },
+      { q: "Mycoplasma is the only bacterium that does not have a cell wall.", type: "tf", a: true, hint: "لهذا السبب، المضادات الحيوية التي تستهدف جدار الخلية (مثل البنسلين) لا تؤثر عليها." },
+      { q: "Spores are a method of bacterial reproduction.", type: "tf", a: false, hint: "هي وسيلة للبقاء (Survival) في الظروف القاسية، وليست للتكاث." },
+      { q: "Mesophiles grow best at 37°C.", type: "tf", a: true, hint: "Meso تعني 'متوسط'، وهي درجة حرارة جسم الإنسان." },
+      { q: "Obligate anaerobes die in the presence of oxygen.", type: "tf", a: true, hint: "الأكسجين سام بالنسبة لها لأنها تفتقر للإنزيمات (مثل الكاتالاز) لتحييده." },
+      { q: "Sterilization is the elimination of all microbial life forms, including spores.", type: "tf", a: true, hint: "هذا هو الفرق الرئيسي بين التعقيم والتطهير." },
+      { q: "Disinfection kills bacterial spores.", type: "tf", a: false, hint: "التطهير يقتل معظم الميكروبات، لكنه لا يقضي على الأبواغ المقاومة." },
+      { q: "The Autoclave uses dry heat for sterilization.", type: "tf", a: false, hint: "الأوتوكلاف يستخدم بخار (حرارة رطبة) تحت ضغط. الفرن (Oven) هو الذي يستخدم حرارة جافة." },
+      { q: "Penicillin works by inhibiting protein synthesis in bacteria.", type: "tf", a: false, hint: "البنسلين يهاجم جدار الخلية (Cell wall)." },
+      { q: "Tetracycline works by inhibiting the 30S ribosomal subunit.", type: "tf", a: true, hint: "مضادات حيوية أخرى (مثل الماكروليدات) تستهدف وحدة 50S." },
+      { q: "Plasmids are an essential part of the bacterial chromosome.", type: "tf", a: false, hint: "هي قطع DNA إضافية (Extrachromosomal) خارج الكروموسوم." },
+      { q: "Pili are used for bacterial motility.", type: "tf", a: false, hint: "الأسواط (Flagella) هي التي تستخدم للحركة. الأهداب تستخدم للالتصاق." },
+      { q: "The capsule helps bacteria resist phagocytosis.", type: "tf", a: true, hint: "تجعل البكتيريا 'زلقة' ويصعب على خلايا المناعة ابتلاعها." },
+      { q: "The Log Phase is the fastest phase of bacterial growth.", type: "tf", a: true, hint: "تُعرف أيضاً بالمرحلة الأسية (Exponential) حيث تتضاعف البكتيريا بأقصى سرعة." },
+      { q: "An antiseptic is used to disinfect inanimate surfaces and tools.", type: "tf", a: false, hint: "المطهر (Antiseptic) يستخدم على الأنسجة الحية (مثل الجلد). المعقم (Disinfectant) هو الذي يستخدم للأسطح." },
+      { q: "Endotoxin is found only in Gram-positive bacteria.", type: "tf", a: false, hint: "يوجد في البكتيريا سالبة الجرام (Gram-negative) كجزء من غشائها الخارجي (LPS)." },
+      { q: "Normal flora is naturally found in the blood.", type: "tf", a: false, hint: "الدم يجب أن يكون معقماً (Sterile). وجود بكتيريا في الدم يعني عدوى." }
     ]
   }
 };
