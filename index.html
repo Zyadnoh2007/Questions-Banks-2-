@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>منصة الاختبارات | Zyad & Yusuf</title>
 
-  <!-- =============================== -->
-  <!--    جزء الـ CSS (الثيم الجديد)     -->
-  <!-- =============================== -->
-<style>
+  <style>
     /* إضافة خط المرع لضمان دعم العربية */
     @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
     
@@ -177,27 +174,37 @@
       box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
     }
 
+    /* ======================================
+    === (تعديل) بداية التعديلات المطلوبة ===
+    ======================================
+    */
+
     /* --- Quiz Container --- */
     .quiz-container {
       display: none;
       background: var(--card-bg);
       border-radius: var(--radius-lg); /* (تعديل) */
       padding: 30px;
+      /* (تعديل) إضافة حشو علوي لإفساح المجال للعداد والزر */
+      padding-top: 70px;
       box-shadow: var(--shadow-heavy);
       margin-bottom: 30px;
       position: relative;
     }
     .quiz-header {
       text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border-color); /* (تعديل) خط أرفع */
+      /* (تعديل) تقليل الهامش السفلي */
+      margin-bottom: 20px;
+      /* (تعديل) إزالة الخط السفلي والحشو */
+      padding-bottom: 0;
+      border-bottom: none;
     }
 
     .quiz-title {
       color: var(--text-dark);
       font-size: 2rem;
-      margin-bottom: 10px;
+      /* (تعديل) تقليل الهامش السفلي */
+      margin-bottom: 5px;
     }
     
     /* (جديد) حاوية لعداد الأسئلة والوقت */
@@ -218,22 +225,26 @@
         margin: 0; /* (تعديل) إزالة الهامش الافتراضي */
     }
     
-    /* (جديد) تصميم عداد الوقت */
-    #timer-container {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--text-dark);
-      background: #f1f5f9; /* slate-100 */
-      padding: 6px 12px;
-      border-radius: var(--radius-md);
+    /* (تعديل) تصميم عداد الوقت ليطابق الصورة */
+    /* (تعديل) تغيير المحدد من #timer-container إلى #quiz-timer ليطابق الـ HTML */
+    #quiz-timer {
+      position: absolute;
+      top: 25px;
+      left: 30px;
+      background: var(--primary-color);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      font-weight: bold;
     }
 
-
+    /* (تعديل) تصميم شريط التقدم ليطابق الصورة */
     .progress-bar {
       background: var(--border-color); /* (تعديل) */
-      height: 8px;
-      border-radius: 4px;
-      margin: 20px 0;
+      height: 5px; /* (تعديل) جعله أرفع */
+      border-radius: 3px; /* (تعديل) */
+      margin: 15px 0 0 0; /* (تعديل) وضعه بعد عداد الأسئلة */
       overflow: hidden;
     }
 
@@ -250,18 +261,26 @@
       border-radius: var(--radius-md);
       padding: 25px;
       margin-bottom: 20px;
-      border-right: 4px solid var(--primary-color); /* (تعديل) */
+      /* (تعديل) إزالة الحد الأيمن الأزرق */
+      border-right: none;
+      /* (تعديل) فرض اتجاه LTR ليطابق الصورة */
+      direction: ltr;
+      text-align: left;
     }
 
     .question-number {
-      color: var(--primary-color);
+      /* (تعديل) تغيير اللون إلى الرمادي */
+      color: var(--text-light);
       font-weight: bold;
-      font-size: 1.1rem;
+      /* (تعديل) تصغير الخط قليلاً */
+      font-size: 1rem;
       margin-bottom: 15px;
     }
 
     .question-text {
-      font-size: 1.3rem;
+      /* (تعديل) جعل الخط أعرض (Bold) */
+      font-weight: 700;
+      font-size: 1.25rem; /* (تعديل) تعديل حجم الخط */
       color: var(--text-dark);
       margin-bottom: 25px;
       line-height: 1.6;
@@ -319,7 +338,8 @@
     }
 
     .nav-btn {
-      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+      /* (تعديل) تغيير الخلفية من متدرجة إلى لون أزرق ثابت */
+      background: var(--primary-color);
       color: white;
       border: none;
       padding: 12px 25px;
@@ -337,7 +357,9 @@
     }
 
     .nav-btn:disabled {
-      background: #a0aec0;
+      /* (تعديل) تغيير لون الزر غير المفعل إلى الرمادي الداكن (ليطابق زر "السابق") */
+      background: #64748b; /* slate-500 */
+      color: white;
       cursor: not-allowed;
     }
 
@@ -392,16 +414,26 @@
       display: block;
   }
     
+    /* (تعديل) تنسيق زر العودة داخل الاختبار ليطابق الصورة */
     .quiz-container .back-btn {
         position: absolute;
-        top: 20px;
-        right: 20px;
+        top: 25px; /* (تعديل) */
+        right: 30px; /* (تعديل) */
         margin: 0;
         max-width: 150px;
-        padding: 8px 15px;
+        padding: 8px 16px; /* (تعديل) */
         font-size: 0.9rem;
+        /* (تعديل) تغيير الخلفية للرمادي الداكن */
+        background: #475569; /* slate-600 */
+        /* (تعديل) جعله حبة دواء (pill shape) */
+        border-radius: 25px;
+        border: none;
     }
 
+    /* ======================================
+    === (تعديل) نهاية التعديلات المطلوبة ===
+    ======================================
+    */
 
     .back-btn:hover {
       background: var(--text-dark);
@@ -516,6 +548,20 @@
           flex-direction: column; /* (تعديل) لترتيب العداد والوقت فوق بعض */
           gap: 15px;
       }
+      /* (تعديل) تعديل أماكن الأزرار العلوية في الموبايل */
+      .quiz-container {
+          padding-top: 15px; /* إرجاع الحشو العادي */
+      }
+      .quiz-container .back-btn, #quiz-timer {
+          position: static; /* إلغاء التثبيت */
+          width: 100%;
+          max-width: 200px;
+          margin: 10px auto;
+          text-align: center;
+      }
+      #quiz-timer {
+          order: -1; /* جعل العداد يظهر أولاً */
+      }
     }
   </style>
 
@@ -523,17 +569,12 @@
 </head>
 <body>
 
-  <!-- =============================== -->
-  <!--           جزء الـ HTML            -->
-  <!-- (هذا الجزء لم يتغير إطلاقاً) -->
-  <!-- =============================== -->
   <div class="container">
     <div class="header">
       <h1 id="site-title">منصة الاختبارات</h1>
       <p>اختبر معلوماتك في المواد الطبية</p>
     </div>
 
-    <!-- Tab Navigation -->
     <div class="tab-container">
       <button class="tab-btn active" data-tab="microbiology">Microbiology Bank</button>
       <button class="tab-btn" data-tab="fundamental">Fundamental Bank</button>
@@ -543,7 +584,6 @@
       <button class="tab-btn" data-tab="clinical">Clinical Bank</button>
     </div>
 
-    <!-- Tab Content (Quiz Selection Area) -->
     <div id="quiz-selection">
       <div id="microbiology" class="tab-content active">
         <div class="quiz-card" data-bank="microbiology" data-quiz="morphology">
@@ -572,14 +612,12 @@
         </div>
       </div>
 
-      <!-- Other Tabs (Coming Soon) -->
       <div id="fundamental" class="tab-content">
         <p class="coming-soon">الأسئلة قادمة قريباً...</p>
       </div>
       <div id="biochemistry" class="tab-content">
         <p class="coming-soon">الأسئلة قادمة قريباً...</p>
       </div>
-      <!-- Anatomy Tab -->
       <div id="anatomy" class="tab-content">
         <div class="quiz-card" data-bank="anatomy" data-quiz="respiratory">
           <h3>Respiratory System</h3>
@@ -594,7 +632,6 @@
           <p>5 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
       </div>
-      <!-- Physiology Tab -->
       <div id="physiology" class="tab-content">
         <div class="quiz-card" data-bank="physiology" data-quiz="cns">
           <h3>CNS (Central Nervous System)</h3>
@@ -610,49 +647,39 @@
         </div>
       </div>
       
-      <!-- Clinical Tab -->
       <div id="clinical" class="tab-content">
-        <!-- Card 1 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_1">
           <h3>Hand Hygiene & PPE - Part 1</h3>
           <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
-        <!-- Card 2 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_2">
           <h3>Hand Hygiene & PPE - Part 2</h3>
           <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
-        <!-- Card 3 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_3">
           <h3>Hand Hygiene & PPE - Part 3</h3>
           <p>6 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
-        <!-- Card 4 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_4">
           <h3>Patient Positioning - Part 1</h3>
           <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
-        <!-- Card 5 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_5">
           <h3>Patient Positioning - Part 2</h3>
           <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
-        <!-- Card 6 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_6">
           <h3>Patient Positioning - Part 3</h3>
           <p>6 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
-        <!-- Card 7 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_7">
           <h3>Body Mechanics - Part 1</h3>
           <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
-        <!-- Card 8 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_8">
           <h3>Body Mechanics - Part 2</h3>
           <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
         </div>
-        <!-- Card 9 -->
         <div class="quiz-card" data-bank="clinical" data-quiz="clinical_9">
           <h3>Body Mechanics - Part 3</h3>
           <p>4 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
@@ -661,7 +688,6 @@
 
     </div>
 
-    <!-- Quiz Container -->
     <div id="quiz-container" class="quiz-container">
       <button class="back-btn go-back">← العودة للقائمة</button>
       <div class="quiz-header">
@@ -670,12 +696,10 @@
           <div id="progress-fill" class="progress-fill"></div>
         </div>
         <p id="question-counter"></p>
-        <!-- (جديد) إضافة عداد الوقت -->
         <div id="quiz-timer">00:00</div>
       </div>
       <div id="question-container">
-        <!-- Questions will be rendered here by JS -->
-      </div>
+        </div>
 
       <div class="quiz-navigation">
         <button id="prev-btn" class="nav-btn" disabled>السابق</button>
@@ -683,7 +707,6 @@
       </div>
     </div>
 
-    <!-- Results Screen -->
     <div id="results" class="quiz-container results">
       <h3>انتهى الاختبار!</h3>
       <div id="final-score" class="score"></div>
@@ -692,14 +715,11 @@
       <button class="start-btn go-back">العودة للرئيسية</button>
     </div>
 
-    <!-- Review Screen -->
     <div id="review-container" class="review-container">
       <h2 class="quiz-title">مراجعة الإجابات</h2>
-      <!-- (تعديل) زر العودة هنا بيرجع للنتائج، مش للرئيسية -->
       <button class="back-btn" id="back-to-results">← العودة للنتائج</button>
       <div id="review-content">
-        <!-- Review content will be rendered here by JS -->
-      </div>
+        </div>
       <button class="start-btn go-back">العودة للرئيسية</button>
     </div>
 
@@ -709,10 +729,6 @@
   </div>
 
 
-  <!-- =============================== -->
-  <!--        جزء الـ JavaScript        -->
-  <!-- (هذا الجزء لم يتغير إطلاقاً) -->
-  <!-- =============================== -->
   <script>
     // --- Global State ---
     let currentQuiz = [];
@@ -963,7 +979,6 @@
               <div class="question-text">${questionData.q}</div>
               ${optionsHTML}
 
-              <!-- (جديد) إضافة حاوية التلميح (تظهر فقط لو السؤال فيه تلميح) -->
               ${questionData.hint ? `
                 <div class="hint-container">
                     <button class="hint-btn">إظهار التلميح</button>
@@ -1254,5 +1269,3 @@
 
 </body>
 </html>
-
-
