@@ -4,581 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title> Nursing Platform </title>
-
-  <style>
-    /* إضافة خط المرع لضمان دعم العربية */
-    @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
-    
-    :root {
-      /* (تعديل) لوحة ألوان عصرية وجديدة */
-      --primary-color: #3b82f6; /* Modern Blue */
-      --secondary-color: #6366f1; /* Modern Indigo */
-      --card-bg: #ffffff;
-      --body-bg: #f8fafc; /* slate-50 (خلفية رمادية فاتحة جداً) */
-      --text-dark: #1e293b; /* slate-800 */
-      --text-light: #64748b; /* slate-500 */
-      --border-color: #e2e8f0; /* slate-200 */
-      --shadow-light: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-      --shadow-heavy: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-      --radius-md: 12px; /* (تعديل) توحيد قياسات الحواف */
-      --radius-lg: 16px;
-    }
-
-    body {
-      box-sizing: border-box;
-      font-family: 'Almarai', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      /* (تعديل) استخدام لون خلفية سادة فاتح بدلاً من التدرج */
-      background-color: var(--body-bg);
-      min-height: 100vh;
-      color: var(--text-dark); /* (تعديل) لون النص الافتراضي أغمق */
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 25px; /* (تعديل) زيادة الحشو لراحة أكبر */
-    }
-
-    /* --- Header --- */
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-      background: var(--card-bg);
-      padding: 30px;
-      border-radius: var(--radius-lg); /* (تعديل) */
-      box-shadow: var(--shadow-heavy);
-    }
-
-    .header h1 {
-      color: var(--text-dark);
-      font-size: 2.5rem;
-      margin: 0;
-    }
-     .header p {
-      font-size: 1.1rem;
-      color: var(--text-light);
-    }
-
-
-    /* --- Tab Navigation --- */
-    .tab-container {
-      display: flex;
-      flex-wrap: wrap;
-      background: var(--card-bg); /* (تعديل) خلفية بيضاء */
-      border-radius: var(--radius-lg);
-      padding: 8px; /* (تعديل) حشو داخلي للأزرار */
-      margin-bottom: 30px;
-      box-shadow: var(--shadow-light);
-    }
-
-    .tab-btn {
-      flex-grow: 1;
-      text-align: center;
-      padding: 12px 10px;
-      border: none;
-      background: transparent;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: bold;
-      color: var(--text-light);
-      border-radius: var(--radius-md); /* (تعديل) */
-      transition: all 0.3s ease;
-      min-width: 150px;
-    }
-
-    .tab-btn:hover {
-      background: rgba(0, 0, 0, 0.05);
-      color: var(--text-dark); /* (تعديل) */
-    }
-
-    .tab-btn.active {
-      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-      color: white;
-      box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3); /* (تعديل) ظل متناسب مع اللون الجديد */
-    }
-
-    /* --- Tab Content (Quiz Selection) --- */
-    .tab-content {
-      display: none;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 30px;
-    }
-
-    .tab-content.active {
-      display: grid;
-    }
-
-    .coming-soon {
-      grid-column: 1 / -1;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: var(--text-dark);
-      background: var(--card-bg);
-      padding: 50px;
-      border-radius: var(--radius-lg);
-    }
-
-    /* --- Quiz Card --- */
-    .quiz-card {
-      background: var(--card-bg);
-      border-radius: var(--radius-lg); /* (تعديل) */
-      padding: 25px;
-      box-shadow: var(--shadow-light);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      cursor: pointer;
-      border: 2px solid transparent; /* (تعديل) */
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .quiz-card:hover {
-      transform: translateY(-5px);
-      box-shadow: var(--shadow-heavy); /* (تعديل) */
-      border-color: var(--primary-color);
-    }
-
-    .quiz-card h3 {
-      color: var(--text-dark);
-      font-size: 1.5rem;
-      margin-bottom: 15px;
-      text-align: center;
-    }
-
-    .quiz-card p {
-      color: var(--text-light);
-      text-align: center;
-      margin-bottom: 20px;
-      flex-grow: 1;
-    }
-
-    .start-btn {
-      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-      color: white;
-      border: none;
-      padding: 12px 25px;
-      border-radius: 25px;
-      font-size: 1rem;
-      cursor: pointer;
-      width: 100%;
-      transition: all 0.3s ease;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    .start-btn:hover {
-      transform: scale(1.03); /* (تعديل) تأثير hover أفضل */
-      box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
-    }
-
-    /* ======================================
-    === (تعديل) بداية التعديلات المطلوبة ===
-    ======================================
-    */
-
-    /* --- Quiz Container --- */
-    .quiz-container {
-      display: none;
-      background: var(--card-bg);
-      border-radius: var(--radius-lg); /* (تعديل) */
-      padding: 30px;
-      /* (تعديل) إضافة حشو علوي لإفساح المجال للعداد والزر */
-      padding-top: 70px;
-      box-shadow: var(--shadow-heavy);
-      margin-bottom: 30px;
-      position: relative;
-    }
-    .quiz-header {
-      text-align: center;
-      /* (تعديل) تقليل الهامش السفلي */
-      margin-bottom: 20px;
-      /* (تعديل) إزالة الخط السفلي والحشو */
-      padding-bottom: 0;
-      border-bottom: none;
-    }
-
-.quiz-title {
-  /* (تعديل) تغيير اللون إلى أزرق غامق صريح */
-  color: #0d47a1; 
-  font-size: 2rem;
-  margin-bottom: 5px;
-}
-
-    
-    /* (جديد) حاوية لعداد الأسئلة والوقت */
-    .quiz-header-info {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap; 
-      gap: 10px;
-      padding: 0 10px; 
-      margin-top: 15px;
-    }
-
-    #question-counter {
-        color: var(--text-light);
-        font-size: 1rem;
-        font-weight: 500;
-        margin: 0; /* (تعديل) إزالة الهامش الافتراضي */
-    }
-    
-    /* (تعديل) تصميم عداد الوقت ليطابق الصورة */
-    /* (تعديل) تغيير المحدد من #timer-container إلى #quiz-timer ليطابق الـ HTML */
-    #quiz-timer {
-      position: absolute;
-      top: 25px;
-      left: 30px;
-      background: var(--primary-color);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 25px;
-      font-size: 0.9rem;
-      font-weight: bold;
-    }
-
-    /* (تعديل) تصميم شريط التقدم ليطابق الصورة */
-    .progress-bar {
-      background: var(--border-color); /* (تعديل) */
-      height: 5px; /* (تعديل) جعله أرفع */
-      border-radius: 3px; /* (تعديل) */
-      margin: 15px 0 0 0; /* (تعديل) وضعه بعد عداد الأسئلة */
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-      height: 100%;
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    /* --- كارت السؤال (من الثيم الجديد) --- */
-.question-card {
-  /* (تعديل) خلفية زرقاء فاتحة جداً (زي الصورة) */
-  background: #eff6ff; 
-  border-radius: var(--radius-md);
-  padding: 25px;
-  margin-bottom: 20px;
-  /* (تعديل) إضافة الحافة الزرقاء على اليمين */
-  border-right: 4px solid var(--primary-color);
-  /* (تعديل) جعل اتجاه الكارد من اليمين لليسار */
-  direction: rtl;
-  text-align: right;
-}
-
-
-.question-number {
-  /* (تعديل) تغيير اللون إلى أزرق غامق */
-  color: #0d47a1; 
-  font-weight: bold;
-  font-size: 1rem;
-  margin-bottom: 15px;
-}
-
-
-.question-text, .answer-btn {
-  /* (تعديل) تم إخراج تنسيقات الاتجاه والخط من هنا لتطبيقها بشكل منفصل */
-  font-size: 1.3rem;
-  color: var(--text-dark);
-  margin-bottom: 25px;
-  line-height: 1.6;
-}
-
-/* (تعديل) تطبيق خاص للأسئلة والأجوبة الإنجليزية */
-.question-text, 
-.answer-btn {
-  text-align: left;
-  direction: ltr;
-}
-
-/* (تعديل) استثناء للأسئلة العربية (مثل اختبار صح وخطأ) */
-.question-text.rtl,
-.answer-btn.rtl {
-    text-align: right;
-    direction: rtl;
-}
-
-
-    .answer-options {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    .answer-btn {
-      background: white;
-      border: 2px solid var(--border-color);
-      padding: 15px 20px;
-      border-radius: var(--radius-md); /* (تعديل) */
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-weight: bold;
-      width: 100%;
-    }
-
-    .answer-btn:hover {
-      border-color: var(--primary-color);
-      background-color: #f1f5f9; /* (تعديل) */
-    }
-    
-    .answer-btn.selected {
-      background: #e0e7ff; /* indigo-100 (تعديل) */
-      border-color: var(--secondary-color);
-      color: var(--text-dark);
-    }
-    
-    .tf-options {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        max-width: 400px;
-        margin: 0 auto;
-    }
-
-
-    /* --- Quiz Navigation --- */
-    .quiz-navigation {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-    }
-
-    .nav-btn {
-      /* (تعديل) تغيير الخلفية من متدرجة إلى لون أزرق ثابت */
-      background: var(--primary-color);
-      color: white;
-      border: none;
-      padding: 12px 25px;
-      border-radius: 25px;
-      font-size: 1rem;
-      cursor: pointer;
-      font-weight: bold;
-      min-width: 140px;
-      transition: transform 0.2s ease; /* (تعديل) */
-    }
-    
-    .nav-btn:hover:not(:disabled) {
-        transform: scale(1.03); /* (تعديل) */
-        box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
-    }
-
-    .nav-btn:disabled {
-      /* (تعديل) تغيير لون الزر غير المفعل إلى الرمادي الداكن (ليطابق زر "السابق") */
-      background: #64748b; /* slate-500 */
-      color: white;
-      cursor: not-allowed;
-    }
-
-    .back-btn {
-      background: var(--text-light);
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 20px;
-      cursor: pointer;
-      margin-bottom: 20px;
-      font-weight: bold;
-      position: static; 
-      display: block;
-      margin: 0 auto 20px auto;
-      max-width: 200px;
-      text-align: center;
-      transition: background-color 0.2s ease; /* (تعديل) */
-    }
-      .hint-container {
-      margin-top: 20px;
-      text-align: center;
-    }
-    .hint-btn {
-      background: #f7fafc;
-      /* (تعديل) لون أزرق */
-      border: 2px solid var(--primary-color); 
-      color: var(--primary-color); 
-      padding: 8px 15px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.3s ease;
-    }
-    .hint-btn:hover {
-      /* (تعديل) لون أزرق */
-      background: var(--primary-color); 
-      color: white;
-    }
-    .hint-text {
-      display: none; /* مخفي افتراضياً */
-      margin-top: 10px;
-      padding: 15px;
-      background: #f7fafc;
-      border-right: 5px solid #e2e8f0;
-      border-radius: 10px;
-      color: var(--text-dark);
-      font-style: italic;
-    }
-    /* عند تفعيل الحاوية، يظهر التلميح */
-    .hint-container.active .hint-text {
-      display: block;
-  }
-    
-    /* (تعديل) تنسيق زر العودة داخل الاختبار ليطابق الصورة */
-    .quiz-container .back-btn {
-        position: absolute;
-        top: 25px; /* (تعديل) */
-        right: 30px; /* (تعديل) */
-        margin: 0;
-        max-width: 150px;
-        padding: 8px 16px; /* (تعديل) */
-        font-size: 0.9rem;
-        /* (تعديل) تغيير الخلفية للرمادي الداكن */
-        background: #475569; /* slate-600 */
-        /* (تعديل) جعله حبة دواء (pill shape) */
-        border-radius: 25px;
-        border: none;
-    }
-
-    /* ======================================
-    === (تعديل) نهاية التعديلات المطلوبة ===
-    ======================================
-    */
-
-    .back-btn:hover {
-      background: var(--text-dark);
-    }
-
-
-    /* --- Results --- */
-    .results {
-      text-align: center;
-      display: none;
-    }
-
-    .score {
-      font-size: 3rem;
-      color: var(--primary-color);
-      font-weight: bold;
-      margin: 20px 0;
-    }
-    
-    /* (جديد) تصميم الوقت النهائي */
-    .final-time {
-      font-size: 1.5rem;
-      color: var(--text-light);
-      margin-top: -10px;
-      margin-bottom: 20px;
-      font-weight: 500;
-    }
-
-
-    /* --- Review Container --- */
-    .review-container {
-      display: none;
-      background: var(--card-bg);
-      border-radius: var(--radius-lg); /* (تعديل) */
-      padding: 30px;
-      box-shadow: var(--shadow-heavy);
-      margin-bottom: 30px;
-      position: relative;
-    }
-
-    .review-question {
-      background: #f8fafc; /* (تعديل) */
-      border-radius: var(--radius-md);
-      padding: 25px;
-      margin-bottom: 20px;
-      border-right: 4px solid var(--border-color); /* (تعديل) */
-    }
-    
-    .review-option {
-      background: white;
-      border: 2px solid var(--border-color);
-      padding: 15px 20px;
-      border-radius: var(--radius-md); /* (تعديل) */
-      font-size: 1.1rem;
-      font-weight: bold;
-      text-align: left;
-      direction: ltr;
-      width: 100%;
-      margin-bottom: 10px;
-      opacity: 0.7;
-      pointer-events: none;
-    }
-
-    .review-option.correct {
-      background: #dcfce7; /* green-100 (تعديل) */
-      border-color: #22c55e; /* green-500 (تعديل) */
-      opacity: 1;
-    }
-
-    .review-option.user-incorrect {
-      background: #fee2e2; /* red-100 (تعديل) */
-      border-color: #ef4444; /* red-500 (تعديل) */
-      text-decoration: line-through;
-      opacity: 1;
-    }
-
-    /* --- Footer --- */
-    .footer {
-      text-align: center;
-      margin-top: 50px;
-      padding: 20px;
-      background: var(--card-bg);
-      border-radius: var(--radius-lg); /* (تعديل) */
-      box-shadow: var(--shadow-light);
-    }
-
-    .footer p {
-      color: #4a5568;
-      font-size: 1.1rem;
-      margin: 0;
-      font-weight: bold;
-    }
-
-    @media (max-width: 768px) {
-      .container {
-          padding: 15px; /* (تعديل) */
-      }
-      .tab-container {
-        flex-direction: column;
-      }
-      .tab-btn {
-        width: 100%;
-      }
-      .tab-content {
-        grid-template-columns: 1fr;
-      }
-      .quiz-container .back-btn {
-        position: static;
-        margin: 0 auto 20px auto;
-      }
-      .quiz-header-info {
-          flex-direction: column; /* (تعديل) لترتيب العداد والوقت فوق بعض */
-          gap: 15px;
-      }
-      /* (تعديل) تعديل أماكن الأزرار العلوية في الموبايل */
-      .quiz-container {
-          padding-top: 15px; /* إرجاع الحشو العادي */
-      }
-      .quiz-container .back-btn, #quiz-timer {
-          position: static; /* إلغاء التثبيت */
-          width: 100%;
-          max-width: 200px;
-          margin: 10px auto;
-          text-align: center;
-      }
-      #quiz-timer {
-          order: -1; /* جعل العداد يظهر أولاً */
-      }
-    }
-  </style>
-
-
+  
+  <!-- ربط ملف الـ CSS الخارجي -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -600,283 +28,279 @@
       <button class="tab-btn" data-tab="ethics">Ethics Bank</button>
     </div>
     
-<!-- ====================================================== -->
-<!-- (تعديل) هذا هو الـ div الوحيد الذي يحتوي على كل الكروت -->
-<!-- ====================================================== -->
-<div id="quiz-selection">
+    <!-- ====================================================== -->
+    <!-- (تعديل) هذا هو الـ div الوحيد الذي يحتوي على كل الكروت -->
+    <!-- ====================================================== -->
+    <div id="quiz-selection">
 
-  <!-- 1. Ethics Tab Content (تم نقله هنا) -->
-  <div id="ethics" class="tab-content">
-    <div class="quiz-card" data-bank="ethics" data-quiz="ethics_1">
-      <h3>Ethics in Nursing - Part 1</h3>
-      <p>20 سؤال (المبادئ الأساسية)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="ethics" data-quiz="ethics_2">
-      <h3>Ethics in Nursing - Part 2</h3>
-      <p>20 سؤال (حقوق المريض والانتهاكات)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="ethics" data-quiz="ethics_3">
-      <h3>Ethics in Nursing - Part 3</h3>
-      <p>20 سؤال (السرية والمساءلة)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="ethics" data-quiz="ethics_4">
-      <h3>Ethics in Nursing - Part 4</h3>
-      <p>20 سؤال (العدالة والكفاءة)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="ethics" data-quiz="ethics_5">
-      <h3>Ethics in Nursing - Part 5</h3>
-      <p>20 سؤال (المسؤوليات المهنية)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="ethics" data-quiz="ethics_6">
-      <h3>Ethics in Nursing - Part 6</h3>
-      <p>20 سؤال (المواقف القانونية والأخلاقية)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-  </div>
+      <!-- 1. Ethics Tab Content (تم نقله هنا) -->
+      <div id="ethics" class="tab-content">
+        <div class="quiz-card" data-bank="ethics" data-quiz="ethics_1">
+          <h3>Ethics in Nursing - Part 1</h3>
+          <p>20 سؤال (المبادئ الأساسية)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="ethics" data-quiz="ethics_2">
+          <h3>Ethics in Nursing - Part 2</h3>
+          <p>20 سؤال (حقوق المريض والانتهاكات)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="ethics" data-quiz="ethics_3">
+          <h3>Ethics in Nursing - Part 3</h3>
+          <p>20 سؤال (السرية والمساءلة)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="ethics" data-quiz="ethics_4">
+          <h3>Ethics in Nursing - Part 4</h3>
+          <p>20 سؤال (العدالة والكفاءة)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="ethics" data-quiz="ethics_5">
+          <h3>Ethics in Nursing - Part 5</h3>
+          <p>20 سؤال (المسؤوليات المهنية)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="ethics" data-quiz="ethics_6">
+          <h3>Ethics in Nursing - Part 6</h3>
+          <p>20 سؤال (المواقف القانونية والأخلاقية)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+      </div>
 
-  <!-- 2. Microbiology Tab Content -->
-  <div id="microbiology" class="tab-content active">
-    <div class="quiz-card" data-bank="microbiology" data-quiz="morphology">
-      <h3>Bacterial Morphology</h3>
-      <p>19 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="microbiology" data-quiz="physiology">
-      <h3>Bacterial Physiology</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="microbiology" data-quiz="flora">
-      <h3>Normal Flora</h3>
-      <p>18 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="microbiology" data-quiz="sterilization">
-      <h3>Sterilization & Disinfection</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="microbiology" data-quiz="chemotherapy">
-      <h3>Antimicrobial Chemotherapy</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="microbiology" data-quiz="general_tf">
-      <h3>Basic Knowledge Test (True/False)</h3>
-      <p>18 سؤال صح وخطأ</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-  </div>
+      <!-- 2. Microbiology Tab Content -->
+      <div id="microbiology" class="tab-content active">
+        <div class="quiz-card" data-bank="microbiology" data-quiz="morphology">
+          <h3>Bacterial Morphology</h3>
+          <p>19 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="microbiology" data-quiz="physiology">
+          <h3>Bacterial Physiology</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="microbiology" data-quiz="flora">
+          <h3>Normal Flora</h3>
+          <p>18 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="microbiology" data-quiz="sterilization">
+          <h3>Sterilization & Disinfection</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="microbiology" data-quiz="chemotherapy">
+          <h3>Antimicrobial Chemotherapy</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="microbiology" data-quiz="general_tf">
+          <h3>Basic Knowledge Test (True/False)</h3>
+          <p>18 سؤال صح وخطأ</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+      </div>
 
-  <!-- 3. Fundamental Tab Content -->
-  <div id="fundamental" class="tab-content">
-    <!-- 1. Body Mechanics -->
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_mechanics_1">
-      <h3>Body Mechanics - Part 1</h3>
-      <p>20 سؤال (ميكانيكا الجسم والحركة)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_mechanics_2">
-      <h3>Body Mechanics - Part 2</h3>
-      <p>21 سؤال (مضاعفات قلة الحركة)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <!-- 2. Infection Control -->
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_infection_1">
-      <h3>Infection Control - Part 1</h3>
-      <p>20 سؤال (سلسلة العدوى)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_infection_2">
-      <h3>Infection Control - Part 2</h3>
-      <p>20 سؤال (الاحتياطات القياسية والتعقيم)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_infection_3">
-      <h3>Infection Control - Part 3</h3>
-      <p>17 سؤال (أنواع العزل ومنع العدوى)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <!-- 3. Prevention & Disparities -->
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_prevention_1">
-      <h3>Prevention & Disparities - Part 1</h3>
-      <p>20 سؤال (مستويات الوقاية)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_prevention_2">
-      <h3>Prevention & Disparities - Part 2</h3>
-      <p>17 سؤال (الفوارق الصحية والعدالة)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <!-- 4. Health Concepts -->
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_concepts_1">
-      <h3>Health Concepts - Part 1</h3>
-      <p>20 سؤال (مفاهيم الصحة والمرض)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_concepts_2">
-      <h3>Health Concepts - Part 2</h3>
-      <p>18 سؤال (أدوار التمريض ونماذج الصحة)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_concepts_3">
-      <h3>Health Concepts - Part 3</h3>
-      <p>19 سؤال (محددات الصحة والالتزام بالعلاج)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_concepts_4">
-      <h3>Health Concepts - Part 4</h3>
-      <p>21 سؤال (مراجعة شاملة للمفاهيم)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-  </div>
+      <!-- 3. Fundamental Tab Content -->
+      <div id="fundamental" class="tab-content">
+        <!-- 1. Body Mechanics -->
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_mechanics_1">
+          <h3>Body Mechanics - Part 1</h3>
+          <p>20 سؤال (ميكانيكا الجسم والحركة)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_mechanics_2">
+          <h3>Body Mechanics - Part 2</h3>
+          <p>21 سؤال (مضاعفات قلة الحركة)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- 2. Infection Control -->
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_infection_1">
+          <h3>Infection Control - Part 1</h3>
+          <p>20 سؤال (سلسلة العدوى)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_infection_2">
+          <h3>Infection Control - Part 2</h3>
+          <p>20 سؤال (الاحتياطات القياسية والتعقيم)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_infection_3">
+          <h3>Infection Control - Part 3</h3>
+          <p>17 سؤال (أنواع العزل ومنع العدوى)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- 3. Prevention & Disparities -->
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_prevention_1">
+          <h3>Prevention & Disparities - Part 1</h3>
+          <p>20 سؤال (مستويات الوقاية)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_prevention_2">
+          <h3>Prevention & Disparities - Part 2</h3>
+          <p>17 سؤال (الفوارق الصحية والعدالة)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- 4. Health Concepts -->
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_concepts_1">
+          <h3>Health Concepts - Part 1</h3>
+          <p>20 سؤال (مفاهيم الصحة والمرض)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_concepts_2">
+          <h3>Health Concepts - Part 2</h3>
+          <p>18 سؤال (أدوار التمريض ونماذج الصحة)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_concepts_3">
+          <h3>Health Concepts - Part 3</h3>
+          <p>19 سؤال (محددات الصحة والالتزام بالعلاج)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="fundamental" data-quiz="fundamental_concepts_4">
+          <h3>Health Concepts - Part 4</h3>
+          <p>21 سؤال (مراجعة شاملة للمفاهيم)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+      </div>
 
-  <!-- 4. Biochemistry Tab Content -->
-  <div id="biochemistry" class="tab-content">
-    <!-- 1. Carbohydrates -->
-    <div class="quiz-card" data-bank="biochemistry" data-quiz="biochem_carbs">
-      <h3>Carbohydrate Metabolism</h3>
-      <p>10 أسئلة (أيض الكربوهيدرات)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <!-- 2. Lipids -->
-    <div class="quiz-card" data-bank="biochemistry" data-quiz="biochem_lipids_1">
-      <h3>Lipid Metabolism - Part 1</h3>
-      <p>20 سؤال (أيض الدهون - ج1)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="biochemistry" data-quiz="biochem_lipids_2">
-      <h3>Lipid Metabolism - Part 2</h3>
-      <p>7 أسئلة (الدهون والبروتينات الدهنية - ج2)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <!-- 3. Proteins -->
-    <div class="quiz-card" data-bank="biochemistry" data-quiz="biochem_proteins">
-      <h3>Protein Metabolism</h3>
-      <p>13 سؤال (أيض البروتين والأحماض الأمينية)</p>
-      <button class="start-btn">ابدأ الاختبار</button>
-    </div>
-  </div>
+      <!-- 4. Biochemistry Tab Content -->
+      <div id="biochemistry" class="tab-content">
+        <!-- 1. Carbohydrates -->
+        <div class="quiz-card" data-bank="biochemistry" data-quiz="biochem_carbs">
+          <h3>Carbohydrate Metabolism</h3>
+          <p>10 أسئلة (أيض الكربوهيدرات)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- 2. Lipids -->
+        <div class="quiz-card" data-bank="biochemistry" data-quiz="biochem_lipids_1">
+          <h3>Lipid Metabolism - Part 1</h3>
+          <p>20 سؤال (أيض الدهون - ج1)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="biochemistry" data-quiz="biochem_lipids_2">
+          <h3>Lipid Metabolism - Part 2</h3>
+          <p>7 أسئلة (الدهون والبروتينات الدهنية - ج2)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <!-- 3. Proteins -->
+        <div class="quiz-card" data-bank="biochemistry" data-quiz="biochem_proteins">
+          <h3>Protein Metabolism</h3>
+          <p>13 سؤال (أيض البروتين والأحماض الأمينية)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+      </div>
 
-  <!-- 5. Anatomy Tab Content -->
-  <div id="anatomy" class="tab-content">
-    <div class="quiz-card" data-bank="anatomy" data-quiz="respiratory">
-      <h3>Respiratory System</h3>
-      <p>11 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="anatomy" data-quiz="heart">
-      <h3>The Heart</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="anatomy" data-quiz="general">
-      <h3>General Anatomy</h3>
-      <p>5 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-  </div>
+      <!-- 5. Anatomy Tab Content -->
+      <div id="anatomy" class="tab-content">
+        <div class="quiz-card" data-bank="anatomy" data-quiz="respiratory">
+          <h3>Respiratory System</h3>
+          <p>11 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="anatomy" data-quiz="heart">
+          <h3>The Heart</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="anatomy" data-quiz="general">
+          <h3>General Anatomy</h3>
+          <p>5 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+      </div>
 
-  <!-- 6. Physiology Tab Content -->
-  <div id="physiology" class="tab-content">
- <!-- ====================================================== -->
-<!--    (Physiology Bank) كروت الاختبارات الخاصة بـ    -->
-<!-- ====================================================== -->
+      <!-- 6. Physiology Tab Content -->
+      <div id="physiology" class="tab-content">
+        <!-- 1. CNS -->
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_cns_1">
+          <h3>CNS - Part 1</h3>
+          <p>20 سؤال (أساسيات الجهاز العصبي)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_cns_2">
+          <h3>CNS - Part 2</h3>
+          <p>20 سؤال (جهد الفعل والتشابك العصبي)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_cns_3">
+          <h3>CNS - Part 3</h3>
+          <p>20 سؤال (خلايا المايلين وسرعة الإشارة)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_cns_4">
+          <h3>CNS - Part 4</h3>
+          <p>18 سؤال (أجزاء الدماغ ووظائفها)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
 
-<!-- 1. CNS -->
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_cns_1">
-  <h3>CNS - Part 1</h3>
-  <p>20 سؤال (أساسيات الجهاز العصبي)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_cns_2">
-  <h3>CNS - Part 2</h3>
-  <p>20 سؤال (جهد الفعل والتشابك العصبي)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_cns_3">
-  <h3>CNS - Part 3</h3>
-  <p>20 سؤال (خلايا المايلين وسرعة الإشارة)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_cns_4">
-  <h3>CNS - Part 4</h3>
-  <p>18 سؤال (أجزاء الدماغ ووظائفها)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
+        <!-- 2. Blood -->
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_blood_1">
+          <h3>Blood - Part 1</h3>
+          <p>20 سؤال (مكونات الدم والتجلط)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_blood_2">
+          <h3>Blood - Part 2</h3>
+          <p>20 سؤال (فصائل الدم ومكونات البلازما)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_blood_3">
+          <h3>Blood - Part 3</h3>
+          <p>12 سؤال (خلايا الدم والمناعة)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
 
-<!-- 2. Blood -->
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_blood_1">
-  <h3>Blood - Part 1</h3>
-  <p>20 سؤال (مكونات الدم والتجلط)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_blood_2">
-  <h3>Blood - Part 2</h3>
-  <p>20 سؤال (فصائل الدم ومكونات البلازما)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_blood_3">
-  <h3>Blood - Part 3</h3>
-  <p>12 سؤال (خلايا الدم والمناعة)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
+        <!-- 3. CVS -->
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_cvs_1">
+          <h3>CVS - Part 1</h3>
+          <p>20 سؤال (تشريح القلب ودورة الدم)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_cvs_2">
+          <h3>CVS - Part 2</h3>
+          <p>20 سؤال (صمامات القلب وكهربية القلب)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="physiology" data-quiz="physio_cvs_3">
+          <h3>CVS - Part 3</h3>
+          <p>20 سؤال (أصوات القلب والأوعية الدموية)</p>
+          <button class="start-btn">ابدأ الاختبار</button>
+        </div>
+      </div>
+      
+      <!-- 7. Clinical Tab Content -->
+      <div id="clinical" class="tab-content">
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_1">
+          <h3>Hand Hygiene & PPE - Part 1</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_2">
+          <h3>Hand Hygiene & PPE - Part 2</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_3">
+          <h3>Hand Hygiene & PPE - Part 3</h3>
+          <p>6 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_4">
+          <h3>Patient Positioning - Part 1</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_5">
+          <h3>Patient Positioning - Part 2</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_6">
+          <h3>Patient Positioning - Part 3</h3>
+          <p>6 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_7">
+          <h3>Body Mechanics - Part 1</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_8">
+          <h3>Body Mechanics - Part 2</h3>
+          <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+        <div class="quiz-card" data-bank="clinical" data-quiz="clinical_9">
+          <h3>Body Mechanics - Part 3</h3>
+          <p>4 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
+        </div>
+      </div>
 
-<!-- 3. CVS -->
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_cvs_1">
-  <h3>CVS - Part 1</h3>
-  <p>20 سؤال (تشريح القلب ودورة الدم)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_cvs_2">
-  <h3>CVS - Part 2</h3>
-  <p>20 سؤال (صمامات القلب وكهربية القلب)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
-<div class="quiz-card" data-bank="physiology" data-quiz="physio_cvs_3">
-  <h3>CVS - Part 3</h3>
-  <p>20 سؤال (أصوات القلب والأوعية الدموية)</p>
-  <button class="start-btn">ابدأ الاختبار</button>
-</div>
-  </div>
-  
-  <!-- 7. Clinical Tab Content -->
-  <div id="clinical" class="tab-content">
-    <div class="quiz-card" data-bank="clinical" data-quiz="clinical_1">
-      <h3>Hand Hygiene & PPE - Part 1</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
     </div>
-    <div class="quiz-card" data-bank="clinical" data-quiz="clinical_2">
-      <h3>Hand Hygiene & PPE - Part 2</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="clinical" data-quiz="clinical_3">
-      <h3>Hand Hygiene & PPE - Part 3</h3>
-      <p>6 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="clinical" data-quiz="clinical_4">
-      <h3>Patient Positioning - Part 1</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="clinical" data-quiz="clinical_5">
-      <h3>Patient Positioning - Part 2</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="clinical" data-quiz="clinical_6">
-      <h3>Patient Positioning - Part 3</h3>
-      <p>6 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="clinical" data-quiz="clinical_7">
-      <h3>Body Mechanics - Part 1</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="clinical" data-quiz="clinical_8">
-      <h3>Body Mechanics - Part 2</h3>
-      <p>20 سؤال اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-    <div class="quiz-card" data-bank="clinical" data-quiz="clinical_9">
-      <h3>Body Mechanics - Part 3</h3>
-      <p>4 أسئلة اختيار من متعدد</p><button class="start-btn">ابدأ الاختبار</button>
-    </div>
-  </div>
-
-</div> <!-- (تعديل) نهاية الـ div الوحيد -->
 
 
     <div id="quiz-container" class="quiz-container">
@@ -919,584 +343,8 @@
     </div>
   </div>
 
-
-  <script>
-    // --- Global State ---
-    let currentQuiz = [];
-    let currentQuestionIndex = 0;
-    let userAnswers = []; // Store answers {qIndex: 0, answer: 1, isCorrect: true}
-    let quizTitle = "";
-    
-    // (جديد) متغيرات العداد
-    let timerInterval = null;
-    let secondsElapsed = 0;
-
-    // (جديد) متغيرات لتخزين الأسئلة والملفات التي تم تحميلها
-    let quizDataBank = {}; // سيخزن البيانات الفعلية (e.g., quizDataBank['microbiology'] = { ... })
-    let loadedScripts = {}; // سيتتبع الملفات التي تم تحميلها (e.g., loadedScripts['microbiology_questions.js'] = true)
-
-
-    /**
-     * Shuffles an array in place.
-     */
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    /**
-     * (جديد) دالة لتحديث عداد الوقت كل ثانية
-     */
-    function updateTimer() {
-      secondsElapsed++;
-      const minutes = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
-      const seconds = (secondsElapsed % 60).toString().padStart(2, '0');
-      
-      const timerElement = document.getElementById("quiz-timer");
-      if (timerElement) {
-        timerElement.textContent = `${minutes}:${seconds}`;
-      }
-    }
-
-    /**
-     * Handles switching tabs.
-     */
-    function openTab(tabName) {
-      document.querySelectorAll(".tab-content").forEach(content => {
-        content.classList.remove("active");
-      });
-      document.querySelectorAll(".tab-btn").forEach(btn => {
-        btn.classList.remove("active");
-      });
-
-      const tabToShow = document.getElementById(tabName);
-      if(tabToShow) {
-        tabToShow.classList.add("active");
-      }
-      const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-      if (activeBtn) {
-        activeBtn.classList.add("active");
-      }
-    }
-
-    /**
-     * (جديد) دالة تحميل ملف الأسئلة ديناميكياً
-     * @param {string} src - The script source URL (e.g., 'microbiology_questions.js')
-     * @param {function} callback - Function to run on successful load
-     * @param {function} errorCallback - Function to run on error
-     */
-    function loadScript(src, callback, errorCallback) {
-      // 1. إذا تم تحميل الملف من قبل، فقط نفذ الكول باك
-      // (تعديل) التأكد من اسم الملف بدون علامة الكاش
-      const cleanSrc = src.split('?')[0];
-      if (loadedScripts[cleanSrc]) {
-        console.log(`Script ${cleanSrc} already loaded, executing callback.`);
-        if (callback) callback();
-        return;
-      }
-      
-      // 2. إذا لم يتم تحميله، قم بإنشاء عنصر سكريبت جديد
-      const script = document.createElement('script');
-      script.src = src;
-
-      // 3. عند التحميل الناجح
-      script.onload = () => {
-        console.log(`Script loaded successfully: ${src}`);
-        loadedScripts[cleanSrc] = true; // ضع علامة أنه تم تحميله
-        if (callback) callback();
-      };
-
-      // 4. عند الفشل في التحميل
-      script.onerror = () => {
-        console.error(`Failed to load script: ${src}`);
-        if (errorCallback) errorCallback();
-      };
-
-      // 5. أضف السكريبت إلى الـ head لبدء التحميل
-      document.head.appendChild(script);
-    }
-
-
-    /**
-     * (معدل) يبدأ اختباراً محدداً عن طريق تحميل السكريبت الخاص به أولاً
-     */
-    function startQuiz(bank, quizId) {
-
-      // --- (جديد) دالة داخلية لبدء الاختبار الفعلي (بعد التأكد من تحميل البيانات) ---
-      const runQuiz = () => {
-        // 1. احصل على بيانات المادة من المخزن
-        const bankData = quizDataBank[bank]; // e.g., quizDataBank['microbiology']
-        
-        if (!bankData) {
-          console.error(`Data for bank '${bank}' is missing even after script load.`);
-          // (تعديل) استخدام رسالة خطأ مخصصة بدلاً من alert
-          document.getElementById("quiz-selection").innerHTML = `<p class="coming-soon">خطأ فادح: بيانات المادة (${bank}) غير موجودة.</p>`;
-          return;
-        }
-
-        // 2. تأكد من وجود الاختبار (quizId) داخل بيانات المادة
-        if (!bankData[quizId] || !bankData[quizId].questions) {
-          console.error("Quiz not found or empty!", bank, quizId);
-          const tabToShow = document.getElementById(bank);
-          if (tabToShow) {
-            tabToShow.innerHTML = `<p class="coming-soon">خطأ: لم يتم العثور على الاختبار (${quizId}).</p>`;
-          }
-          openTab(bank); // افتح التاب ليرى المستخدم الرسالة
-          return;
-        }
-        
-        // 3. (نفس الكود القديم) إذا وجد الاختبار، ابدأه
-        const quiz = bankData[quizId];
-        currentQuiz = shuffleArray([...quiz.questions]);
-        quizTitle = quiz.title;
-        currentQuestionIndex = 0;
-        userAnswers = new Array(currentQuiz.length).fill(null); 
-
-        // (جديد) بدء/تصفير عداد الوقت
-        if (timerInterval) clearInterval(timerInterval); // إيقاف أي عداد قديم
-        secondsElapsed = 0;
-        document.getElementById("quiz-timer").textContent = "00:00";
-        timerInterval = setInterval(updateTimer, 1000); // بدء عداد جديد
-
-        document.getElementById("current-quiz-title").textContent = quizTitle;
-        
-        // (تعديل) التأكد من استهداف الـ ID الصحيح
-        const quizSelectionEl = document.getElementById("quiz-selection");
-        if (quizSelectionEl) {
-            quizSelectionEl.style.display = "none";
-        } else {
-            console.error("Could not find #quiz-selection element to hide.");
-        }
-        
-        document.getElementById("quiz-container").style.display = "block";
-        document.getElementById("results").style.display = "none";
-        document.getElementById("review-container").style.display = "none";
-
-        displayQuestion();
-        updateNavigation();
-      };
-      // --- نهاية دالة runQuiz ---
-
-
-      // --- المنطق الرئيسي لدالة startQuiz ---
-
-      // 1. هل بيانات المادة (bank) موجودة بالفعل في المخزن؟
-      if (quizDataBank[bank]) {
-        // نعم، تم تحميلها من قبل. ابدأ الاختبار فوراً.
-        console.log(`Data for '${bank}' already in bank. Running quiz.`);
-        runQuiz();
-      } else {
-        // لا، لم يتم تحميلها. قم بتحميل السكريبت الخاص بها.
-        
-        // ======================================================
-        // (*** هذا هو السطر الذي يستخدم اسم ملفك الصحيح ***)
-        // ======================================================
-        const scriptSrc = `${bank}_questions.js?v=1.1`; // e.g., "microbiology_questions.js?v=1.1"
-        
-        console.log(`Data for '${bank}' not found. Loading script: ${scriptSrc}`);
-
-        loadScript(scriptSrc,
-          // --- دالة النجاح (Callback) ---
-          () => {
-            // السكريبت يجب أن يُعرف متغيراً بالاسم المطابق للمادة
-            const dataVarName = `${bank}Data`; // e.g., "microbiologyData"
-            
-            if (typeof window[dataVarName] !== 'undefined') {
-              // نجح! قم بتخزين البيانات في المخزن الرئيسي
-              quizDataBank[bank] = window[dataVarName];
-              console.log(`Successfully loaded and stored data for '${bank}'.`);
-              // الآن ابدأ الاختبار
-              runQuiz();
-            } else {
-              // السكريبت تم تحميله، لكنه لا يحتوي على المتغير المتوقع
-              console.error(`Script ${scriptSrc} loaded, but did not define ${dataVarName}.`);
-              const tabToShow = document.getElementById(bank);
-              if(tabToShow) {
-                tabToShow.innerHTML = `<p class="coming-soon">خطأ في ملف الأسئلة (${scriptSrc}). قريباً...</p>`;
-              }
-              openTab(bank);
-            }
-          },
-          // --- دالة الفشل (Error Callback) ---
-          () => {
-            // فشل تحميل السكريبت (e.g., 404 Not Found)
-            console.error(`Failed to load script: ${scriptSrc}. Marking as 'Coming Soon'.`);
-            const tabToShow = document.getElementById(bank);
-            if(tabToShow) {
-              tabToShow.innerHTML = `<p class="coming-soon">فشل تحميل ملف الأسئلة (${scriptSrc}). قريباً...</p>`;
-            }
-            openTab(bank);
-          }
-        );
-      }
-    }
-    
-    /**
-     * يعرض السؤال الحالي بالـ HTML المتوافق مع الثيم الجديد
-     */
-    function displayQuestion() {
-      if (currentQuestionIndex >= currentQuiz.length) {
-        showResults();
-        return;
-      }
-
-      const questionData = currentQuiz[currentQuestionIndex];
-      const questionContainer = document.getElementById("question-container");
-      const userAnswer = userAnswers[currentQuestionIndex];
-
-      let optionsHTML = '';
-      
-      // (تعديل) تحديد اتجاه النص للأسئلة العربية
-      // هذا السطر بيبحث عن كلمات عربية. بما إن كل أسئلة المايكرو إنجليزي، هيفضل false
-      const isRtlQuestion = questionData.q.startsWith("البكتيريا") || questionData.q.includes("صح وخطأ");
-      const textClass = isRtlQuestion ? "rtl" : "";
-
-      if (questionData.type === "mcq") {
-        optionsHTML = '<div class="answer-options">';
-        optionsHTML += questionData.options.map((option, index) => {
-          let btnClass = "answer-btn";
-          if (userAnswer !== null && userAnswer.answer === index) {
-            btnClass += " selected";
-          }
-          // (تعديل) تطبيق الكلاس العربي على الأزرار إذا لزم الأمر
-          const optionClass = isRtlQuestion ? "rtl" : "";
-          return `<button class="${btnClass} ${optionClass}" data-option-index="${index}">${option}</button>`;
-        }).join('');
-         optionsHTML += '</div>';
-      } else if (questionData.type === "tf") {
-        // ======================================================
-        // (*** هذا هو الكود الذي تم تعديله ***)
-        // ======================================================
-        optionsHTML = '<div class="tf-options">'; // Use the specific TF wrapper
-        optionsHTML += `
-          <button class="answer-btn ${userAnswer !== null && userAnswer.answer === true ? 'selected' : ''}" data-tf-value="true">
-            True
-          </button>
-          <button class="answer-btn ${userAnswer !== null && userAnswer.answer === false ? 'selected' : ''}" data-tf-value="false">
-            False
-          </button>
-        `;
-         optionsHTML += '</div>';
-         // ======================================================
-         // (*** نهاية الكود المعدل ***)
-         // ======================================================
-      }
-     
-      questionContainer.innerHTML = `
-            <div class="question-card">
-              <div class="question-number">السؤال ${currentQuestionIndex + 1}</div>
-              <div class="question-text ${textClass}">${questionData.q}</div>
-              ${optionsHTML}
-
-              ${questionData.hint ? `
-                <div class="hint-container">
-                    <button class="hint-btn">إظهار التلميح</button>
-                    <p class="hint-text">${questionData.hint}</p>
-                </div>
-              ` : ''}
-            </div>
-        `;
-
-      attachQuestionListeners();
-      updateProgressBar();
-    }
-    
-    /**
-     * يربط المستمعين لأزرار الإجابات والتلميح
-     */
-    function attachQuestionListeners() {
-        // 1. مستمعين أزرار الإجابات
-        document.querySelectorAll('.answer-btn').forEach(btn => {
-            if (btn.dataset.optionIndex) {
-                 btn.addEventListener('click', () => {
-                    selectOption(parseInt(btn.dataset.optionIndex, 10));
-                });
-            } else if (btn.dataset.tfValue) {
-                btn.addEventListener('click', () => {
-                    selectTF(btn.dataset.tfValue === 'true');
-                });
-            }
-        });
-
-        // 2. (جديد) مستمع لزر التلميح
-        const hintBtn = document.querySelector('.hint-btn');
-        if (hintBtn) {
-            hintBtn.addEventListener('click', (e) => {
-                // تفعيل الحاوية لإظهار النص
-                e.target.closest('.hint-container').classList.add('active');
-                // إخفاء الزر نفسه بعد الضغط عليه
-                e.target.style.display = 'none';
-            });
-        }
-    }
-
-
-    /**
-     * Updates the visual progress bar and question counter.
-     */
-    function updateProgressBar() {
-      const progress = ((currentQuestionIndex + 1) / currentQuiz.length) * 100;
-      document.getElementById("progress-fill").style.width = `${progress}%`;
-      document.getElementById("question-counter").textContent = `السؤال ${currentQuestionIndex + 1} من ${currentQuiz.length}`;
-    }
-
-    /**
-     * Returns the user to the main quiz selection screen.
-     */
-    function goBack() {
-      // (جديد) إيقاف العداد عند العودة للقائمة
-      if (timerInterval) clearInterval(timerInterval);
-      secondsElapsed = 0;
-      document.getElementById("quiz-timer").textContent = "00:00";
-
-      document.getElementById("quiz-container").style.display = "none";
-      document.getElementById("results").style.display = "none";
-      document.getElementById("review-container").style.display = "none";
-      
-      // (تعديل) التأكد من استهداف الـ ID الصحيح
-      const quizSelectionEl = document.getElementById("quiz-selection");
-      if (quizSelectionEl) {
-          quizSelectionEl.style.display = "block";
-      }
-
-      const activeTabBtn = document.querySelector('.tab-btn.active');
-      const tabId = activeTabBtn ? activeTabBtn.dataset.tab : 'microbiology';
-      openTab(tabId);
-    }
-    
-    /**
-     * وظيفة للرجوع من شاشة المراجعة إلى شاشة النتائج
-     */
-    function showResultsScreen() {
-        document.getElementById("review-container").style.display = "none";
-        document.getElementById("results").style.display = "block";
-    }
-
-
-    /**
-     * منطق اختيار الإجابة (MCQ) - يخزن الإجابة ويعيد العرض
-     */
-    function selectOption(optionIndex) {
-      const question = currentQuiz[currentQuestionIndex];
-      userAnswers[currentQuestionIndex] = {
-        answer: optionIndex,
-        isCorrect: (optionIndex === question.a)
-      };
-      displayQuestion(); // Just re-render to show the "selected" class
-    }
-
-    /**
-     * منطق اختيار الإجابة (TF) - يخزن الإجابة ويعيد العرض
-     */
-    function selectTF(isTrue) {
-      const question = currentQuiz[currentQuestionIndex];
-      userAnswers[currentQuestionIndex] = {
-        answer: isTrue,
-        isCorrect: (isTrue === question.a)
-      };
-      displayQuestion(); // Just re-render to show the "selected" class
-    }
-
-    /**
-     * Enables or disables the Next/Prev navigation buttons.
-     */
-    function updateNavigation() {
-      document.getElementById("prev-btn").disabled = (currentQuestionIndex === 0);
-      if (currentQuestionIndex === currentQuiz.length - 1) {
-        document.getElementById("next-btn").textContent = "إنهاء الاختبار";
-      } else {
-        document.getElementById("next-btn").textContent = "التالي";
-      }
-    }
-
-    /**
-     * Moves to the next question or finishes the quiz.
-     */
-    function nextQuestion() {
-      if (userAnswers[currentQuestionIndex] == null) {
-          // (اختياري) يمكنك إلغاء التعليق عن هذا السطر لإجبار المستخدم على الإجابة
-          // console.log("الرجاء اختيار إجابة أولاً");
-          // return;
-      }
-        
-      if (currentQuestionIndex < currentQuiz.length - 1) {
-        currentQuestionIndex++;
-        displayQuestion();
-      } else {
-        showResults();
-      }
-      updateNavigation();
-    }
-
-    /**
-     * Moves to the previous question.
-     */
-    function prevQuestion() {
-      if (currentQuestionIndex > 0) {
-        currentQuestionIndex--;
-        displayQuestion();
-      }
-      updateNavigation();
-    }
-
-    /**
-     * Calculates and displays the final score.
-     */
-    function showResults() {
-      // (جديد) إيقاف العداد عند إظهار النتائج
-      if (timerInterval) clearInterval(timerInterval);
-
-      let score = 0;
-      userAnswers.forEach(answer => {
-        if (answer && answer.isCorrect) {
-          score++;
-        }
-      });
-
-      const total = currentQuiz.length;
-      const percentage = (score / total) * 100;
-      const scoreEl = document.getElementById("final-score");
-      const messageEl = document.getElementById("score-message");
-
-      scoreEl.textContent = `${score} / ${total}`;
-      
-      let message = "نتيجة جيدة!";
-      if (percentage >= 90) {
-        message = "ممتاز! أحسنت.";
-      } else if (percentage >= 75) {
-        message = "جيد جداً، استمر.";
-      } else if (percentage < 50) {
-        message = "تحتاج للمزيد من المراجعة. بالتوفيق المرة القادمة!";
-      }
-
-      // (جديد) إضافة الوقت المستغرق لرسالة النتيجة
-      const finalTime = document.getElementById("quiz-timer").textContent;
-      messageEl.textContent = `${message} | الوقت المستغرق: ${finalTime}`;
-
-      document.getElementById("quiz-container").style.display = "none";
-      document.getElementById("review-container").style.display = "none";
-      document.getElementById("results").style.display = "block";
-    }
-
-    /**
-     * يعرض المراجعة بالـ HTML المتوافق مع الثيم الجديد
-     */
-    function showReview() {
-      const reviewContent = document.getElementById("review-content");
-      reviewContent.innerHTML = ""; 
-
-      currentQuiz.forEach((question, index) => {
-        const userAnswer = userAnswers[index];
-        const correctAnswer = question.a;
-        const isCorrect = userAnswer ? userAnswer.isCorrect : false;
-
-        let optionsReviewHtml = '';
-        
-        // (تعديل) تحديد اتجاه النص للأسئلة العربية
-        const isRtlQuestion = question.q.startsWith("البكتيريا") || question.q.includes("صح وخطأ");
-        const textClass = isRtlQuestion ? "rtl" : "";
-        const optionClass = isRtlQuestion ? "rtl" : "";
-
-        if (question.type === "mcq") {
-          optionsReviewHtml = question.options.map((option, i) => {
-            let className = 'review-option';
-            if (i === correctAnswer) {
-              className += ' correct';
-            } else if (userAnswer && i === userAnswer.answer && !isCorrect) {
-              className += ' user-incorrect';
-            }
-            return `<div class="${className} ${optionClass}">${option}</div>`;
-          }).join('');
-        } else if (question.type === "tf") {
-          // ======================================================
-          // (*** هذا هو الكود الذي تم تعديله ***)
-          // ======================================================
-          optionsReviewHtml = `
-            <div class="review-option ${correctAnswer === true ? 'correct' : ''} ${userAnswer && userAnswer.answer === true && !isCorrect ? 'user-incorrect' : ''}">
-              True
-            </div>
-            <div class="review-option ${correctAnswer === false ? 'correct' : ''} ${userAnswer && userAnswer.answer === false && !isCorrect ? 'user-incorrect' : ''}">
-              False
-            </div>
-          `;
-          // ======================================================
-          // (*** نهاية الكود المعدل ***)
-          // ======================================================
-        }
-
-        reviewContent.innerHTML += `
-            <div class="review-question">
-              <div class="question-number">السؤال ${index + 1}</div>
-              <div class="question-text ${textClass}">${question.q}</div>
-              ${optionsReviewHtml}
-            </div>
-        `;
-      });
-
-      document.getElementById("results").style.display = "none";
-      document.getElementById("review-container").style.display = "block";
-    }
-
-    /**
-     * (البرمجة الوظيفية) يربط كل المستمعين عند تحميل الصفحة
-     */
-    function initializeEventListeners() {
-      console.log("Initializing event listeners...");
-      // 1. Tab buttons
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          openTab(btn.dataset.tab);
-        });
-      });
-
-      // 2. Quiz cards
-      // (تعديل!) المستمع هو نفسه، لكن الدالة التي يستدعيها (startQuiz) أصبحت معدلة
-      document.querySelectorAll('.quiz-card').forEach(card => {
-        card.addEventListener('click', () => {
-            console.log(`Quiz card clicked. Bank: ${card.dataset.bank}, Quiz: ${card.dataset.quiz}`);
-          startQuiz(card.dataset.bank, card.dataset.quiz);
-        });
-      });
-      
-      // 3. Navigation buttons
-      document.getElementById('prev-btn').addEventListener('click', prevQuestion);
-      document.getElementById('next-btn').addEventListener('click', nextQuestion);
-      document.getElementById('review-btn').addEventListener('click', showReview);
-      
-      // 4. زر العودة من المراجعة للنتائج
-       document.getElementById('back-to-results').addEventListener('click', showResultsScreen);
-
-
-      // 5. All "Go Back" (to main menu) buttons
-      document.querySelectorAll('.go-back').forEach(btn => {
-        btn.addEventListener('click', goBack);
-      });
-      console.log("Event listeners initialized.");
-    }
-
-    // --- Initial Load ---
-    document.addEventListener("DOMContentLoaded", () => {
-        // ... (نفس الكود الخاص بالتحقق من التاب) ...
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            if(tab.children.length > 1 || (tab.children.length === 1 && tab.children[0]?.classList.contains('quiz-card'))) {
-                // This tab has cards, do nothing
-            } else if (tab.children.length === 1 && tab.children[0]?.classList.contains('coming-soon')) {
-                // This tab already has the "coming soon" message
-            } else if (tab.children.length === 0) {
-                // This tab is empty
-                tab.innerHTML = '<p class="coming-soon">الأسئلة قادمة قريباً...</p>';
-            }
-        });
-        
-        openTab('microbiology'); // افتح التبويب الافتراضي
-        initializeEventListeners(); // اربط كل الأزرار
-    });
-  </script>
-
+  <!-- ربط ملف الجافاسكريبت الخارجي -->
+  <script src="script.js"></script>
 </body>
 </html>
-
 
