@@ -9,7 +9,7 @@ let timerInterval = null;
 let secondsElapsed = 0;
 let loadedScripts = {}; // لتتبع الملفات المحملة
 
-// --- Theme Logic (نفس القديم) ---
+// --- Theme Logic ---
 const themeToggleBtn = document.getElementById('theme-toggle');
 const bodyElement = document.body;
 if (localStorage.getItem('theme') === 'dark') {
@@ -44,8 +44,9 @@ function selectSubject(subject) {
 function loadQuizSource(source) {
     currentSource = source;
     
-    // اسم الملف: questions/microbiology/bank.js
-    const scriptPath = `questions/${currentSubject}/${source}.js?v=2.0`;
+    // مسار الملف بناءً على المادة والمصدر
+    // مثال: questions/microbiology/bank.js
+    const scriptPath = `questions/${currentSubject}/${source}.js?v=2.1`;
     
     // إظهار رسالة تحميل مؤقتة
     document.getElementById('source-selection').style.display = 'none';
@@ -53,7 +54,7 @@ function loadQuizSource(source) {
     document.getElementById('dynamic-cards-container').innerHTML = '<p style="text-align:center;">جاري تحميل الأسئلة...</p>';
 
     loadScript(scriptPath, () => {
-        // اسم المتغير المتوقع: microbiology_bank_data
+        // اسم المتغير المتوقع داخل الملف: microbiology_bank_data
         const dataVarName = `${currentSubject}_${source}_data`;
         const data = window[dataVarName];
 
@@ -61,11 +62,11 @@ function loadQuizSource(source) {
             renderQuizCards(data);
         } else {
             document.getElementById('dynamic-cards-container').innerHTML = 
-                '<p class="coming-soon">لم يتم العثور على أسئلة لهذا القسم حتى الآن.</p>';
+                '<p class="coming-soon">لم يتم العثور على بيانات لهذا القسم.</p>';
         }
     }, () => {
         document.getElementById('dynamic-cards-container').innerHTML = 
-            '<p class="coming-soon">عذراً، الملف غير موجود حالياً (قريباً).</p>';
+            '<p class="coming-soon">عذراً، ملف الأسئلة غير موجود حالياً (قريباً).</p>';
     });
 }
 
@@ -273,7 +274,6 @@ function showReview() {
     currentQuiz.forEach((q, i) => {
         const uAns = userAnswers[i];
         const isCorrect = uAns && uAns.isCorrect;
-        const correctVal = q.a;
         
         // تجهيز عرض الإجابات (للمراجعة)
         let correctText = q.type === 'tf' ? (q.a ? 'True' : 'False') : q.options[q.a];
@@ -297,9 +297,20 @@ function showReview() {
     document.getElementById('review-container').style.display = 'block';
 }
 
-document.getElementById('back-to-results').addEventListener('click', () => {
-    document.getElementById('review-container').style.display = 'none';
-    document.getElementById('results').style.display = 'block';
+// --- (تعديل هام) ربط الأزرار عند تحميل الصفحة ---
+document.addEventListener("DOMContentLoaded", () => {
+    
+    // ربط أزرار التنقل والمراجعة (هذا هو الجزء الذي كان ناقصاً)
+    document.getElementById('next-btn').addEventListener('click', nextQuestion);
+    document.getElementById('prev-btn').addEventListener('click', prevQuestion);
+    document.getElementById('review-btn').addEventListener('click', showReview);
+    document.getElementById('back-to-results').addEventListener('click', () => {
+        document.getElementById('review-container').style.display = 'none';
+        document.getElementById('results').style.display = 'block';
+    });
+
+    // تشغيل المادة الافتراضية
+    selectSubject('microbiology'); 
 });
 
 // أدوات مساعدة
@@ -310,8 +321,3 @@ function shuffleArray(array) {
     }
     return array;
 }
-
-// عند البدء
-document.addEventListener("DOMContentLoaded", () => {
-    selectSubject('microbiology'); // تشغيل الافتراضي
-});
