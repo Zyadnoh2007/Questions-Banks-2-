@@ -62,7 +62,7 @@ function loadQuizSource(source) {
             renderQuizCards(data);
         } else {
             document.getElementById('dynamic-cards-container').innerHTML = 
-                '<p class="coming-soon">لم يتم العثور على بيانات لهذا القسم.</p>';
+                '<p class="coming-soon">لسه مفيش كويزات هنا 🙂</p>';
         }
     }, () => {
         document.getElementById('dynamic-cards-container').innerHTML = 
