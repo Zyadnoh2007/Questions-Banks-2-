@@ -1,4 +1,4 @@
-window.clinicalData = {
+window.clinical_bank_data = {
   clinical_1: {
     title: "Hand Hygiene & PPE - Part 1",
     questions: [
