@@ -1,4 +1,4 @@
-window.anatomyData = {
+window.anatomy_bank_data = {
   respiratory: {
     title: "Respiratory System",
     questions: [
