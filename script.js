@@ -1,13 +1,13 @@
 // --- Global State ---
-let currentSubject = 'microbiology'; // المادة الحالية
-let currentSource = ''; // 'bank' or 'doctor'
-let currentQuizData = null; // الداتا اللي حملناها
+let currentSubject = 'microbiology';
+let currentSource = ''; 
+let currentQuizData = null;
 let currentQuiz = [];
 let currentQuestionIndex = 0;
 let userAnswers = [];
 let timerInterval = null;
 let secondsElapsed = 0;
-let loadedScripts = {}; // لتتبع الملفات المحملة
+let loadedScripts = {}; 
 
 // --- Theme Logic ---
 const themeToggleBtn = document.getElementById('theme-toggle');
@@ -22,39 +22,111 @@ themeToggleBtn.addEventListener('click', () => {
     themeToggleBtn.textContent = bodyElement.classList.contains('dark-mode') ? '☀️' : '🌙';
 });
 
+// --- Dashboard Logic (الجديد) ---
+
+function openDashboard() {
+    // إخفاء كل الصفحات وإظهار الداش بورد
+    document.getElementById('source-selection').style.display = 'none';
+    document.getElementById('quiz-list-area').style.display = 'none';
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('main-nav').style.display = 'none'; // إخفاء التبويبات
+    document.getElementById('dashboard-view').style.display = 'block';
+
+    calculateAndRenderStats();
+}
+
+function closeDashboard() {
+    document.getElementById('dashboard-view').style.display = 'none';
+    document.getElementById('main-nav').style.display = 'flex';
+    selectSubject(currentSubject); // العودة لآخر مادة
+}
+
+function calculateAndRenderStats() {
+    const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
+    const tbody = document.getElementById('history-table-body');
+    tbody.innerHTML = '';
+
+    let totalQuizzes = 0;
+    let totalAttempts = 0;
+    let totalScoreSum = 0;
+    let totalQuestionsSum = 0;
+
+    // تحويل البيانات لمصفوفة وترتيبها (الأحدث أولاً أو حسب المادة)
+    const entries = Object.entries(historyData);
+
+    if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center">لم تقم بحل أي اختبارات بعد 🤷‍♂️</td></tr>';
+        return;
+    }
+
+    entries.forEach(([key, data]) => {
+        // key format: subject_source_quizId
+        const parts = key.split('_');
+        // استخراج اسم الكويز بشكل جميل (ممكن نحتاج مابينج للاسم بس مؤقتاً هنعرض الكود)
+        // لتحسين الاسم، بنعتمد على إننا بنعرض العنوان لما نكون فاتحين المادة، هنا هنعرض الـ Quiz ID
+        // الأفضل: تخزين عنوان الكويز في الـ history
+        const quizTitle = data.title || key; // Fallback to key if title missing
+
+        // تجميع الإحصائيات
+        totalQuizzes++;
+        totalAttempts += (data.attempts || 1);
+        totalScoreSum += data.score; // Last score
+        totalQuestionsSum += data.total;
+
+        // حساب النسبة المئوية لأعلى درجة
+        const highScore = data.highestScore !== undefined ? data.highestScore : data.score;
+        const percentage = Math.round((highScore / data.total) * 100);
+        
+        let rowHtml = `
+            <tr>
+                <td>
+                    <div style="font-weight:bold;">${quizTitle}</div>
+                    <div style="font-size:0.8rem; color:gray;">${parts[0]}</div>
+                </td>
+                <td><span style="color:var(--primary-color); font-weight:bold;">${highScore}/${data.total}</span> (${percentage}%)</td>
+                <td>${data.score}/${data.total}</td>
+                <td>${data.attempts || 1}</td>
+            </tr>
+        `;
+        tbody.innerHTML += rowHtml;
+    });
+
+    // تحديث الكروت العلوية
+    document.getElementById('total-quizzes-taken').textContent = totalQuizzes;
+    document.getElementById('total-attempts').textContent = totalAttempts;
+    
+    // حساب الدقة العامة (بناءً على آخر درجات)
+    const globalAccuracy = totalQuestionsSum > 0 ? Math.round((totalScoreSum / totalQuestionsSum) * 100) : 0;
+    document.getElementById('total-accuracy').textContent = `${globalAccuracy}%`;
+}
+
+
 // --- Navigation Logic ---
 
-// 1. اختيار المادة (التبويبات اللي فوق)
 function selectSubject(subject) {
     currentSubject = subject;
     
-    // تحديث شكل الزراير
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.querySelector(`button[onclick="selectSubject('${subject}')"]`);
     if(activeBtn) activeBtn.classList.add('active');
 
-    // إظهار شاشة اختيار المصدر (بنك/دكتور) وإخفاء الباقي
     document.getElementById('source-selection').style.display = 'flex';
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('quiz-container').style.display = 'none';
     document.getElementById('results').style.display = 'none';
+    document.getElementById('dashboard-view').style.display = 'none';
 }
 
-// 2. اختيار المصدر (بنك أو دكتور)
 function loadQuizSource(source) {
     currentSource = source;
+    const scriptPath = `questions/${currentSubject}/${source}.js?v=3.0`;
     
-    // مسار الملف بناءً على المادة والمصدر
-    // مثال: questions/microbiology/bank.js
-    const scriptPath = `questions/${currentSubject}/${source}.js?v=2.1`;
-    
-    // إظهار رسالة تحميل مؤقتة
     document.getElementById('source-selection').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'block';
     document.getElementById('dynamic-cards-container').innerHTML = '<p style="text-align:center;">جاري تحميل الأسئلة...</p>';
 
     loadScript(scriptPath, () => {
-        // اسم المتغير المتوقع داخل الملف: microbiology_bank_data
         const dataVarName = `${currentSubject}_${source}_data`;
         const data = window[dataVarName];
 
@@ -62,35 +134,34 @@ function loadQuizSource(source) {
             renderQuizCards(data);
         } else {
             document.getElementById('dynamic-cards-container').innerHTML = 
-                '<p class="coming-soon">لسه مفيش كويزات هنا 🙂</p>';
+                '<p class="coming-soon">لم يتم العثور على بيانات لهذا القسم.</p>';
         }
     }, () => {
         document.getElementById('dynamic-cards-container').innerHTML = 
-            '<p class="coming-soon">عذراً، ملف الأسئلة غير موجود حالياً (قريباً).</p>';
+            '<p class="coming-soon">عذراً، الملف غير موجود حالياً.</p>';
     });
 }
 
-// 3. رسم الكروت أوتوماتيك
 function renderQuizCards(data) {
     const container = document.getElementById('dynamic-cards-container');
-    container.innerHTML = ''; // مسح القديم
+    container.innerHTML = '';
 
-    // التكرار على كل الكويزات في الملف
     Object.keys(data).forEach(quizKey => {
         const quiz = data[quizKey];
         const questionCount = quiz.questions ? quiz.questions.length : 0;
         
-        // البحث عن النتيجة المحفوظة
         const historyKey = `${currentSubject}_${currentSource}_${quizKey}`;
         const savedHistory = JSON.parse(localStorage.getItem('quizHistory')) || {};
         let badgeHtml = '';
         
+        // تعديل لعرض أعلى درجة في الكارت
         if (savedHistory[historyKey]) {
-            badgeHtml = `<div class="history-badge">✅ ${savedHistory[historyKey].score}/${savedHistory[historyKey].total}</div>`;
+            const best = savedHistory[historyKey].highestScore !== undefined ? savedHistory[historyKey].highestScore : savedHistory[historyKey].score;
+            badgeHtml = `<div class="history-badge">🏆 Best: ${best}/${savedHistory[historyKey].total}</div>`;
         }
 
         const cardHtml = `
-            <div class="quiz-card" onclick="startQuiz('${quizKey}')">
+            <div class="quiz-card" onclick="startQuiz('${quizKey}', '${quiz.title}')">
                 ${badgeHtml}
                 <h3>${quiz.title}</h3>
                 <p>${questionCount} سؤال</p>
@@ -99,30 +170,24 @@ function renderQuizCards(data) {
         `;
         container.innerHTML += cardHtml;
     });
-    
-    // حفظ الداتا الحالية عشان لما نختار كويز نعرف نجيبه
     currentQuizData = data;
 }
 
-// 4. الرجوع لاختيار المصدر
 function backToSources() {
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('source-selection').style.display = 'flex';
 }
 
-// 5. الرجوع لقائمة الكويزات (من جوه الامتحان)
 function backToQuizList() {
     if (timerInterval) clearInterval(timerInterval);
     document.getElementById('quiz-container').style.display = 'none';
     document.getElementById('results').style.display = 'none';
     document.getElementById('review-container').style.display = 'none';
     
-    // إعادة تحميل القائمة وتحديث النتائج
     document.getElementById('quiz-list-area').style.display = 'block';
     if (currentQuizData) renderQuizCards(currentQuizData);
 }
 
-// --- Helper: Load Script ---
 function loadScript(src, callback, errorCallback) {
     const cleanSrc = src.split('?')[0];
     if (loadedScripts[cleanSrc]) {
@@ -141,28 +206,25 @@ function loadScript(src, callback, errorCallback) {
     document.head.appendChild(script);
 }
 
-// --- Quiz Logic (Start, Play, End) ---
+// --- Quiz Logic ---
 
-function startQuiz(quizKey) {
+function startQuiz(quizKey, quizTitle) {
     const quiz = currentQuizData[quizKey];
     if (!quiz || !quiz.questions) return;
 
-    // تخزين المفتاح الحالي للحفظ لاحقاً
     window.currentQuizKey = quizKey;
+    window.currentQuizTitle = quizTitle; // تخزين العنوان عشان نحفظه في الهيستوري
 
     currentQuiz = shuffleArray([...quiz.questions]);
     currentQuestionIndex = 0;
     userAnswers = new Array(currentQuiz.length).fill(null);
 
-    // إخفاء القائمة وإظهار الاختبار
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('quiz-container').style.display = 'block';
     
-    // إعداد الواجهة
     document.getElementById("current-quiz-title").textContent = quiz.title;
     document.getElementById("quiz-timer").textContent = "00:00";
     
-    // بدء العداد
     if (timerInterval) clearInterval(timerInterval);
     secondsElapsed = 0;
     timerInterval = setInterval(() => {
@@ -181,7 +243,7 @@ function displayQuestion() {
     const container = document.getElementById("question-container");
     const userAnswer = userAnswers[currentQuestionIndex];
     
-    const isRtl = qData.q.match(/[\u0600-\u06FF]/); // كشف اللغة العربية
+    const isRtl = qData.q.match(/[\u0600-\u06FF]/);
     const dirClass = isRtl ? 'rtl' : '';
 
     let optionsHtml = '';
@@ -221,7 +283,7 @@ function selectOption(val) {
         answer: val, 
         isCorrect: val === currentQuiz[currentQuestionIndex].a 
     };
-    displayQuestion(); // إعادة رسم لتحديث الـ Selected style
+    displayQuestion();
 }
 
 function nextQuestion() {
@@ -248,14 +310,32 @@ function updateNavigation() {
         currentQuestionIndex === currentQuiz.length - 1 ? "إنهاء" : "التالي";
 }
 
+// --- (تعديل) دالة الإنهاء وحفظ البيانات الجديدة ---
 function finishQuiz() {
     clearInterval(timerInterval);
     let score = userAnswers.filter(a => a && a.isCorrect).length;
     
-    // حفظ النتيجة
     const historyKey = `${currentSubject}_${currentSource}_${window.currentQuizKey}`;
     const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
-    historyData[historyKey] = { score: score, total: currentQuiz.length };
+    
+    // استرجاع البيانات القديمة أو إنشاء جديد
+    let entry = historyData[historyKey] || { 
+        score: 0, 
+        total: currentQuiz.length, 
+        highestScore: 0, 
+        attempts: 0,
+        title: window.currentQuizTitle 
+    };
+
+    // تحديث البيانات
+    entry.score = score; // آخر درجة
+    entry.total = currentQuiz.length;
+    entry.title = window.currentQuizTitle; // تحديث العنوان لضمان ظهوره في الداش بورد
+    entry.attempts = (entry.attempts || 0) + 1; // زيادة عدد المحاولات
+    entry.highestScore = Math.max(entry.highestScore || 0, score); // حفظ أعلى درجة
+
+    // حفظ في LocalStorage
+    historyData[historyKey] = entry;
     localStorage.setItem('quizHistory', JSON.stringify(historyData));
 
     document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
@@ -274,8 +354,6 @@ function showReview() {
     currentQuiz.forEach((q, i) => {
         const uAns = userAnswers[i];
         const isCorrect = uAns && uAns.isCorrect;
-        
-        // تجهيز عرض الإجابات (للمراجعة)
         let correctText = q.type === 'tf' ? (q.a ? 'True' : 'False') : q.options[q.a];
         let userText = uAns ? (q.type === 'tf' ? (uAns.answer ? 'True' : 'False') : q.options[uAns.answer]) : 'لم يتم الرد';
 
@@ -297,10 +375,8 @@ function showReview() {
     document.getElementById('review-container').style.display = 'block';
 }
 
-// --- (تعديل هام) ربط الأزرار عند تحميل الصفحة ---
+// Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
-    
-    // ربط أزرار التنقل والمراجعة (هذا هو الجزء الذي كان ناقصاً)
     document.getElementById('next-btn').addEventListener('click', nextQuestion);
     document.getElementById('prev-btn').addEventListener('click', prevQuestion);
     document.getElementById('review-btn').addEventListener('click', showReview);
@@ -309,15 +385,13 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('results').style.display = 'block';
     });
 
-    // تشغيل المادة الافتراضية
     selectSubject('microbiology'); 
 });
 
-// أدوات مساعدة
 function shuffleArray(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
-}
+        }
