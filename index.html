@@ -12,13 +12,13 @@
 </head>
 <body>
 
-  <!-- شاشة الترحيب -->
+  <!-- شاشة الترحيب (تسجيل الدخول) -->
   <div id="welcome-modal" class="modal-overlay">
     <div class="modal-box">
       <h2>مرحباً بك يا بطل 🩺</h2>
       <p>من فضلك ادخل اسمك الثلاثي قبل البدء</p>
       <input type="text" id="student-name-input" placeholder="اكتب اسمك هنا..." />
-      <p id="login-error" style="color: #ef4444; font-size: 0.9rem; display: none;">الاسم قصير جداً</p>
+      <p id="login-error" style="color: #ef4444; font-size: 0.9rem; display: none; margin-top:5px;">الاسم قصير جداً</p>
       <button class="start-btn" onclick="saveStudentName()">دخول</button>
     </div>
   </div>
@@ -38,11 +38,11 @@
 
   <div class="container">
     
-    <!-- 📢 شريط الأخبار (جديد) -->
+    <!-- شريط الأخبار -->
     <div id="news-ticker-bar" class="news-container" style="display:none;">
         <div class="news-label">تنبيه هام 🔔</div>
         <div class="news-content">
-            <span id="news-text">أهلاً بكم في المنصة الجديدة...</span>
+            <span id="news-text">أهلاً بكم...</span>
         </div>
     </div>
 
@@ -108,16 +108,16 @@
             <button class="start-btn" onclick="closeAdminDashboard()" style="background:#ef4444; width:auto;">خروج</button>
         </div>
 
-        <!-- 1. التحكم في شريط الأخبار (جديد) -->
+        <!-- 1. أخبار -->
         <div style="background:var(--card-bg); padding:15px; border-radius:15px; border:1px solid #fcd34d; margin-bottom:20px;">
             <h4 style="margin-top:0; color:#d97706;">📢 تحديث شريط الأخبار</h4>
             <div style="display:flex; gap:10px;">
-                <input type="text" id="admin-news-input" class="admin-input" style="margin:0;" placeholder="اكتب التنبيه هنا (أو اتركه فارغاً للإخفاء)">
+                <input type="text" id="admin-news-input" class="admin-input" style="margin:0;" placeholder="اكتب التنبيه هنا...">
                 <button class="start-btn" onclick="updateNewsTicker()" style="width:auto; margin:0; background:#d97706;">تحديث</button>
             </div>
         </div>
 
-        <!-- 2. قسم الإضافة -->
+        <!-- 2. إضافة -->
         <div style="background:var(--card-bg); padding:20px; border-radius:15px; border:2px dashed #ccc; margin-bottom:30px;">
             <h3 style="color:var(--primary-color); margin-top:0;">➕ إضافة امتحان جديد</h3>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
@@ -135,34 +135,24 @@
                     <option value="doctor">👨‍⚕️ كويزات الدكتور</option>
                 </select>
             </div>
-            <input type="text" id="admin-quiz-title" class="admin-input" placeholder="عنوان الامتحان (مثال: شابتر 1 مناعة)">
-            <textarea id="admin-quiz-content" class="admin-input" style="height:150px;" placeholder="انسخ الأسئلة هنا...&#10;مثال:&#10;س1: عاصمة مصر؟&#10;أ) القاهرة&#10;ب) الاسكندرية&#10;الإجابة: أ&#10;تلميح: مدينة الألف مئذنة"></textarea>
+            <input type="text" id="admin-quiz-title" class="admin-input" placeholder="عنوان الامتحان">
+            <textarea id="admin-quiz-content" class="admin-input" style="height:150px;" placeholder="انسخ الأسئلة هنا..."></textarea>
             <button class="start-btn" onclick="addNewQuizFromAdmin()" style="background:#10b981;">حفظ الامتحان ✅</button>
         </div>
 
-        <!-- 3. قسم الحذف -->
-        <h3 style="border-top: 1px solid #ccc; padding-top: 20px;">🗑️ الامتحانات اليدوية (إدارة)</h3>
+        <!-- 3. حذف -->
+        <h3 style="border-top: 1px solid #ccc; padding-top: 20px;">🗑️ الامتحانات اليدوية</h3>
         <div id="admin-custom-quizzes-list" class="cards-grid" style="margin-bottom: 30px;"></div>
 
-        <!-- 4. قسم النتائج + زر الإكسيل (جديد) -->
+        <!-- 4. نتائج وإكسيل -->
         <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #ccc; padding-top: 20px;">
             <h3>📊 نتائج الطلاب الأخيرة</h3>
             <button onclick="exportToExcel()" class="start-btn" style="width:auto; margin:0; background:#22c55e;">📥 تحميل Excel</button>
         </div>
-        
         <div class="history-table-container">
             <table id="admin-table">
-                <thead>
-                    <tr>
-                        <th>الطالب</th>
-                        <th>الامتحان</th>
-                        <th>الدرجة</th>
-                        <th>التاريخ</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-table-body">
-                    <tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr>
-                </tbody>
+                <thead><tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th></tr></thead>
+                <tbody id="admin-table-body"><tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr></tbody>
             </table>
         </div>
     </div>
