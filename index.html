@@ -6,13 +6,13 @@
   <title> Nursing Platform </title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- مكتبات Firebase (مهمة جداً للربط بقاعدة البيانات) -->
+  <!-- مكتبات Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <!-- شاشة الترحيب (إدخال الاسم) -->
+  <!-- شاشة الترحيب -->
   <div id="welcome-modal" class="modal-overlay">
     <div class="modal-box">
       <h2>مرحباً بك يا بطل 🩺</h2>
@@ -38,9 +38,7 @@
     <div class="header">
       <div class="header-controls">
           <button id="theme-toggle" class="icon-btn" title="تغيير الوضع">🌙</button>
-          <!-- زرار لوحة الطالب -->
           <button onclick="openDashboard()" class="icon-btn dashboard-icon" title="إحصائياتي">📊</button>
-          <!-- زرار لوحة الأدمن (الجديد) -->
           <button onclick="openAdminLogin()" class="icon-btn admin-icon" title="لوحة المشرفين">👨‍💼</button>
       </div>
       
@@ -48,7 +46,7 @@
       <p id="welcome-message">أهلاً بك</p>
     </div>
 
-    <!-- التبويبات (المواد) -->
+    <!-- التبويبات -->
     <div id="main-nav" class="tab-container">
       <button class="tab-btn active" onclick="selectSubject('microbiology')">Microbiology</button>
       <button class="tab-btn" onclick="selectSubject('fundamental')">Fundamental</button>
@@ -59,7 +57,7 @@
       <button class="tab-btn" onclick="selectSubject('ethics')">Ethics</button>
     </div>
     
-    <!-- منطقة اختيار المصدر -->
+    <!-- اختيار المصدر -->
     <div id="source-selection" class="source-container">
         <div class="source-card" onclick="loadQuizSource('bank')">
             <h3>📚 بنك الأسئلة</h3>
@@ -71,13 +69,13 @@
         </div>
     </div>
 
-    <!-- منطقة عرض الكروت -->
+    <!-- عرض الكروت -->
     <div id="quiz-list-area" class="tab-content active" style="display:none;">
         <button class="back-btn" onclick="backToSources()">← تغيير المصدر</button>
         <div id="dynamic-cards-container" class="cards-grid"></div>
     </div>
 
-    <!-- لوحة تحكم الطالب (القديمة) -->
+    <!-- لوحة الطالب -->
     <div id="dashboard-view" class="dashboard-view" style="display:none;">
         <h2 class="quiz-title">إحصائياتي الشخصية 🚀</h2>
         <div class="stats-grid">
@@ -85,7 +83,6 @@
             <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-info"><span id="total-accuracy">0%</span><p>الدقة</p></div></div>
             <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-info"><span id="total-attempts">0</span><p>محاولات</p></div></div>
         </div>
-        <h3 style="margin-top:30px;">سجلي الخاص</h3>
         <div class="history-table-container">
             <table id="history-table">
                 <thead><tr><th>الامتحان</th><th>أعلى درجة</th><th>آخر درجة</th><th>عدد المحاولات</th></tr></thead>
@@ -95,34 +92,57 @@
         <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- (جديد) لوحة تحكم الأدمن (الشيت المجمع) -->
+    <!-- لوحة الأدمن (المعدلة) -->
     <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف (نتائج الطلاب)</h2>
-            <button class="start-btn" onclick="exportToExcel()" style="background:#22c55e; min-width:150px;">📥 تحميل شيت Excel</button>
-        </div>
-        
-        <div class="filter-container" style="margin: 20px 0; display: flex; gap: 10px;">
-             <input type="text" id="admin-search" placeholder="ابحث باسم الطالب..." onkeyup="filterAdminTable()" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%;">
+            <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف</h2>
+            <button class="start-btn" onclick="closeAdminDashboard()" style="background:#ef4444; width:auto;">خروج</button>
         </div>
 
+        <!-- الجزء الجديد: إضافة كويز -->
+        <div class="admin-add-section" style="background:var(--card-bg); padding:20px; border-radius:15px; border:2px dashed #ccc; margin-bottom:30px;">
+            <h3 style="color:var(--primary-color); margin-top:0;">➕ إضافة امتحان جديد (سريع)</h3>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                <div>
+                    <label>المادة:</label>
+                    <select id="admin-sub-select" class="admin-input">
+                        <option value="microbiology">Microbiology</option>
+                        <option value="fundamental">Fundamental</option>
+                        <option value="biochemistry">Biochemistry</option>
+                        <option value="anatomy">Anatomy</option>
+                        <option value="physiology">Physiology</option>
+                        <option value="clinical">Clinical</option>
+                        <option value="ethics">Ethics</option>
+                    </select>
+                </div>
+                <div>
+                    <label>المصدر:</label>
+                    <select id="admin-src-select" class="admin-input">
+                        <option value="bank">📚 بنك الأسئلة</option>
+                        <option value="doctor">👨‍⚕️ كويزات الدكتور</option>
+                    </select>
+                </div>
+            </div>
+            
+            <input type="text" id="admin-quiz-title" class="admin-input" placeholder="عنوان الامتحان (مثال: شابتر 1 مناعة)">
+            
+            <textarea id="admin-quiz-content" class="admin-input" style="height:150px;" placeholder="انسخ الأسئلة هنا...&#10;مثال:&#10;س1: عاصمة مصر؟&#10;أ) القاهرة&#10;ب) الاسكندرية&#10;الإجابة: أ"></textarea>
+            
+            <button class="start-btn" onclick="addNewQuizFromAdmin()" style="background:#10b981;">حفظ الامتحان ✅</button>
+        </div>
+
+        <h3 style="margin-top:20px;">نتائج الطلاب</h3>
         <div class="history-table-container">
             <table id="admin-table">
                 <thead>
-                    <tr>
-                        <th>اسم الطالب</th>
-                        <th>المادة / الكويز</th>
-                        <th>الدرجة</th>
-                        <th>النسبة</th>
-                        <th>التاريخ</th>
-                    </tr>
+                    <tr><th>اسم الطالب</th><th>الكويز</th><th>الدرجة</th><th>التاريخ</th></tr>
                 </thead>
                 <tbody id="admin-table-body">
-                    <tr><td colspan="5" style="text-align:center;">جاري تحميل البيانات من السحابة... ☁️</td></tr>
+                    <tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr>
                 </tbody>
             </table>
         </div>
-        <button class="start-btn go-back" onclick="closeAdminDashboard()" style="margin-top:20px; background:#ef4444;">خروج من وضع المشرف</button>
     </div>
 
     <!-- منطقة الاختبار -->
