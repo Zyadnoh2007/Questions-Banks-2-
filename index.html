@@ -12,7 +12,7 @@
 </head>
 <body>
 
-  <!-- شاشة الترحيب (الدخول) -->
+  <!-- شاشة الترحيب -->
   <div id="welcome-modal" class="modal-overlay">
     <div class="modal-box">
       <h2>مرحباً بك يا بطل 🩺</h2>
@@ -69,6 +69,110 @@
             <h3>👨‍⚕️ كويزات الدكتور</h3>
             <p>الأسئلة الخاصة بمحاضرات الدكتور</p>
         </div>
+    </div>
+
+    <!-- عرض الكروت -->
+    <div id="quiz-list-area" style="display:none;">
+        <button class="start-btn" onclick="backToSources()" style="width: auto; margin-bottom: 20px; background: #64748b;">← تغيير المصدر</button>
+        <div id="dynamic-cards-container" class="cards-grid"></div>
+    </div>
+
+    <!-- لوحة الطالب -->
+    <div id="dashboard-view" style="display:none;">
+        <h2 class="quiz-title">إحصائياتي الشخصية 🚀</h2>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-info"><span id="total-quizzes-taken">0</span><p>كويزات</p></div></div>
+            <div class="stat-card"><div class="stat-info"><span id="total-accuracy">0%</span><p>الدقة</p></div></div>
+        </div>
+        <div class="history-table-container">
+            <table style="width:100%">
+                <tbody id="history-table-body"></tbody>
+            </table>
+        </div>
+        <button class="start-btn" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
+    </div>
+
+    <!-- لوحة الأدمن (إضافة + حذف) -->
+    <div id="admin-dashboard-view" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف</h2>
+            <button class="start-btn" onclick="closeAdminDashboard()" style="background:#ef4444; width:auto;">خروج</button>
+        </div>
+
+        <!-- قسم الإضافة -->
+        <div style="background:var(--card-bg); padding:20px; border-radius:15px; border:2px dashed #ccc; margin-bottom:30px;">
+            <h3 style="color:var(--primary-color); margin-top:0;">➕ إضافة امتحان جديد</h3>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                <select id="admin-sub-select" class="admin-input">
+                    <option value="microbiology">Microbiology</option>
+                    <option value="fundamental">Fundamental</option>
+                    <option value="biochemistry">Biochemistry</option>
+                    <option value="anatomy">Anatomy</option>
+                    <option value="physiology">Physiology</option>
+                    <option value="clinical">Clinical</option>
+                    <option value="ethics">Ethics</option>
+                </select>
+                <select id="admin-src-select" class="admin-input">
+                    <option value="bank">📚 بنك الأسئلة</option>
+                    <option value="doctor">👨‍⚕️ كويزات الدكتور</option>
+                </select>
+            </div>
+            
+            <input type="text" id="admin-quiz-title" class="admin-input" placeholder="عنوان الامتحان (مثال: شابتر 1 مناعة)">
+            
+            <!-- لاحظ المثال في الـ placeholder يوضح طريقة إضافة التلميح -->
+            <textarea id="admin-quiz-content" class="admin-input" style="height:150px;" placeholder="انسخ الأسئلة هنا...&#10;مثال:&#10;س1: عاصمة مصر؟&#10;أ) القاهرة&#10;ب) الاسكندرية&#10;الإجابة: أ&#10;تلميح: مدينة الألف مئذنة"></textarea>
+            
+            <button class="start-btn" onclick="addNewQuizFromAdmin()" style="background:#10b981;">حفظ الامتحان ✅</button>
+        </div>
+
+        <!-- قسم الحذف -->
+        <h3 style="border-top: 1px solid #ccc; padding-top: 20px;">🗑️ الامتحانات المضافة يدوياً</h3>
+        <div id="admin-custom-quizzes-list" class="cards-grid" style="margin-bottom: 30px;"></div>
+    </div>
+
+    <!-- منطقة الاختبار -->
+    <div id="quiz-container" class="quiz-container">
+      <button class="start-btn" onclick="backToQuizList()" style="position: absolute; top: 20px; right: 20px; width: auto; background: #64748b; padding: 5px 15px; font-size: 0.8rem;">خروج</button>
+      <div class="quiz-header">
+        <h2 id="current-quiz-title" class="quiz-title"></h2>
+        <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+        <p id="question-counter"></p>
+        <div id="quiz-timer">00:00</div>
+      </div>
+      <div id="question-container"></div>
+      <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+        <button id="prev-btn" class="nav-btn" disabled>السابق</button>
+        <button id="next-btn" class="nav-btn">التالي</button>
+      </div>
+    </div>
+
+    <!-- النتائج -->
+    <div id="results" class="quiz-container results">
+      <h3>انتهى الاختبار!</h3>
+      <div id="final-score" class="score"></div>
+      <p id="score-message"></p>
+      <p id="upload-status" style="font-size: 0.9rem; color: gray; margin-top:5px;"></p>
+      <button id="review-btn" class="start-btn">مراجعة الإجابات</button>
+      <button class="start-btn" onclick="backToQuizList()" style="margin-top: 10px; background: #64748b;">العودة للقائمة</button>
+    </div>
+
+    <!-- المراجعة -->
+    <div id="review-container" class="review-container">
+      <h2 class="quiz-title">مراجعة الإجابات</h2>
+      <div id="review-content"></div>
+      <button class="start-btn" onclick="backToQuizList()">العودة للقائمة</button>
+    </div>
+
+    <div class="footer">
+      <p>Created by Zyad & Yusuf</p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+  </html>        </div>
     </div>
 
     <!-- عرض الكروت -->
