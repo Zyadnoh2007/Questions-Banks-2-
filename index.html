@@ -10,14 +10,22 @@
 
   <div class="container">
     <div class="header">
-      <button id="theme-toggle" class="theme-btn" title="تغيير الوضع">🌙</button>
+      <!-- أزرار التحكم (الوضع الليلي + الداش بورد) -->
+      <div class="header-controls">
+          <button id="theme-toggle" class="icon-btn" title="تغيير الوضع">🌙</button>
+          <button onclick="openDashboard()" class="icon-btn dashboard-icon" title="لوحة التحكم">📊</button>
+      </div>
+      
       <h1 id="site-title">منصة الاختبارات</h1>
-    </p>ضيفت كل الكويزات اللي اخدناها </p>
-    </p>حطيط لينك صارحني عشان تقولي رايك من غير احراج لو عندك اي افكار قولها وان شاء الله هحاول انفذها وقولولي رايكو ف التحديث الجديد ومتنسوش تصلوا علي النبي ❤️</p>
+      
+      <!-- رسالتك كما هي -->
+      <p>ضيفت كل الكويزات اللي اخدناها</p>
+      <p>حطيط لينك صارحني عشان تقولي رايك من غير احراج لو عندك اي افكار قولها وان شاء الله هحاول انفذها وقولولي رايكو ف التحديث الجديد ومتنسوش تصلوا علي النبي ❤️</p>
     </div>
 
     <!-- التبويبات (المواد) -->
-    <div class="tab-container">
+    <!-- تم إضافة id="main-nav" عشان الداش بورد تشتغل -->
+    <div id="main-nav" class="tab-container">
       <button class="tab-btn active" onclick="selectSubject('microbiology')">Microbiology</button>
       <button class="tab-btn" onclick="selectSubject('fundamental')">Fundamental</button>
       <button class="tab-btn" onclick="selectSubject('biochemistry')">Biochemistry</button>
@@ -27,7 +35,7 @@
       <button class="tab-btn" onclick="selectSubject('ethics')">Ethics</button>
     </div>
     
-    <!-- منطقة الاختيار (بنك / دكتور) -->
+    <!-- منطقة اختيار المصدر -->
     <div id="source-selection" class="source-container">
         <div class="source-card" onclick="loadQuizSource('bank')">
             <h3>📚 بنك الأسئلة</h3>
@@ -43,6 +51,53 @@
     <div id="quiz-list-area" class="tab-content active" style="display:none;">
         <button class="back-btn" onclick="backToSources()">← تغيير المصدر</button>
         <div id="dynamic-cards-container" class="cards-grid"></div>
+    </div>
+
+    <!-- (هام) منطقة الداش بورد -->
+    <div id="dashboard-view" class="dashboard-view" style="display:none;">
+        <h2 class="quiz-title">لوحة تحكم الطالب 🚀</h2>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-info">
+                    <span id="total-quizzes-taken">0</span>
+                    <p>كويزات مكتملة</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-info">
+                    <span id="total-accuracy">0%</span>
+                    <p>مستوى الدقة</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔄</div>
+                <div class="stat-info">
+                    <span id="total-attempts">0</span>
+                    <p>عدد المحاولات</p>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top:30px; color:var(--primary-color);">سجل الاختبارات</h3>
+        <div class="history-table-container">
+            <table id="history-table">
+                <thead>
+                    <tr>
+                        <th>الاختبار</th>
+                        <th>أعلى درجة</th>
+                        <th>آخر درجة</th>
+                        <th>المحاولات</th>
+                    </tr>
+                </thead>
+                <tbody id="history-table-body">
+                </tbody>
+            </table>
+        </div>
+
+        <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
     <!-- منطقة الاختبار -->
@@ -61,7 +116,7 @@
       </div>
     </div>
 
-    <!-- النتائج والمراجعة -->
+    <!-- النتائج -->
     <div id="results" class="quiz-container results">
       <h3>انتهى الاختبار!</h3>
       <div id="final-score" class="score"></div>
@@ -70,6 +125,7 @@
       <button class="start-btn go-back" onclick="backToQuizList()">العودة للقائمة</button>
     </div>
 
+    <!-- المراجعة -->
     <div id="review-container" class="review-container">
       <h2 class="quiz-title">مراجعة الإجابات</h2>
       <button class="back-btn" id="back-to-results">← العودة للنتائج</button>
@@ -80,8 +136,7 @@
     <div class="footer">
       <p>Created by Zyad & Yusuf</p>
       
-      <!-- (جديد) زرار صارحني -->
-      <!-- استبدل الرابط ده برابط صارحني بتاعك -->
+      <!-- لينك صارحني الخاص بك -->
       <a href="https://zyadyasser2007.sarhne.com" target="_blank" class="sarhne-btn">
        صارحني 🙂❤️
       </a>
