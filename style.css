@@ -761,6 +761,76 @@ tr:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
 }
+/* ... (نفس الكود السابق بالكامل، ضيف عليه الجزء ده في الآخر) ... */
+
+/* --- Modal Styles (للترحيب وباسورد الأدمن) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-box {
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: popIn 0.3s ease;
+}
+
+.modal-box h2 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.modal-box input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin: 20px 0;
+    font-size: 1.1rem;
+    text-align: center;
+    background: var(--body-bg);
+    color: var(--text-dark);
+}
+
+.modal-box input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.admin-icon {
+    background: #fce7f3; /* وردي فاتح */
+    border-color: #ec4899;
+    color: #ec4899;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Dark mode updates */
+body.dark-mode .admin-icon {
+    background: #831843;
+    border-color: #ec4899;
+    color: #fbcfe8;
+}
+body.dark-mode .modal-box input {
+    background: #334155;
+    border-color: #475569;
+    color: white;
+}
 
 /* --- Mobile Adjustments --- */
 @media (max-width: 768px) {
