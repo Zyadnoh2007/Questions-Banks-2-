@@ -28,7 +28,6 @@ let timerInterval = null;
 let secondsElapsed = 0;
 let loadedScripts = {};
 
-// --- Initialization ---
 document.addEventListener("DOMContentLoaded", () => {
     if (!currentStudentName) {
         document.getElementById('welcome-modal').style.display = 'flex';
@@ -51,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
     selectSubject('microbiology');
 });
 
-// --- Auth & Admin Functions ---
 window.saveStudentName = function() {
     const nameInput = document.getElementById('student-name-input').value.trim();
     const errorMsg = document.getElementById('login-error');
@@ -71,6 +69,7 @@ window.checkAdminPassword = function() {
         document.getElementById('admin-dashboard-view').style.display = 'block';
         err.style.display = "none";
         renderCustomQuizzesList();
+        fetchAdminData(); // تحميل النتائج
     } else {
         err.style.display = "block";
     }
@@ -84,7 +83,22 @@ window.closeAdminDashboard = function() {
     selectSubject(currentSubject);
 };
 
-// --- Custom Quiz Management (Add/Delete) ---
+// --- بيانات النتائج ---
+function fetchAdminData() {
+    const tbody = document.getElementById('admin-table-body');
+    if (!db) { tbody.innerHTML = '<tr><td colspan="4">يجب ربط Firebase لرؤية النتائج</td></tr>'; return; }
+    tbody.innerHTML = '<tr><td colspan="4">جاري التحميل...</td></tr>';
+    db.collection("exam_results").orderBy("timestamp", "desc").limit(50).get().then((snap) => {
+        tbody.innerHTML = '';
+        if(snap.empty) { tbody.innerHTML = '<tr><td colspan="4">لا توجد نتائج</td></tr>'; return; }
+        snap.forEach((doc) => {
+            const d = doc.data();
+            tbody.innerHTML += `<tr><td>${d.studentName}</td><td>${d.quizTitle}</td><td>${d.score}/${d.total}</td><td style="direction:ltr">${d.date||''}</td></tr>`;
+        });
+    });
+}
+
+// --- إدارة الامتحانات (إضافة وحذف) ---
 window.addNewQuizFromAdmin = function() {
     const sub = document.getElementById('admin-sub-select').value;
     const src = document.getElementById('admin-src-select').value;
@@ -155,7 +169,7 @@ function parseQuestionsText(text) {
     return questions;
 }
 
-// --- Navigation & Core Logic ---
+// --- باقي الكود (التنقل والعرض) ---
 window.toggleTheme = function() {
     document.body.classList.toggle('dark-mode');
     const isDark = document.body.classList.contains('dark-mode');
@@ -417,4 +431,4 @@ function loadScript(src, cb, errCb) {
     s.onload = () => { loadedScripts[src]=true; cb(); };
     s.onerror = errCb;
     document.head.appendChild(s);
-      }
+                  }
