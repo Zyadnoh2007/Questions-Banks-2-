@@ -5,26 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title> Nursing Platform </title>
   <link rel="stylesheet" href="style.css">
+  
+  <!-- مكتبات Firebase (مهمة جداً للربط بقاعدة البيانات) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
+  <!-- شاشة الترحيب (إدخال الاسم) -->
+  <div id="welcome-modal" class="modal-overlay">
+    <div class="modal-box">
+      <h2>مرحباً بك يا بطل 🩺</h2>
+      <p>من فضلك ادخل اسمك الثلاثي قبل البدء</p>
+      <input type="text" id="student-name-input" placeholder="اكتب اسمك هنا..." />
+      <button class="start-btn" onclick="saveStudentName()">دخول</button>
+    </div>
+  </div>
+
+  <!-- شاشة دخول الأدمن -->
+  <div id="admin-login-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+      <h2>دخول المشرفين 🔒</h2>
+      <input type="password" id="admin-password-input" placeholder="كلمة المرور..." />
+      <div class="modal-buttons">
+          <button class="start-btn" onclick="checkAdminPassword()">دخول</button>
+          <button class="back-btn" onclick="closeAdminLogin()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <div class="header">
-      <!-- أزرار التحكم (الوضع الليلي + الداش بورد) -->
       <div class="header-controls">
           <button id="theme-toggle" class="icon-btn" title="تغيير الوضع">🌙</button>
-          <button onclick="openDashboard()" class="icon-btn dashboard-icon" title="لوحة التحكم">📊</button>
+          <!-- زرار لوحة الطالب -->
+          <button onclick="openDashboard()" class="icon-btn dashboard-icon" title="إحصائياتي">📊</button>
+          <!-- زرار لوحة الأدمن (الجديد) -->
+          <button onclick="openAdminLogin()" class="icon-btn admin-icon" title="لوحة المشرفين">👨‍💼</button>
       </div>
       
       <h1 id="site-title">منصة الاختبارات</h1>
-      
-      <!-- رسالتك كما هي -->
-      <p>ضيفت كل الكويزات اللي اخدناها</p>
-      <p>حطيط لينك صارحني عشان تقولي رايك من غير احراج لو عندك اي افكار قولها وان شاء الله هحاول انفذها وقولولي رايكو ف التحديث الجديد ومتنسوش تصلوا علي النبي ❤️</p>
+      <p id="welcome-message">أهلاً بك</p>
     </div>
 
     <!-- التبويبات (المواد) -->
-    <!-- تم إضافة id="main-nav" عشان الداش بورد تشتغل -->
     <div id="main-nav" class="tab-container">
       <button class="tab-btn active" onclick="selectSubject('microbiology')">Microbiology</button>
       <button class="tab-btn" onclick="selectSubject('fundamental')">Fundamental</button>
@@ -53,51 +77,52 @@
         <div id="dynamic-cards-container" class="cards-grid"></div>
     </div>
 
-    <!-- (هام) منطقة الداش بورد -->
+    <!-- لوحة تحكم الطالب (القديمة) -->
     <div id="dashboard-view" class="dashboard-view" style="display:none;">
-        <h2 class="quiz-title">لوحة تحكم الطالب 🚀</h2>
-        
+        <h2 class="quiz-title">إحصائياتي الشخصية 🚀</h2>
         <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">📝</div>
-                <div class="stat-info">
-                    <span id="total-quizzes-taken">0</span>
-                    <p>كويزات مكتملة</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🎯</div>
-                <div class="stat-info">
-                    <span id="total-accuracy">0%</span>
-                    <p>مستوى الدقة</p>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🔄</div>
-                <div class="stat-info">
-                    <span id="total-attempts">0</span>
-                    <p>عدد المحاولات</p>
-                </div>
-            </div>
+            <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-info"><span id="total-quizzes-taken">0</span><p>كويزات</p></div></div>
+            <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-info"><span id="total-accuracy">0%</span><p>الدقة</p></div></div>
+            <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-info"><span id="total-attempts">0</span><p>محاولات</p></div></div>
         </div>
-
-        <h3 style="margin-top:30px; color:var(--primary-color);">سجل الاختبارات</h3>
+        <h3 style="margin-top:30px;">سجلي الخاص</h3>
         <div class="history-table-container">
             <table id="history-table">
+                <thead><tr><th>الامتحان</th><th>أعلى درجة</th><th>آخر درجة</th><th>عدد المحاولات</th></tr></thead>
+                <tbody id="history-table-body"></tbody>
+            </table>
+        </div>
+        <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
+    </div>
+
+    <!-- (جديد) لوحة تحكم الأدمن (الشيت المجمع) -->
+    <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف (نتائج الطلاب)</h2>
+            <button class="start-btn" onclick="exportToExcel()" style="background:#22c55e; min-width:150px;">📥 تحميل شيت Excel</button>
+        </div>
+        
+        <div class="filter-container" style="margin: 20px 0; display: flex; gap: 10px;">
+             <input type="text" id="admin-search" placeholder="ابحث باسم الطالب..." onkeyup="filterAdminTable()" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%;">
+        </div>
+
+        <div class="history-table-container">
+            <table id="admin-table">
                 <thead>
                     <tr>
-                        <th>الاختبار</th>
-                        <th>أعلى درجة</th>
-                        <th>آخر درجة</th>
-                        <th>المحاولات</th>
+                        <th>اسم الطالب</th>
+                        <th>المادة / الكويز</th>
+                        <th>الدرجة</th>
+                        <th>النسبة</th>
+                        <th>التاريخ</th>
                     </tr>
                 </thead>
-                <tbody id="history-table-body">
+                <tbody id="admin-table-body">
+                    <tr><td colspan="5" style="text-align:center;">جاري تحميل البيانات من السحابة... ☁️</td></tr>
                 </tbody>
             </table>
         </div>
-
-        <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
+        <button class="start-btn go-back" onclick="closeAdminDashboard()" style="margin-top:20px; background:#ef4444;">خروج من وضع المشرف</button>
     </div>
 
     <!-- منطقة الاختبار -->
@@ -121,6 +146,7 @@
       <h3>انتهى الاختبار!</h3>
       <div id="final-score" class="score"></div>
       <p id="score-message"></p>
+      <p id="upload-status" style="font-size: 0.9rem; color: gray; margin-top:5px;"></p>
       <button id="review-btn" class="start-btn">مراجعة الإجابات</button>
       <button class="start-btn go-back" onclick="backToQuizList()">العودة للقائمة</button>
     </div>
@@ -135,11 +161,7 @@
 
     <div class="footer">
       <p>Created by Zyad & Yusuf</p>
-      
-      <!-- لينك صارحني الخاص بك -->
-      <a href="https://zyadyasser2007.sarhne.com" target="_blank" class="sarhne-btn">
-       صارحني 🙂❤️
-      </a>
+      <a href="https://zyadyasser2007.sarhne.com" target="_blank" class="sarhne-btn">صارحني 🙂❤️</a>
     </div>
   </div>
 
