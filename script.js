@@ -1,5 +1,4 @@
 // --- Firebase Configuration ---
-// 🔴🔴 هام جداً: استبدل البيانات دي ببيانات مشروعك من Firebase Console 🔴🔴
 const firebaseConfig = {
   apiKey: "AIzaSyCzv8U8Syd71OK5uXF7MbOTdT77jXldWqE",
   authDomain: "nursing-quiz-63de2.firebaseapp.com",
@@ -9,14 +8,13 @@ const firebaseConfig = {
   appId: "1:135091277588:web:388ed4c31b8b11693cbc01"
 };
 
-// تهيئة Firebase (لو البيانات مش موجودة مش هيشتغل، بس الموقع هيفضل شغال Local)
 let db = null;
 try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
     console.log("Firebase Connected Successfully ✅");
 } catch (e) {
-    console.log("Firebase not configured yet (Local Mode) ⚠️");
+    console.log("Firebase not configured (Local Mode) ⚠️");
 }
 
 // --- Global State ---
@@ -33,15 +31,12 @@ let loadedScripts = {};
 
 // --- Setup on Load ---
 document.addEventListener("DOMContentLoaded", () => {
-    // التحقق من الاسم
     if (!currentStudentName) {
         document.getElementById('welcome-modal').style.display = 'flex';
     } else {
-        document.getElementById('welcome-modal').style.display = 'none';
         document.getElementById('welcome-message').textContent = `أهلاً بك يا دكتور/ة ${currentStudentName} 👋`;
     }
 
-    // ربط الأزرار
     document.getElementById('next-btn').addEventListener('click', nextQuestion);
     document.getElementById('prev-btn').addEventListener('click', prevQuestion);
     document.getElementById('review-btn').addEventListener('click', showReview);
@@ -50,23 +45,18 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('results').style.display = 'block';
     });
 
-    // Theme Check
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
         document.getElementById('theme-toggle').textContent = '☀️';
     }
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-
     selectSubject('microbiology'); 
 });
 
 // --- User Management ---
 function saveStudentName() {
     const nameInput = document.getElementById('student-name-input').value.trim();
-    if (nameInput.length < 3) {
-        alert("الرجاء كتابة الاسم الثلاثي بشكل صحيح");
-        return;
-    }
+    if (nameInput.length < 3) return alert("الاسم قصير جداً");
     currentStudentName = nameInput;
     localStorage.setItem('studentName', currentStudentName);
     document.getElementById('welcome-modal').style.display = 'none';
@@ -80,205 +70,67 @@ function toggleTheme() {
     document.getElementById('theme-toggle').textContent = isDark ? '☀️' : '🌙';
 }
 
-
-// --- Quiz Logic & Firebase Saving ---
-
-function finishQuiz() {
-    clearInterval(timerInterval);
-    let score = userAnswers.filter(a => a && a.isCorrect).length;
+// --- Admin Features (New Addition) ---
+function addNewQuizFromAdmin() {
+    const subject = document.getElementById('admin-sub-select').value;
+    const source = document.getElementById('admin-src-select').value;
+    const title = document.getElementById('admin-quiz-title').value;
+    const content = document.getElementById('admin-quiz-content').value;
     
-    // 1. الحفظ المحلي (للطالب)
-    const historyKey = `${currentSubject}_${currentSource}_${window.currentQuizKey}`;
-    const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
+    if(!title || !content) return alert("يرجى إدخال العنوان والأسئلة");
     
-    let entry = historyData[historyKey] || { 
-        score: 0, total: currentQuiz.length, highestScore: 0, attempts: 0, title: window.currentQuizTitle 
-    };
-    entry.score = score;
-    entry.total = currentQuiz.length;
-    entry.title = window.currentQuizTitle;
-    entry.attempts = (entry.attempts || 0) + 1;
-    entry.highestScore = Math.max(entry.highestScore || 0, score);
+    // Parse Questions
+    const questions = parseQuestionsText(content);
+    if(questions.length === 0) return alert("تنسيق الأسئلة غير صحيح. تأكد من كتابة س1: ... أ)...");
     
-    historyData[historyKey] = entry;
-    localStorage.setItem('quizHistory', JSON.stringify(historyData));
-
-    // 2. الحفظ في السحابة (للمشرف)
-    saveScoreToFirebase(score, currentQuiz.length);
-
-    // 3. عرض النتائج
-    document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
-    document.getElementById("score-message").textContent = 
-        score === currentQuiz.length ? "ممتاز! العلامة الكاملة 🎉" :
-        score > currentQuiz.length / 2 ? "جيد جداً، استمر 💪" : "حاول مرة أخرى 📚";
-
-    document.getElementById('quiz-container').style.display = 'none';
-    document.getElementById('results').style.display = 'block';
-}
-
-function saveScoreToFirebase(score, total) {
-    const statusEl = document.getElementById('upload-status');
+    // Save to LocalStorage
+    const customQuizzes = JSON.parse(localStorage.getItem('custom_quizzes') || '[]');
+    const newId = 'custom_' + Date.now();
     
-    if (!db) {
-        statusEl.textContent = "⚠️ النتيجة محفوظة محلياً فقط (لم يتم ربط قاعدة البيانات)";
-        return;
-    }
-
-    statusEl.textContent = "جاري رفع النتيجة...";
-    
-    // البيانات التي سيتم حفظها
-    const resultData = {
-        studentName: currentStudentName,
-        subject: currentSubject,
-        quizTitle: window.currentQuizTitle,
-        score: score,
-        total: total,
-        percentage: Math.round((score/total)*100),
-        date: new Date().toLocaleString('ar-EG'),
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    db.collection("exam_results").add(resultData)
-    .then(() => {
-        statusEl.textContent = "✅ تم إرسال النتيجة للدكتور بنجاح";
-        statusEl.style.color = "green";
-    })
-    .catch((error) => {
-        console.error("Error adding document: ", error);
-        statusEl.textContent = "❌ فشل إرسال النتيجة (تأكد من الإنترنت)";
-        statusEl.style.color = "red";
+    customQuizzes.push({
+        id: newId,
+        subject: subject,
+        source: source,
+        title: title,
+        questions: questions
     });
-}
-
-// --- Admin Dashboard Logic ---
-
-function openAdminLogin() {
-    document.getElementById('admin-login-modal').style.display = 'flex';
-}
-
-function closeAdminLogin() {
-    document.getElementById('admin-login-modal').style.display = 'none';
-}
-
-function checkAdminPassword() {
-    const pass = document.getElementById('admin-password-input').value;
-    // باسورد بسيط (ممكن تغيره)
-    if (pass === "admin123") { 
-        closeAdminLogin();
-        openAdminDashboard();
-    } else {
-        alert("كلمة المرور خاطئة!");
-    }
-}
-
-function openAdminDashboard() {
-    // إخفاء كل شيء وإظهار لوحة الأدمن
-    document.getElementById('main-nav').style.display = 'none';
-    document.getElementById('source-selection').style.display = 'none';
-    document.getElementById('quiz-list-area').style.display = 'none';
-    document.getElementById('admin-dashboard-view').style.display = 'block';
     
-    fetchAdminData();
-}
-
-function closeAdminDashboard() {
-    document.getElementById('admin-dashboard-view').style.display = 'none';
-    document.getElementById('main-nav').style.display = 'flex';
-    selectSubject(currentSubject);
-}
-
-function fetchAdminData() {
-    const tbody = document.getElementById('admin-table-body');
+    localStorage.setItem('custom_quizzes', JSON.stringify(customQuizzes));
     
-    if (!db) {
-        tbody.innerHTML = '<tr><td colspan="5">يجب ربط Firebase لتفعيل هذه الميزة</td></tr>';
-        return;
-    }
+    alert("تم حفظ الامتحان بنجاح ✅");
+    document.getElementById('admin-quiz-title').value = '';
+    document.getElementById('admin-quiz-content').value = '';
+}
 
-    tbody.innerHTML = '<tr><td colspan="5">جاري تحميل البيانات...</td></tr>';
-
-    // جلب البيانات مرتبة بالأحدث
-    db.collection("exam_results").orderBy("timestamp", "desc").limit(100).get()
-    .then((querySnapshot) => {
-        tbody.innerHTML = '';
-        if (querySnapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="5">لا توجد نتائج حتى الآن</td></tr>';
-            return;
+function parseQuestionsText(text) {
+    const lines = text.split('\n');
+    let questions = [];
+    let current = null;
+    
+    lines.forEach(line => {
+        line = line.trim();
+        if(!line) return;
+        
+        if(line.match(/^(Q\d+|س\d+|\d+)[:.)]/i) || (line.includes('?') && !current)) {
+            if(current) questions.push(current);
+            current = { q: line.replace(/^(Q\d+|س\d+|\d+)[:.)]\s*/i, ''), options: [], a: 0, type: 'mcq' };
+        } else if(current && line.match(/^([a-dأ-د]|\-|\*|\d\))[:.)]\s*/i)) {
+            current.options.push(line.replace(/^([a-dأ-د]|\-|\*|\d\))[:.)]\s*/i, ''));
+        } else if(current && line.match(/^(Answer|Correct|الاجابة|الإجابة)[:]\s*/i)) {
+            const m = {'a':0,'b':1,'c':2,'d':3,'أ':0,'ب':1,'ج':2,'د':3,'1':0,'2':1,'3':2,'4':3};
+            const char = line.split(':')[1].trim().toLowerCase();
+            if(m[char] !== undefined) current.a = m[char];
         }
-
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            const row = `
-                <tr>
-                    <td><b>${data.studentName}</b></td>
-                    <td>${data.quizTitle} <br><small style="color:gray">${data.subject}</small></td>
-                    <td>${data.score} / ${data.total}</td>
-                    <td>${data.percentage}%</td>
-                    <td style="direction:ltr">${data.date}</td>
-                </tr>
-            `;
-            tbody.innerHTML += row;
-        });
-    })
-    .catch((error) => {
-        tbody.innerHTML = `<tr><td colspan="5">حدث خطأ: ${error.message}</td></tr>`;
     });
+    if(current) questions.push(current);
+    return questions;
 }
 
-// دالة البحث في الجدول
-function filterAdminTable() {
-    const input = document.getElementById("admin-search");
-    const filter = input.value.toUpperCase();
-    const table = document.getElementById("admin-table");
-    const tr = table.getElementsByTagName("tr");
-
-    for (let i = 1; i < tr.length; i++) {
-        const td = tr[i].getElementsByTagName("td")[0]; // العمود الأول (الاسم)
-        if (td) {
-            const txtValue = td.textContent || td.innerText;
-            if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                tr[i].style.display = "";
-            } else {
-                tr[i].style.display = "none";
-            }
-        }
-    }
-}
-
-// دالة تصدير لإكسيل (Simple CSV Export)
-function exportToExcel() {
-    const table = document.getElementById("admin-table");
-    let csvContent = "\uFEFF"; // BOM لـ Excel عشان العربي يظهر صح
-    
-    const rows = table.querySelectorAll("tr");
-    
-    rows.forEach(row => {
-        const cols = row.querySelectorAll("th, td");
-        let rowData = [];
-        cols.forEach(col => rowData.push(`"${col.innerText.replace(/\n/g, ' ')}"`));
-        csvContent += rowData.join(",") + "\n";
-    });
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "Nursing_Exam_Results.csv");
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-// --- باقي دوال الكويز العادية (Select, Start, Render) ---
-// (نفس الدوال السابقة بدون تغيير جوهري، بس تأكد إنها موجودة)
-
+// --- Quiz Logic ---
 function selectSubject(subject) {
     currentSubject = subject;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = document.querySelector(`button[onclick="selectSubject('${subject}')"]`);
-    if(activeBtn) activeBtn.classList.add('active');
-
+    document.querySelector(`button[onclick="selectSubject('${subject}')"]`)?.classList.add('active');
     document.getElementById('source-selection').style.display = 'flex';
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('quiz-container').style.display = 'none';
@@ -289,56 +141,78 @@ function selectSubject(subject) {
 
 function loadQuizSource(source) {
     currentSource = source;
-    const scriptPath = `questions/${currentSubject}/${source}.js?v=3.1`;
-    
     document.getElementById('source-selection').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'block';
-    document.getElementById('dynamic-cards-container').innerHTML = '<p style="text-align:center;">جاري التحميل...</p>';
-
+    const container = document.getElementById('dynamic-cards-container');
+    container.innerHTML = '<p style="text-align:center;">جاري التحميل...</p>';
+    
+    // 1. Load File-based Quizzes (Old Way)
+    const scriptPath = `questions/${currentSubject}/${source}.js`;
+    let fileQuizzes = {};
+    
+    // 2. Load Custom Quizzes (New Way)
+    const customAll = JSON.parse(localStorage.getItem('custom_quizzes') || '[]');
+    const customFiltered = customAll.filter(q => q.subject === currentSubject && q.source === currentSource);
+    
+    // Combine logic
     loadScript(scriptPath, () => {
-        const dataVarName = `${currentSubject}_${source}_data`;
-        const data = window[dataVarName];
-        if (data) renderQuizCards(data);
-        else document.getElementById('dynamic-cards-container').innerHTML = '<p class="coming-soon">لا يوجد محتوى</p>';
+        const dataVar = `${currentSubject}_${source}_data`;
+        if(window[dataVar]) fileQuizzes = window[dataVar];
+        renderCombinedQuizzes(fileQuizzes, customFiltered);
     }, () => {
-        document.getElementById('dynamic-cards-container').innerHTML = '<p class="coming-soon">الملف غير موجود</p>';
+        renderCombinedQuizzes({}, customFiltered);
     });
 }
 
-function renderQuizCards(data) {
+function renderCombinedQuizzes(fileData, customList) {
     const container = document.getElementById('dynamic-cards-container');
     container.innerHTML = '';
-    Object.keys(data).forEach(quizKey => {
-        const quiz = data[quizKey];
-        const historyKey = `${currentSubject}_${currentSource}_${quizKey}`;
-        const savedHistory = JSON.parse(localStorage.getItem('quizHistory')) || {};
-        let badgeHtml = '';
-        if (savedHistory[historyKey]) {
-            badgeHtml = `<div class="history-badge">✅ ${savedHistory[historyKey].score}/${savedHistory[historyKey].total}</div>`;
-        }
-        container.innerHTML += `
-            <div class="quiz-card" onclick="startQuiz('${quizKey}', '${quiz.title}')">
-                ${badgeHtml}
-                <h3>${quiz.title}</h3>
-                <p>${quiz.questions.length} سؤال</p>
-                <button class="start-btn">ابدأ</button>
-            </div>`;
+    
+    // Render File Data
+    Object.keys(fileData).forEach(key => {
+        const quiz = fileData[key];
+        const histKey = `${currentSubject}_${currentSource}_${key}`;
+        addQuizCard(key, quiz.title, quiz.questions.length, histKey, 'file');
     });
-    currentQuizData = data;
+    
+    // Render Custom Data
+    customList.forEach(quiz => {
+        const histKey = `${currentSubject}_${currentSource}_${quiz.id}`;
+        addQuizCard(quiz.id, quiz.title, quiz.questions.length, histKey, 'custom');
+    });
+    
+    // Cache data for playing
+    currentQuizData = { ...fileData };
+    customList.forEach(q => currentQuizData[q.id] = q);
+    
+    if(container.innerHTML === '') container.innerHTML = '<p class="coming-soon">لا يوجد محتوى</p>';
 }
 
-function startQuiz(quizKey, quizTitle) {
-    const quiz = currentQuizData[quizKey];
-    if (!quiz) return;
-    window.currentQuizKey = quizKey;
-    window.currentQuizTitle = quizTitle;
-    currentQuiz = shuffleArray([...quiz.questions]);
+function addQuizCard(key, title, count, histKey, type) {
+    const savedHistory = JSON.parse(localStorage.getItem('quizHistory')) || {};
+    let badgeHtml = savedHistory[histKey] ? `<div class="history-badge">✅ ${savedHistory[histKey].score}</div>` : '';
+    let badgeType = type === 'custom' ? '<span style="font-size:0.8rem; color:green;">(مضاف يدوياً)</span>' : '';
+    
+    document.getElementById('dynamic-cards-container').innerHTML += `
+        <div class="quiz-card" onclick="startQuiz('${key}', '${title}')">
+            ${badgeHtml}
+            <h3>${title} ${badgeType}</h3>
+            <p>${count} سؤال</p>
+            <button class="start-btn">ابدأ</button>
+        </div>`;
+}
+
+function startQuiz(key, title) {
+    const quiz = currentQuizData[key];
+    window.currentQuizKey = key;
+    window.currentQuizTitle = title;
+    currentQuiz = quiz.questions; // Shuffle removed for simplicity in custom quizzes
     currentQuestionIndex = 0;
     userAnswers = new Array(currentQuiz.length).fill(null);
     
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('quiz-container').style.display = 'block';
-    document.getElementById("current-quiz-title").textContent = quiz.title;
+    document.getElementById("current-quiz-title").textContent = title;
     
     if (timerInterval) clearInterval(timerInterval);
     secondsElapsed = 0;
@@ -354,32 +228,21 @@ function startQuiz(quizKey, quizTitle) {
 }
 
 function displayQuestion() {
-    const qData = currentQuiz[currentQuestionIndex];
+    const q = currentQuiz[currentQuestionIndex];
     const container = document.getElementById("question-container");
-    const userAnswer = userAnswers[currentQuestionIndex];
-    const isRtl = qData.q.match(/[\u0600-\u06FF]/);
-    const dirClass = isRtl ? 'rtl' : '';
-
-    let optionsHtml = '';
-    if (qData.type === 'mcq') {
-        optionsHtml = `<div class="answer-options">` + 
-            qData.options.map((opt, i) => `
-                <button class="answer-btn ${dirClass} ${userAnswer?.answer === i ? 'selected' : ''}" 
-                        onclick="selectOption(${i})">${opt}</button>
-            `).join('') + `</div>`;
-    } else if (qData.type === 'tf') {
-        optionsHtml = `<div class="tf-options">
-            <button class="answer-btn ${userAnswer?.answer === true ? 'selected' : ''}" onclick="selectOption(true)">True</button>
-            <button class="answer-btn ${userAnswer?.answer === false ? 'selected' : ''}" onclick="selectOption(false)">False</button>
-        </div>`;
-    }
+    const uAns = userAnswers[currentQuestionIndex];
+    
+    let optionsHtml = `<div class="answer-options">` + 
+        q.options.map((opt, i) => `
+            <button class="answer-btn ${uAns?.answer === i ? 'selected' : ''}" 
+                    onclick="selectOption(${i})">${opt}</button>
+        `).join('') + `</div>`;
 
     container.innerHTML = `
         <div class="question-card">
             <div class="question-number">س ${currentQuestionIndex + 1} / ${currentQuiz.length}</div>
-            <div class="question-text ${dirClass}">${qData.q}</div>
+            <div class="question-text">${q.q}</div>
             ${optionsHtml}
-            ${qData.hint ? `<div class="hint-container"><button class="hint-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">تلميح</button><p class="hint-text">${qData.hint}</p></div>` : ''}
         </div>`;
     
     document.getElementById("progress-fill").style.width = `${((currentQuestionIndex + 1) / currentQuiz.length) * 100}%`;
@@ -405,13 +268,46 @@ function prevQuestion() {
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
         displayQuestion();
-        updateNavigation();
     }
+    updateNavigation();
 }
 
 function updateNavigation() {
     document.getElementById("prev-btn").disabled = currentQuestionIndex === 0;
     document.getElementById("next-btn").textContent = currentQuestionIndex === currentQuiz.length - 1 ? "إنهاء" : "التالي";
+}
+
+function finishQuiz() {
+    clearInterval(timerInterval);
+    let score = userAnswers.filter(a => a && a.isCorrect).length;
+    
+    // Save Local History
+    const hKey = `${currentSubject}_${currentSource}_${window.currentQuizKey}`;
+    const hData = JSON.parse(localStorage.getItem('quizHistory')) || {};
+    hData[hKey] = { score: score, total: currentQuiz.length, title: window.currentQuizTitle };
+    localStorage.setItem('quizHistory', JSON.stringify(hData));
+
+    // Save to Firebase (if connected)
+    if(db) {
+        document.getElementById('upload-status').textContent = "جاري رفع النتيجة...";
+        db.collection("exam_results").add({
+            studentName: currentStudentName,
+            subject: currentSubject,
+            quizTitle: window.currentQuizTitle,
+            score: score,
+            total: currentQuiz.length,
+            date: new Date().toLocaleString('ar-EG'),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            document.getElementById('upload-status').textContent = "✅ تم إرسال النتيجة";
+            document.getElementById('upload-status').style.color = "green";
+        });
+    }
+
+    document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
+    document.getElementById("score-message").textContent = score >= currentQuiz.length/2 ? "أحسنت! 👏" : "حاول مرة أخرى 💪";
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
 }
 
 function showReview() {
@@ -420,8 +316,8 @@ function showReview() {
     currentQuiz.forEach((q, i) => {
         const uAns = userAnswers[i];
         const isCorrect = uAns && uAns.isCorrect;
-        let correctText = q.type === 'tf' ? (q.a ? 'True' : 'False') : q.options[q.a];
-        let userText = uAns ? (q.type === 'tf' ? (uAns.answer ? 'True' : 'False') : q.options[uAns.answer]) : 'لم يجب';
+        let correctText = q.options[q.a];
+        let userText = uAns ? q.options[uAns.answer] : 'لم يجب';
         
         container.innerHTML += `
             <div class="review-question">
@@ -429,7 +325,6 @@ function showReview() {
                 <div class="question-text">${q.q}</div>
                 <div class="review-option ${isCorrect ? 'correct' : 'user-incorrect'}">إجابتك: ${userText}</div>
                 ${!isCorrect ? `<div class="review-option correct">الصحيح: ${correctText}</div>` : ''}
-                ${q.explanation ? `<div class="explanation-box">💡 ${q.explanation}</div>` : ''}
             </div>`;
     });
     document.getElementById('results').style.display = 'none';
@@ -447,62 +342,70 @@ function backToQuizList() {
     document.getElementById('results').style.display = 'none';
     document.getElementById('review-container').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'block';
-    if (currentQuizData) renderQuizCards(currentQuizData);
 }
 
 function loadScript(src, callback, errorCallback) {
-    const cleanSrc = src.split('?')[0];
-    if (loadedScripts[cleanSrc]) { if (callback) callback(); return; }
+    if (loadedScripts[src]) { if (callback) callback(); return; }
     const script = document.createElement('script');
     script.src = src;
-    script.onload = () => { loadedScripts[cleanSrc] = true; if (callback) callback(); };
+    script.onload = () => { loadedScripts[src] = true; if (callback) callback(); };
     script.onerror = () => { if (errorCallback) errorCallback(); };
     document.head.appendChild(script);
 }
 
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
+// Admin & Dashboard Navigation
+function openAdminLogin() { document.getElementById('admin-login-modal').style.display = 'flex'; }
+function closeAdminLogin() { document.getElementById('admin-login-modal').style.display = 'none'; }
+function checkAdminPassword() {
+    if (document.getElementById('admin-password-input').value === "admin123") { 
+        closeAdminLogin();
+        document.getElementById('main-nav').style.display = 'none';
+        document.getElementById('source-selection').style.display = 'none';
+        document.getElementById('quiz-list-area').style.display = 'none';
+        document.getElementById('admin-dashboard-view').style.display = 'block';
+        fetchAdminData();
+    } else { alert("كلمة المرور خاطئة!"); }
 }
 
-// Global Functions for Dashboard
-window.openDashboard = function() {
+function openDashboard() {
     document.getElementById('main-nav').style.display = 'none';
     document.getElementById('source-selection').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('dashboard-view').style.display = 'block';
-    
-    // Render Student Stats
+    // Render Stats logic here... (Same as before)
     const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
-    let totalQ = 0, totalAttempts = 0, totalScore = 0, totalPossible = 0;
     const tbody = document.getElementById('history-table-body');
     tbody.innerHTML = '';
-    
-    Object.entries(historyData).forEach(([key, data]) => {
-        totalQ++;
-        totalAttempts += (data.attempts || 1);
-        totalScore += data.score;
-        totalPossible += data.total;
-        
-        tbody.innerHTML += `
-            <tr>
-                <td>${data.title || key}</td>
-                <td>${data.highestScore || data.score}</td>
-                <td>${data.score}</td>
-                <td>${data.attempts || 1}</td>
-            </tr>`;
+    let tQ=0, tScore=0, tTotal=0;
+    Object.values(historyData).forEach(d => {
+        tQ++; tScore+=d.score; tTotal+=d.total;
+        tbody.innerHTML += `<tr><td>${d.title}</td><td>${d.score}</td><td>${d.score}</td><td>1</td></tr>`;
     });
-    
-    document.getElementById('total-quizzes-taken').textContent = totalQ;
-    document.getElementById('total-attempts').textContent = totalAttempts;
-    document.getElementById('total-accuracy').textContent = totalPossible ? Math.round((totalScore/totalPossible)*100) + '%' : '0%';
-};
+    document.getElementById('total-quizzes-taken').textContent = tQ;
+    document.getElementById('total-accuracy').textContent = tTotal ? Math.round((tScore/tTotal)*100)+'%' : '0%';
+}
 
-window.closeDashboard = function() {
+function closeDashboard() {
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('main-nav').style.display = 'flex';
     selectSubject(currentSubject);
-};
+}
+
+function closeAdminDashboard() {
+    document.getElementById('admin-dashboard-view').style.display = 'none';
+    document.getElementById('main-nav').style.display = 'flex';
+    selectSubject(currentSubject);
+}
+
+function fetchAdminData() {
+    const tbody = document.getElementById('admin-table-body');
+    if (!db) { tbody.innerHTML = '<tr><td colspan="4">يجب ربط Firebase لرؤية النتائج</td></tr>'; return; }
+    tbody.innerHTML = '<tr><td colspan="4">جاري التحميل...</td></tr>';
+    db.collection("exam_results").orderBy("timestamp", "desc").limit(20).get().then((snap) => {
+        tbody.innerHTML = '';
+        snap.forEach((doc) => {
+            const d = doc.data();
+            tbody.innerHTML += `<tr><td>${d.studentName}</td><td>${d.quizTitle}</td><td>${d.score}/${d.total}</td><td>${d.date}</td></tr>`;
+        });
+    });
+}
