@@ -1,4 +1,4 @@
-/* إضافة خط المرع لضمان دعم العربية */
+/* نفس ملفك القديم مع إضافة الجزء الخاص بالأدمن */
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 
 :root {
@@ -27,7 +27,7 @@ body.dark-mode {
   --quiz-card-border: #6366f1;
 }
 
-/* تنسيقات خاصة بإدخال الأدمن */
+/* تنسيقات خاصة بإدخال الأدمن (جديد) */
 .admin-input {
     width: 100%;
     padding: 10px;
@@ -40,7 +40,7 @@ body.dark-mode {
     box-sizing: border-box;
 }
 
-/* --- باقي التنسيقات كما كانت --- */
+/* --- باقي التنسيقات الأصلية --- */
 body { box-sizing: border-box; font-family: 'Almarai', sans-serif; margin: 0; padding: 0; background-color: var(--body-bg); min-height: 100vh; color: var(--text-dark); transition: background-color 0.3s ease, color 0.3s ease; }
 .container { max-width: 1200px; margin: 0 auto; padding: 25px; }
 .header { text-align: center; margin-bottom: 30px; background: var(--card-bg); padding: 30px; border-radius: var(--radius-lg); box-shadow: var(--shadow-heavy); position: relative; }
