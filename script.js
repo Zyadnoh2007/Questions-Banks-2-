@@ -1,12 +1,12 @@
 // --- Firebase Configuration ---
 // 🔴🔴 هام جداً: استبدل البيانات دي ببيانات مشروعك من Firebase Console 🔴🔴
 const firebaseConfig = {
-  apiKey: "PUT_YOUR_API_KEY_HERE",
-  authDomain: "PUT_YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "PUT_YOUR_PROJECT_ID",
-  storageBucket: "PUT_YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "PUT_YOUR_SENDER_ID",
-  appId: "PUT_YOUR_APP_ID"
+  apiKey: "AIzaSyCzv8U8Syd71OK5uXF7MbOTdT77jXldWqE",
+  authDomain: "nursing-quiz-63de2.firebaseapp.com",
+  projectId: "nursing-quiz-63de2",
+  storageBucket: "nursing-quiz-63de2.firebasestorage.app",
+  messagingSenderId: "135091277588",
+  appId: "1:135091277588:web:388ed4c31b8b11693cbc01"
 };
 
 // تهيئة Firebase (لو البيانات مش موجودة مش هيشتغل، بس الموقع هيفضل شغال Local)
