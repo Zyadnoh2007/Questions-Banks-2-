@@ -29,20 +29,130 @@ let timerInterval = null;
 let secondsElapsed = 0;
 let loadedScripts = {};
 
-// 🟢🟢 1. دوال الدخول (في البداية لضمان عملها) 🟢🟢
-window.saveStudentName = function() {
+// --- Initialization ---
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. التحقق من تسجيل الدخول
+    if (!currentStudentName) {
+        document.getElementById('welcome-modal').style.display = 'flex';
+    } else {
+        // لو الاسم موجود، إخفاء المودال فوراً
+        document.getElementById('welcome-modal').style.display = 'none';
+        document.getElementById('welcome-message').textContent = `أهلاً بك يا دكتور/ة ${currentStudentName} 👋`;
+    }
+
+    // تفعيل الأزرار
+    document.getElementById('next-btn').addEventListener('click', nextQuestion);
+    document.getElementById('prev-btn').addEventListener('click', prevQuestion);
+    document.getElementById('review-btn').addEventListener('click', showReview);
+
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('theme-toggle').textContent = '☀️';
+    }
+    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+    hideAllViews();
+    document.getElementById('main-nav').style.display = 'flex';
+    selectSubject('microbiology');
+    
+    // تشغيل شريط الأخبار السحابي
+    listenToCloudNews();
+});
+
+// --- 🔒 تسجيل الدخول الذكي (يمنع التكرار ويحفظ الجلسة) ---
+window.handleStudentLogin = async function() {
     const nameInput = document.getElementById('student-name-input').value.trim();
     const errorMsg = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+
     if (nameInput.length < 3) {
+        errorMsg.textContent = "الاسم قصير جداً";
         errorMsg.style.display = "block";
         return;
     }
-    currentStudentName = nameInput;
-    localStorage.setItem('studentName', currentStudentName);
-    document.getElementById('welcome-modal').style.display = 'none';
-    document.getElementById('welcome-message').textContent = `أهلاً بك يا دكتور/ة ${currentStudentName} 👋`;
+
+    if (!db) {
+        // لو مفيش نت، هيسجل محلي
+        completeLogin(nameInput);
+        return;
+    }
+
+    btn.textContent = "جاري التحقق...";
+    btn.disabled = true;
+
+    try {
+        // التحقق من وجود الاسم في قاعدة البيانات
+        const userRef = db.collection('users').doc(nameInput);
+        const doc = await userRef.get();
+
+        if (doc.exists) {
+            // الاسم موجود، هل هو نفس الجهاز؟
+            if (localStorage.getItem('studentName') === nameInput) {
+                completeLogin(nameInput); // دخول مسموح لنفس الشخص
+            } else {
+                errorMsg.textContent = "هذا الاسم مستخدم بالفعل، اختر اسماً آخر";
+                errorMsg.style.display = "block";
+                btn.textContent = "دخول";
+                btn.disabled = false;
+            }
+        } else {
+            // اسم جديد، احجزه في قاعدة البيانات
+            await userRef.set({
+                name: nameInput,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            completeLogin(nameInput);
+        }
+    } catch (error) {
+        console.error(error);
+        // في حالة الخطأ، اسمح بالدخول
+        completeLogin(nameInput);
+    }
 };
 
+function completeLogin(name) {
+    currentStudentName = name;
+    localStorage.setItem('studentName', name);
+    document.getElementById('welcome-modal').style.display = 'none';
+    document.getElementById('welcome-message').textContent = `أهلاً بك يا دكتور/ة ${currentStudentName} 👋`;
+    document.getElementById('login-btn').textContent = "دخول";
+    document.getElementById('login-btn').disabled = false;
+}
+
+window.logoutUser = function() {
+    if(confirm("هل تريد تسجيل الخروج؟")) {
+        localStorage.removeItem('studentName');
+        location.reload();
+    }
+};
+
+// --- 📢 شريط الأخبار السحابي (يظهر للجميع) ---
+window.updateCloudNews = function() {
+    const text = document.getElementById('admin-news-input').value.trim();
+    if(db) {
+        db.collection('settings').doc('news').set({ text: text })
+        .then(() => alert('تم نشر الخبر لكل الطلاب ✅'))
+        .catch(err => alert('فشل النشر: ' + err.message));
+    } else {
+        alert('يجب توفر إنترنت لنشر الأخبار');
+    }
+};
+
+function listenToCloudNews() {
+    if(db) {
+        db.collection('settings').doc('news').onSnapshot((doc) => {
+            if(doc.exists && doc.data().text) {
+                const text = doc.data().text;
+                document.getElementById('news-text').textContent = text;
+                document.getElementById('news-ticker-bar').style.display = 'flex';
+            } else {
+                document.getElementById('news-ticker-bar').style.display = 'none';
+            }
+        });
+    }
+}
+
+// --- Admin Auth ---
 window.checkAdminPassword = function() {
     const pass = document.getElementById('admin-password-input').value;
     const err = document.getElementById('admin-error');
@@ -53,66 +163,12 @@ window.checkAdminPassword = function() {
         err.style.display = "none";
         renderCustomQuizzesList();
         fetchAdminData();
-        // استرجاع الخبر المحفوظ
-        document.getElementById('admin-news-input').value = localStorage.getItem('siteNews') || '';
     } else {
         err.style.display = "block";
     }
 };
 
-// --- Initialization ---
-document.addEventListener("DOMContentLoaded", () => {
-    if (!currentStudentName) {
-        document.getElementById('welcome-modal').style.display = 'flex';
-    } else {
-        document.getElementById('welcome-message').textContent = `أهلاً بك يا دكتور/ة ${currentStudentName} 👋`;
-    }
-
-    // تفعيل الأزرار
-    document.getElementById('next-btn').addEventListener('click', nextQuestion);
-    document.getElementById('prev-btn').addEventListener('click', prevQuestion);
-    document.getElementById('review-btn').addEventListener('click', showReview);
-
-    // الوضع الليلي
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-mode');
-        document.getElementById('theme-toggle').textContent = '☀️';
-    }
-    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-
-    // إخفاء الشاشات وتحميل الأخبار
-    hideAllViews();
-    document.getElementById('main-nav').style.display = 'flex';
-    selectSubject('microbiology');
-    loadNewsTicker(); 
-});
-
-// --- 📢 شريط الأخبار ---
-window.updateNewsTicker = function() {
-    const text = document.getElementById('admin-news-input').value.trim();
-    if(text) {
-        localStorage.setItem('siteNews', text);
-        loadNewsTicker();
-        alert('تم تحديث الشريط ✅');
-    } else {
-        localStorage.removeItem('siteNews');
-        loadNewsTicker();
-        alert('تم الإخفاء');
-    }
-};
-
-function loadNewsTicker() {
-    const news = localStorage.getItem('siteNews');
-    const container = document.getElementById('news-ticker-bar');
-    if(news) {
-        document.getElementById('news-text').textContent = news;
-        container.style.display = 'flex';
-    } else {
-        container.style.display = 'none';
-    }
-}
-
-// --- 📥 Excel Export ---
+// --- Excel Export ---
 window.exportToExcel = function() {
     const table = document.getElementById("admin-table");
     let csvContent = "\uFEFF"; 
@@ -132,7 +188,7 @@ window.exportToExcel = function() {
     document.body.removeChild(link);
 };
 
-// --- Admin Functions (Fetch Data) ---
+// --- Admin Data Fetch ---
 function fetchAdminData() {
     const tbody = document.getElementById('admin-table-body');
     if (!db) { tbody.innerHTML = '<tr><td colspan="4">يجب ربط Firebase</td></tr>'; return; }
@@ -214,7 +270,15 @@ function parseQuestionsText(text) {
     return questions;
 }
 
-// --- Navigation ---
+// --- UI & Navigation ---
+window.openAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'flex'; };
+window.closeAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'none'; };
+window.closeAdminDashboard = function() {
+    hideAllViews();
+    document.getElementById('main-nav').style.display = 'flex';
+    selectSubject(currentSubject);
+};
+
 window.toggleTheme = function() {
     document.body.classList.toggle('dark-mode');
     const isDark = document.body.classList.contains('dark-mode');
@@ -245,22 +309,17 @@ window.loadQuizSource = function(source) {
     currentSource = source;
     hideAllViews();
     document.getElementById('quiz-list-area').style.display = 'block';
-    
     const container = document.getElementById('dynamic-cards-container');
     container.innerHTML = '<p style="text-align:center;">جاري البحث عن الامتحانات...</p>';
-
     const scriptPath = `questions/${currentSubject}/${source}.js`;
     let fileQuizzes = {};
     const customAll = JSON.parse(localStorage.getItem('custom_quizzes') || '[]');
     const customFiltered = customAll.filter(q => q.subject === currentSubject && q.source === currentSource);
-
     loadScript(scriptPath, () => {
         const dataVar = `${currentSubject}_${source}_data`;
         if(window[dataVar]) fileQuizzes = window[dataVar];
         renderCombinedQuizzes(fileQuizzes, customFiltered);
-    }, () => {
-        renderCombinedQuizzes({}, customFiltered);
-    });
+    }, () => { renderCombinedQuizzes({}, customFiltered); });
 };
 
 function renderCombinedQuizzes(fileData, customList) {
@@ -294,7 +353,6 @@ function addQuizCard(key, title, count, isCustom) {
         </div>`;
 }
 
-// --- Quiz Player ---
 window.startQuiz = function(key, title) {
     const quiz = currentQuizData[key];
     window.currentQuizKey = key;
@@ -323,34 +381,21 @@ function displayQuestion() {
     const uAns = userAnswers[currentQuestionIndex];
     const isRtl = qData.q.match(/[\u0600-\u06FF]/);
     const dirClass = isRtl ? 'rtl' : '';
-
     let optionsHtml = '';
     if (!qData.type || qData.type === 'mcq') {
         optionsHtml = `<div class="answer-options">` + 
-            qData.options.map((opt, i) => `
-                <button class="answer-btn ${dirClass} ${uAns?.answer === i ? 'selected' : ''}" 
-                        onclick="selectOption(${i})">${opt}</button>
-            `).join('') + `</div>`;
+            qData.options.map((opt, i) => `<button class="answer-btn ${dirClass} ${uAns?.answer === i ? 'selected' : ''}" onclick="selectOption(${i})">${opt}</button>`).join('') + `</div>`;
     } else if (qData.type === 'tf') {
         optionsHtml = `<div class="tf-options" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
             <button class="answer-btn ${uAns?.answer === true ? 'selected' : ''}" onclick="selectOption(true)">True</button>
             <button class="answer-btn ${uAns?.answer === false ? 'selected' : ''}" onclick="selectOption(false)">False</button>
         </div>`;
     }
-
     let hintHtml = '';
     if (qData.hint) {
         hintHtml = `<div class="hint-container"><button class="hint-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">💡 تلميح</button><p class="hint-text">${qData.hint}</p></div>`;
     }
-
-    container.innerHTML = `
-        <div class="question-card">
-            <div class="question-number">س ${currentQuestionIndex + 1} / ${currentQuiz.length}</div>
-            <div class="question-text ${dirClass}">${qData.q}</div>
-            ${optionsHtml}
-            ${hintHtml}
-        </div>`;
-    
+    container.innerHTML = `<div class="question-card"><div class="question-number">س ${currentQuestionIndex + 1} / ${currentQuiz.length}</div><div class="question-text ${dirClass}">${qData.q}</div>${optionsHtml}${hintHtml}</div>`;
     document.getElementById("progress-fill").style.width = `${((currentQuestionIndex + 1) / currentQuiz.length) * 100}%`;
     document.getElementById("question-counter").textContent = `${currentQuestionIndex + 1} / ${currentQuiz.length}`;
 }
@@ -380,7 +425,6 @@ function finishQuiz() {
     const hData = JSON.parse(localStorage.getItem('quizHistory')) || {};
     hData[hKey] = { score: score, total: currentQuiz.length, title: window.currentQuizTitle };
     localStorage.setItem('quizHistory', JSON.stringify(hData));
-
     if(db) {
         document.getElementById('upload-status').textContent = "جاري الحفظ...";
         db.collection("exam_results").add({
@@ -398,7 +442,6 @@ function finishQuiz() {
             document.getElementById('upload-status').textContent = "⚠️ تم الحفظ محلياً فقط";
         });
     }
-
     hideAllViews();
     document.getElementById('results').style.display = 'block';
     document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
@@ -413,38 +456,14 @@ window.showReview = function() {
         const correct = ua && ua.isCorrect;
         let cText = q.type==='tf' ? (q.a?'True':'False') : q.options[q.a];
         let uText = ua ? (q.type==='tf' ? (ua.answer?'True':'False') : q.options[ua.answer]) : "لم يجب";
-        c.innerHTML += `
-            <div class="review-question">
-                <div style="font-weight:bold;">س ${i+1}: ${q.q}</div>
-                <div class="review-option ${correct?'correct':'user-incorrect'}">إجابتك: ${uText}</div>
-                ${!correct ? `<div class="review-option correct">الصحيح: ${cText}</div>` : ''}
-                ${q.hint ? `<div style="font-size:0.9rem; color:gray; margin-top:5px;">💡 تلميح: ${q.hint}</div>` : ''}
-            </div>`;
+        c.innerHTML += `<div class="review-question"><div style="font-weight:bold;">س ${i+1}: ${q.q}</div><div class="review-option ${correct?'correct':'user-incorrect'}">إجابتك: ${uText}</div>${!correct ? `<div class="review-option correct">الصحيح: ${cText}</div>` : ''}${q.hint ? `<div style="font-size:0.9rem; color:gray; margin-top:5px;">💡 تلميح: ${q.hint}</div>` : ''}</div>`;
     });
     document.getElementById('results').style.display = 'none';
     document.getElementById('review-container').style.display = 'block';
 };
 
-window.backToSources = function() {
-    hideAllViews();
-    document.getElementById('main-nav').style.display = 'flex';
-    document.getElementById('source-selection').style.display = 'flex';
-};
-
-window.backToQuizList = function() {
-    hideAllViews();
-    document.getElementById('main-nav').style.display = 'flex';
-    loadQuizSource(currentSource);
-};
-
-window.openAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'flex'; };
-window.closeAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'none'; };
-window.closeAdminDashboard = function() {
-    hideAllViews();
-    document.getElementById('main-nav').style.display = 'flex';
-    selectSubject(currentSubject);
-};
-
+window.backToSources = function() { hideAllViews(); document.getElementById('main-nav').style.display = 'flex'; document.getElementById('source-selection').style.display = 'flex'; };
+window.backToQuizList = function() { hideAllViews(); document.getElementById('main-nav').style.display = 'flex'; loadQuizSource(currentSource); };
 window.openDashboard = function() {
     hideAllViews();
     document.getElementById('dashboard-view').style.display = 'block';
@@ -452,24 +471,8 @@ window.openDashboard = function() {
     let tQ=0;
     const tbody = document.getElementById('history-table-body');
     tbody.innerHTML = '';
-    Object.values(hist).forEach(v => { 
-        tQ++;
-        tbody.innerHTML += `<tr><td>${v.title}</td><td>${v.score}</td><td>${v.score}</td><td>1</td></tr>`;
-    });
+    Object.values(hist).forEach(v => { tQ++; tbody.innerHTML += `<tr><td>${v.title}</td><td>${v.score}</td><td>${v.score}</td><td>1</td></tr>`; });
     document.getElementById('total-quizzes-taken').textContent = tQ;
 };
-
-window.closeDashboard = function() {
-    hideAllViews();
-    document.getElementById('main-nav').style.display = 'flex';
-    selectSubject(currentSubject);
-};
-
-function loadScript(src, cb, errCb) {
-    if(loadedScripts[src]) { cb(); return; }
-    const s = document.createElement('script');
-    s.src = src;
-    s.onload = () => { loadedScripts[src]=true; cb(); };
-    s.onerror = errCb;
-    document.head.appendChild(s);
-          }
+window.closeDashboard = function() { hideAllViews(); document.getElementById('main-nav').style.display = 'flex'; selectSubject(currentSubject); };
+function loadScript(src, cb, errCb) { if(loadedScripts[src]) { cb(); return; } const s = document.createElement('script'); s.src = src; s.onload = () => { loadedScripts[src]=true; cb(); }; s.onerror = errCb; document.head.appendChild(s); }
