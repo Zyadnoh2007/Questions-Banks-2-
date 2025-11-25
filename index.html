@@ -17,7 +17,8 @@
     <div class="modal-box">
       <h2>مرحباً بك يا بطل 🩺</h2>
       <p>من فضلك ادخل اسمك الثلاثي قبل البدء</p>
-      <input type="text" id="student-name-input" placeholder="اكتب اسمك هنا..." />
+      <input type="text" id="student-name-input" placeholder="مثال: أحمد محمد علي" />
+      <p id="login-error" style="color:red; font-size:0.9rem; display:none;"></p>
       <button class="start-btn" onclick="saveStudentName()">دخول</button>
     </div>
   </div>
@@ -38,6 +39,7 @@
     <div class="header">
       <div class="header-controls">
           <button id="theme-toggle" class="icon-btn" title="تغيير الوضع">🌙</button>
+          <button onclick="logout()" class="icon-btn logout-icon" title="تسجيل خروج" style="border-color: #ef4444; color: #ef4444;">🚪</button>
           <button onclick="openDashboard()" class="icon-btn dashboard-icon" title="إحصائياتي">📊</button>
           <button onclick="openAdminLogin()" class="icon-btn admin-icon" title="لوحة المشرفين">👨‍💼</button>
       </div>
@@ -46,10 +48,8 @@
       <p id="welcome-message">أهلاً بك</p>
     </div>
 
-    <!-- 🔴 التغيير هنا: شلنا الزراير الثابتة وهنسيب الكود يضيفها -->
-    <div id="main-nav" class="tab-container">
-        <!-- سيتم توليد أزرار المواد هنا تلقائياً -->
-    </div>
+    <!-- التبويبات (يتم توليدها تلقائياً) -->
+    <div id="main-nav" class="tab-container"></div>
     
     <!-- منطقة اختيار المصدر -->
     <div id="source-selection" class="source-container">
@@ -61,6 +61,7 @@
             <h3>👨‍⚕️ كويزات الدكتور</h3>
             <p>الأسئلة الخاصة بمحاضرات الدكتور</p>
         </div>
+        <!-- تم تجهيز المكان لإضافة كروت جديدة من الكود -->
     </div>
 
     <!-- منطقة عرض الكروت -->
@@ -77,23 +78,33 @@
             <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-info"><span id="total-accuracy">0%</span><p>الدقة</p></div></div>
             <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-info"><span id="total-attempts">0</span><p>محاولات</p></div></div>
         </div>
-        <h3 style="margin-top:30px;">سجلي الخاص</h3>
         <div class="history-table-container">
             <table id="history-table">
-                <thead><tr><th>الامتحان</th><th>أعلى درجة</th><th>آخر درجة</th><th>عدد المحاولات</th></tr></thead>
+                <thead><tr><th>الامتحان</th><th>أعلى درجة</th><th>آخر درجة</th><th>المحاولات</th></tr></thead>
                 <tbody id="history-table-body"></tbody>
             </table>
         </div>
         <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- لوحة تحكم الأدمن -->
+    <!-- لوحة تحكم الأدمن (المحدثة) -->
     <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
             <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف</h2>
-            <button class="start-btn" onclick="exportToExcel()" style="background:#22c55e; min-width:150px;">📥 تحميل Excel</button>
+            <div style="display:flex; gap:5px;">
+                <button class="start-btn" onclick="exportToExcel()" style="background:#22c55e; font-size: 0.9rem;">📥 Excel</button>
+            </div>
         </div>
         
+        <!-- أزرار التحكم الخطيرة -->
+        <div class="admin-danger-zone" style="background: #fee2e2; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #ef4444;">
+            <h3 style="color:#b91c1c; margin-top:0;">⚠️ منطقة الخطر</h3>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button onclick="adminResetAllResults()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">🗑️ حذف جميع النتائج</button>
+                <button onclick="adminDeleteAllUsers()" style="background:#b91c1c; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">👥 حذف جميع المستخدمين</button>
+            </div>
+        </div>
+
         <div class="filter-container" style="margin: 20px 0;">
              <input type="text" id="admin-search" placeholder="ابحث باسم الطالب..." onkeyup="filterAdminTable()" style="padding: 10px; width: 100%;">
         </div>
@@ -104,7 +115,7 @@
                 <tbody id="admin-table-body"></tbody>
             </table>
         </div>
-        <button class="start-btn go-back" onclick="closeAdminDashboard()" style="margin-top:20px; background:#ef4444;">خروج</button>
+        <button class="start-btn go-back" onclick="closeAdminDashboard()" style="margin-top:20px; background:#475569;">خروج</button>
     </div>
 
     <!-- منطقة الاختبار -->
@@ -150,4 +161,5 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
