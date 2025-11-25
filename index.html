@@ -20,7 +20,7 @@
       <p>من فضلك ادخل اسمك الثلاثي قبل البدء</p>
       <input type="text" id="student-name-input" placeholder="اكتب اسمك هنا..." />
       <p id="login-error" style="color: #ef4444; font-size: 0.9rem; display: none; margin-top:5px;"></p>
-      <button id="login-btn" class="start-btn" onclick="handleStudentLogin()">دخول</button>
+      <button id="login-btn" class="start-btn" onclick="saveStudentName()">دخول</button>
     </div>
   </div>
 
@@ -59,9 +59,9 @@
       <p id="welcome-message">أهلاً بك</p>
     </div>
 
-    <!-- التبويبات (القديمة ثابتة + مكان للجديد) -->
+    <!-- التبويبات -->
     <div id="main-nav" class="tab-container">
-      <!-- 👇👇 التبويبات القديمة ثابتة هنا 👇👇 -->
+      <!-- التبويبات الثابتة -->
       <button class="tab-btn active" data-static="true" onclick="selectSubject('microbiology')">Microbiology</button>
       <button class="tab-btn" data-static="true" onclick="selectSubject('fundamental')">Fundamental</button>
       <button class="tab-btn" data-static="true" onclick="selectSubject('biochemistry')">Biochemistry</button>
@@ -69,12 +69,11 @@
       <button class="tab-btn" data-static="true" onclick="selectSubject('physiology')">Physiology</button>
       <button class="tab-btn" data-static="true" onclick="selectSubject('clinical')">Clinical</button>
       <button class="tab-btn" data-static="true" onclick="selectSubject('ethics')">Ethics</button>
-      <!-- المواد الجديدة هتضاف هنا أوتوماتيك بالكود -->
     </div>
     
-    <!-- اختيار المصدر (القديم ثابت + مكان للجديد) -->
+    <!-- اختيار المصدر -->
     <div id="source-selection" class="source-container">
-        <!-- 👇👇 الكروت القديمة ثابتة هنا 👇👇 -->
+        <!-- الكروت الثابتة -->
         <div class="source-card" data-static="true" onclick="loadQuizSource('bank')">
             <h3>📚 بنك الأسئلة</h3>
             <p>أسئلة البنك الشاملة للمادة</p>
@@ -83,7 +82,6 @@
             <h3>👨‍⚕️ كويزات الدكتور</h3>
             <p>الأسئلة الخاصة بمحاضرات الدكتور</p>
         </div>
-        <!-- المصادر الجديدة هتضاف هنا أوتوماتيك بالكود -->
     </div>
 
     <!-- عرض الكروت -->
@@ -107,50 +105,25 @@
         <button class="start-btn" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- لوحة الأدمن -->
+    <!-- 🟢 لوحة الأدمن (المحدثة والمفصولة) 🟢 -->
     <div id="admin-dashboard-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف</h2>
-            <button class="start-btn" onclick="closeAdminDashboard()" style="background:#ef4444; width:auto;">خروج</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2 class="quiz-title" style="color:var(--secondary-color); margin:0;">👨‍💼 لوحة المشرف</h2>
+            <button class="start-btn" onclick="closeAdminDashboard()" style="background:#ef4444; width:auto; margin:0;">خروج</button>
         </div>
 
-        <!-- 1. إعدادات الأقسام والمصادر (جديد) -->
-        <div style="background:var(--card-bg); padding:20px; border-radius:15px; border:1px solid #3b82f6; margin-bottom:20px;">
-            <h3 style="color:var(--primary-color); margin-top:0;">⚙️ إضافة مواد/مصادر جديدة</h3>
-            
-            <!-- إضافة مادة -->
-            <div style="margin-bottom: 15px;">
-                <label style="font-weight:bold;">اسم المادة الجديدة:</label>
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <input type="text" id="new-subject-name" class="admin-input" style="margin:0;" placeholder="مثال: Pathology">
-                    <button class="start-btn" onclick="addNewSubject()" style="width:auto; margin:0; background:#3b82f6;">إضافة</button>
-                </div>
-                <div id="subjects-list" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
-            </div>
-
-            <!-- إضافة مصدر -->
-            <div>
-                <label style="font-weight:bold;">اسم المصدر الجديد:</label>
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <input type="text" id="new-source-name" class="admin-input" style="margin:0;" placeholder="مثال: مراجعة 2024">
-                    <button class="start-btn" onclick="addNewSource()" style="width:auto; margin:0; background:#6366f1;">إضافة</button>
-                </div>
-                <div id="sources-list" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
-            </div>
-        </div>
-
-        <!-- 2. أخبار -->
-        <div style="background:var(--card-bg); padding:15px; border-radius:15px; border:1px solid #fcd34d; margin-bottom:20px;">
-            <h4 style="margin-top:0; color:#d97706;">📢 تحديث التنبيه</h4>
+        <!-- 1. إدارة شريط الأخبار -->
+        <div class="admin-section">
+            <h4 style="margin-top:0; color:#d97706;">📢 شريط التنبيهات</h4>
             <div style="display:flex; gap:10px;">
                 <input type="text" id="admin-news-input" class="admin-input" style="margin:0;" placeholder="اكتب التنبيه هنا...">
-                <button class="start-btn" onclick="updateCloudNews()" style="width:auto; margin:0; background:#d97706;">نشر ☁️</button>
+                <button class="start-btn" onclick="updateCloudNews()" style="width:auto; margin:0; background:#d97706;">نشر</button>
             </div>
         </div>
 
-        <!-- 3. إضافة امتحان -->
-        <div style="background:var(--card-bg); padding:20px; border-radius:15px; border:2px dashed #ccc; margin-bottom:30px;">
-            <h3 style="color:var(--primary-color); margin-top:0;">➕ إضافة امتحان جديد</h3>
+        <!-- 2. إضافة امتحان جديد -->
+        <div class="admin-section" style="border-color: #3b82f6;">
+            <h3 style="color:var(--primary-color); margin-top:0;">➕ إضافة امتحان (أسئلة)</h3>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
                 <select id="admin-sub-select" class="admin-input"></select>
                 <select id="admin-src-select" class="admin-input"></select>
@@ -160,13 +133,43 @@
             <button class="start-btn" onclick="addNewQuizFromAdmin()" style="background:#10b981;">حفظ الامتحان ✅</button>
         </div>
 
-        <!-- 4. حذف -->
-        <h3 style="border-top: 1px solid #ccc; padding-top: 20px;">🗑️ الامتحانات اليدوية</h3>
+        <!-- 3. إضافة مادة جديدة (منفصلة) -->
+        <div class="admin-section">
+            <h3 style="color:#8b5cf6; margin-top:0;">📚 إضافة تبويب (مادة جديدة)</h3>
+            <div style="display:flex; gap:10px; margin-top:5px;">
+                <input type="text" id="new-subject-name" class="admin-input" style="margin:0;" placeholder="اسم المادة (English...)">
+                <button class="start-btn" onclick="addNewSubject()" style="width:auto; margin:0; background:#8b5cf6;">إضافة</button>
+            </div>
+            <div id="subjects-list" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
+        </div>
+
+        <!-- 4. إضافة مصدر جديد (منفصلة) -->
+        <div class="admin-section">
+            <h3 style="color:#ec4899; margin-top:0;">🗂️ إضافة كارت (مصدر جديد)</h3>
+            <div style="display:flex; gap:10px; margin-top:5px;">
+                <input type="text" id="new-source-name" class="admin-input" style="margin:0;" placeholder="اسم المصدر (شيتات...)">
+                <button class="start-btn" onclick="addNewSource()" style="width:auto; margin:0; background:#ec4899;">إضافة</button>
+            </div>
+            <div id="sources-list" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
+        </div>
+
+        <!-- 5. حذف الامتحانات اليدوية -->
+        <h3 style="border-top: 1px solid #ccc; padding-top: 20px;">🗑️ الامتحانات المضافة يدوياً</h3>
         <div id="admin-custom-quizzes-list" class="cards-grid" style="margin-bottom: 30px;"></div>
 
-        <!-- 5. نتائج -->
-        <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #ccc; padding-top: 20px;">
-            <h3>📊 نتائج الطلاب الأخيرة</h3>
+        <!-- 6. النتائج والبيانات (منطقة الخطر) -->
+        <h3 style="border-top: 1px solid #ccc; padding-top: 20px; color:#ef4444;">⛔ منطقة التحكم في البيانات</h3>
+        <div class="admin-section" style="border-color:#ef4444; background:#fef2f2;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <button onclick="deleteAllStudents()" class="start-btn" style="background:#ef4444; width:auto; margin:0;">🗑️ حذف جميع الطلاب المسجلين</button>
+                <button onclick="deleteAllResults()" class="start-btn" style="background:#ef4444; width:auto; margin:0;">🗑️ حذف جميع النتائج</button>
+            </div>
+            <p style="color:#7f1d1d; font-size:0.8rem; margin-top:10px;">* تحذير: هذه الإجراءات لا يمكن التراجع عنها.</p>
+        </div>
+
+        <!-- جدول النتائج -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
+            <h3>📊 آخر النتائج</h3>
             <button onclick="exportToExcel()" class="start-btn" style="width:auto; margin:0; background:#22c55e;">📥 تحميل Excel</button>
         </div>
         <div class="history-table-container">
@@ -193,7 +196,7 @@
       </div>
     </div>
 
-    <!-- النتائج -->
+    <!-- النتائج والمراجعة -->
     <div id="results" class="quiz-container results">
       <h3>انتهى الاختبار!</h3>
       <div id="final-score" class="score"></div>
@@ -203,7 +206,6 @@
       <button class="start-btn" onclick="backToQuizList()" style="margin-top: 10px; background: #64748b;">العودة للقائمة</button>
     </div>
 
-    <!-- المراجعة -->
     <div id="review-container" class="review-container">
       <h2 class="quiz-title">مراجعة الإجابات</h2>
       <div id="review-content"></div>
@@ -216,7 +218,8 @@
     </div>
   </div>
 
-  <!-- الكود يعمل بعد تحميل الصفحة لضمان وجود العناصر -->
   <script src="script.js" defer></script>
 </body>
 </html>
+
+
