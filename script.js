@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 });
 
-// --- Dynamic Content Fetching ---
+// --- Dynamic Content ---
 async function fetchDynamicContent() {
     if (!db) return;
     try {
@@ -147,7 +147,7 @@ window.backToSources = function() {
     document.getElementById('source-selection').style.display = 'flex';
 };
 
-// --- Load & Render Quizzes ---
+// --- Load Quizzes ---
 async function loadQuizSource(sourceId, sourceName) {
     currentSource = sourceId;
     document.getElementById('source-selection').style.display = 'none';
@@ -219,7 +219,7 @@ function renderQuizCards(data) {
     currentQuizData = data;
 }
 
-// --- Quiz Logic (With Security Update) ---
+// --- Quiz Logic (With Lockdown) ---
 function startQuiz(quizKey, quizTitle, timeLimit = 0) {
     const quiz = currentQuizData[quizKey];
     if (!quiz) return;
@@ -235,22 +235,14 @@ function startQuiz(quizKey, quizTitle, timeLimit = 0) {
     
     if (timerInterval) clearInterval(timerInterval);
     
-    // 🔒 نظام تأمين الامتحان 🔒
     const exitBtn = document.querySelector('#quiz-container .back-btn');
     
     if (timeLimit > 0) {
-        // لو الامتحان بوقت: إخفاء زر الخروج ومنع إغلاق المتصفح
         isTimerDown = true;
         secondsRemaining = timeLimit * 60;
-        
-        exitBtn.style.display = 'none'; // إخفاء زر الخروج
-        
-        // تحذير عند محاولة إغلاق الصفحة أو عمل Refresh
-        window.onbeforeunload = function() {
-            return "تحذير: الامتحان قيد التشغيل! إذا خرجت الآن ستفقد تقدمك.";
-        };
+        exitBtn.style.display = 'none';
+        window.onbeforeunload = function() { return "تحذير: الامتحان قيد التشغيل!"; };
     } else {
-        // لو امتحان عادي: إظهار الزر والسماح بالخروج
         isTimerDown = false;
         secondsRemaining = 0;
         exitBtn.style.display = 'block';
@@ -278,9 +270,7 @@ function startQuiz(quizKey, quizTitle, timeLimit = 0) {
 
 function finishQuiz(timeOut = false) {
     clearInterval(timerInterval);
-    
-    // 🔓 فك تأمين الامتحان 🔓
-    window.onbeforeunload = null; // إلغاء التحذير
+    window.onbeforeunload = null;
     
     let score = userAnswers.filter(a => a && a.isCorrect).length;
     
@@ -303,7 +293,6 @@ function finishQuiz(timeOut = false) {
     document.getElementById('results').style.display = 'block';
 }
 
-// --- Helper Functions ---
 function updateTimerDisplay() {
     const m = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
     const s = (secondsRemaining % 60).toString().padStart(2, '0');
@@ -319,6 +308,7 @@ function updateTimerDisplay() {
     }
 }
 
+// --- Basic UI ---
 function displayQuestion() {
     const qData = currentQuiz[currentQuestionIndex];
     const container = document.getElementById("question-container");
@@ -390,7 +380,7 @@ function backToQuizList() {
     window.onbeforeunload = null;
 }
 
-// --- Auth & Admin Utils ---
+// --- Auth ---
 function saveStudentName() {
     const nameInput = document.getElementById('student-name-input');
     const errorMsg = document.getElementById('login-error');
@@ -467,7 +457,10 @@ function shuffleArray(array) {
     return array;
 }
 
-// --- Admin Panel Logic ---
+// ==========================================
+// 🔥 ADMIN PANEL LOGIC 🔥
+// ==========================================
+
 window.openDashboard = function() {
     document.getElementById('main-nav').style.display = 'none';
     document.getElementById('source-selection').style.display = 'none';
@@ -515,14 +508,17 @@ window.switchAdminTab = function(tabName) {
     document.getElementById(`admin-tab-${tabName}`).style.display = 'block';
     document.querySelectorAll('#admin-dashboard-view .tab-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
+    
     if(tabName === 'content') populateAdminDropdowns();
     if(tabName === 'results') fetchAdminData();
+    if(tabName === 'users') fetchAdminUsers(); // إضافة جديدة
 };
 
 window.toggleTimeInput = function(show) {
     document.getElementById('time-limit-input-container').style.display = show ? 'block' : 'none';
 };
 
+// --- Add Content ---
 window.addNewSubject = async function() {
     const name = document.getElementById('new-subject-name').value;
     const id = document.getElementById('new-subject-id').value;
@@ -581,7 +577,7 @@ function parseQuestionsFromText(text) {
     return questions;
 }
 
-// 🔴 تحديث قائمة الحذف لإصلاح مشكلة undefined 🔴
+// --- Delete Logic ---
 window.updateDeleteDropdown = async function() {
     const type = document.getElementById('delete-type-select').value;
     const itemSelect = document.getElementById('delete-item-select');
@@ -606,7 +602,7 @@ window.updateDeleteDropdown = async function() {
             if(snaps.empty) { itemSelect.innerHTML = '<option>لا توجد كويزات</option>'; return; }
             snaps.forEach(doc => { 
                 const q = doc.data(); 
-                // هنا الإصلاح: لو مفيش subjectId نكتب "عام" بدل undefined
+                // fix undefined subject
                 const subName = q.subjectId || 'عام';
                 itemSelect.innerHTML += `<option value="${doc.id}">${q.title} (${subName})</option>`; 
             });
@@ -623,6 +619,50 @@ window.deleteSelectedItem = async function() {
     try { await db.collection(col).doc(id).delete(); alert("تم الحذف"); location.reload(); } catch(e) { alert("خطأ: " + e.message); }
 };
 
+// --- Users List Logic (New) ---
+window.fetchAdminUsers = function() {
+    const tbody = document.getElementById('users-table-body');
+    if (!db) { tbody.innerHTML = '<tr><td colspan="3">Firebase غير مفعل</td></tr>'; return; }
+    tbody.innerHTML = '<tr><td colspan="3">جاري التحميل...</td></tr>';
+    
+    db.collection("users").orderBy("joinedAt", "desc").get().then((snap) => {
+        tbody.innerHTML = '';
+        if(snap.empty) { tbody.innerHTML = '<tr><td colspan="3">لا يوجد طلاب مسجلين</td></tr>'; return; }
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            const date = d.joinedAt ? new Date(d.joinedAt.toDate()).toLocaleDateString('ar-EG') : 'غير معروف';
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td>${d.name}</td>
+                    <td>${date}</td>
+                    <td><button class="btn-danger" style="padding:5px 10px; font-size:0.8rem;" onclick="deleteOneUser('${doc.id}')">حذف</button></td>
+                </tr>`;
+        });
+    });
+};
+
+window.deleteOneUser = function(userId) {
+    if(!confirm(`هل أنت متأكد من حذف الطالب ${userId}؟`)) return;
+    db.collection('users').doc(userId).delete()
+    .then(() => {
+        alert("تم حذف الطالب.");
+        fetchAdminUsers(); // Refresh table
+    })
+    .catch(err => alert("خطأ: " + err.message));
+};
+
+window.filterUsersTable = function() {
+    const filter = document.getElementById("users-search").value.toUpperCase();
+    const rows = document.getElementById("users-table").getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const td = rows[i].getElementsByTagName("td")[0];
+        if (td) rows[i].style.display = (td.textContent || td.innerText).toUpperCase().indexOf(filter) > -1 ? "" : "none";
+    }
+};
+
+// --- Fetch Data ---
 window.fetchAdminData = function() {
     const tbody = document.getElementById('admin-table-body');
     if (!db) { tbody.innerHTML = '<tr><td colspan="5">Firebase غير مفعل</td></tr>'; return; }
