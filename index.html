@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nursing Platform</title>
-  <meta name="theme-color" content="#3b82f6">
+  <title> Nursing Platform </title>
   <link rel="stylesheet" href="style.css">
   
   <!-- مكتبات Firebase -->
@@ -19,8 +18,7 @@
       <h2>مرحباً بك يا بطل 🩺</h2>
       <p>من فضلك ادخل اسمك الثلاثي قبل البدء</p>
       <input type="text" id="student-name-input" placeholder="اكتب اسمك هنا..." />
-      <p id="login-error" style="color: #ef4444; font-size: 0.9rem; display: none; margin-top:5px;"></p>
-      <button id="login-btn" class="start-btn" onclick="saveStudentName()">دخول</button>
+      <button class="start-btn" onclick="saveStudentName()">دخول</button>
     </div>
   </div>
 
@@ -29,28 +27,17 @@
     <div class="modal-box">
       <h2>دخول المشرفين 🔒</h2>
       <input type="password" id="admin-password-input" placeholder="كلمة المرور..." />
-      <p id="admin-error" style="color: #ef4444; font-size: 0.9rem; display: none;">كلمة المرور خطأ</p>
-      <div style="display: flex; gap: 10px; justify-content: center;">
+      <div class="modal-buttons">
           <button class="start-btn" onclick="checkAdminPassword()">دخول</button>
-          <button class="start-btn" onclick="closeAdminLogin()" style="background: #64748b;">إلغاء</button>
+          <button class="back-btn" onclick="closeAdminLogin()">إلغاء</button>
       </div>
     </div>
   </div>
 
   <div class="container">
-    
-    <!-- شريط الأخبار -->
-    <div id="news-ticker-bar" class="news-container" style="display:none;">
-        <div class="news-label">تنبيه هام 🔔</div>
-        <div class="news-content">
-            <span id="news-text">جاري التحميل...</span>
-        </div>
-    </div>
-
     <div class="header">
       <div class="header-controls">
           <button id="theme-toggle" class="icon-btn" title="تغيير الوضع">🌙</button>
-          <button onclick="logoutUser()" class="icon-btn" title="تسجيل خروج" style="color:#ef4444; border-color:#ef4444;">🚪</button>
           <button onclick="openDashboard()" class="icon-btn dashboard-icon" title="إحصائياتي">📊</button>
           <button onclick="openAdminLogin()" class="icon-btn admin-icon" title="لوحة المشرفين">👨‍💼</button>
       </div>
@@ -59,140 +46,70 @@
       <p id="welcome-message">أهلاً بك</p>
     </div>
 
-    <!-- التبويبات (القديم ثابت + الجديد ديناميكي) -->
+    <!-- 🔴 التغيير هنا: شلنا الزراير الثابتة وهنسيب الكود يضيفها -->
     <div id="main-nav" class="tab-container">
-      <!-- القديم ثابت -->
-      <button class="tab-btn active" data-static="true" onclick="selectSubject('microbiology')">Microbiology</button>
-      <button class="tab-btn" data-static="true" onclick="selectSubject('fundamental')">Fundamental</button>
-      <button class="tab-btn" data-static="true" onclick="selectSubject('biochemistry')">Biochemistry</button>
-      <button class="tab-btn" data-static="true" onclick="selectSubject('anatomy')">Anatomy</button>
-      <button class="tab-btn" data-static="true" onclick="selectSubject('physiology')">Physiology</button>
-      <button class="tab-btn" data-static="true" onclick="selectSubject('clinical')">Clinical</button>
-      <button class="tab-btn" data-static="true" onclick="selectSubject('ethics')">Ethics</button>
-      <!-- الجديد هيتضاف هنا -->
+        <!-- سيتم توليد أزرار المواد هنا تلقائياً -->
     </div>
     
-    <!-- اختيار المصدر -->
+    <!-- منطقة اختيار المصدر -->
     <div id="source-selection" class="source-container">
-        <!-- القديم ثابت -->
-        <div class="source-card" data-static="true" onclick="loadQuizSource('bank')">
+        <div class="source-card" onclick="loadQuizSource('bank')">
             <h3>📚 بنك الأسئلة</h3>
             <p>أسئلة البنك الشاملة للمادة</p>
         </div>
-        <div class="source-card doctor-card" data-static="true" onclick="loadQuizSource('doctor')">
+        <div class="source-card doctor-card" onclick="loadQuizSource('doctor')">
             <h3>👨‍⚕️ كويزات الدكتور</h3>
             <p>الأسئلة الخاصة بمحاضرات الدكتور</p>
         </div>
-        <!-- الجديد هيتضاف هنا -->
     </div>
 
-    <!-- عرض الكروت -->
-    <div id="quiz-list-area" style="display:none;">
-        <button class="start-btn" onclick="backToSources()" style="width: auto; margin-bottom: 20px; background: #64748b;">← تغيير المصدر</button>
+    <!-- منطقة عرض الكروت -->
+    <div id="quiz-list-area" class="tab-content active" style="display:none;">
+        <button class="back-btn" onclick="backToSources()">← تغيير المصدر</button>
         <div id="dynamic-cards-container" class="cards-grid"></div>
     </div>
 
-    <!-- لوحة الطالب -->
-    <div id="dashboard-view" style="display:none;">
+    <!-- لوحة تحكم الطالب -->
+    <div id="dashboard-view" class="dashboard-view" style="display:none;">
         <h2 class="quiz-title">إحصائياتي الشخصية 🚀</h2>
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-info"><span id="total-quizzes-taken">0</span><p>كويزات</p></div></div>
-            <div class="stat-card"><div class="stat-info"><span id="total-accuracy">0%</span><p>الدقة</p></div></div>
+            <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-info"><span id="total-quizzes-taken">0</span><p>كويزات</p></div></div>
+            <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-info"><span id="total-accuracy">0%</span><p>الدقة</p></div></div>
+            <div class="stat-card"><div class="stat-icon">🔄</div><div class="stat-info"><span id="total-attempts">0</span><p>محاولات</p></div></div>
         </div>
+        <h3 style="margin-top:30px;">سجلي الخاص</h3>
         <div class="history-table-container">
-            <table style="width:100%">
+            <table id="history-table">
+                <thead><tr><th>الامتحان</th><th>أعلى درجة</th><th>آخر درجة</th><th>عدد المحاولات</th></tr></thead>
                 <tbody id="history-table-body"></tbody>
             </table>
         </div>
-        <button class="start-btn" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
+        <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- لوحة الأدمن -->
-    <div id="admin-dashboard-view" style="display:none;">
+    <!-- لوحة تحكم الأدمن -->
+    <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف</h2>
-            <button class="start-btn" onclick="closeAdminDashboard()" style="background:#ef4444; width:auto;">خروج</button>
+            <button class="start-btn" onclick="exportToExcel()" style="background:#22c55e; min-width:150px;">📥 تحميل Excel</button>
+        </div>
+        
+        <div class="filter-container" style="margin: 20px 0;">
+             <input type="text" id="admin-search" placeholder="ابحث باسم الطالب..." onkeyup="filterAdminTable()" style="padding: 10px; width: 100%;">
         </div>
 
-        <!-- 1. إعدادات الأقسام والمصادر -->
-        <div class="admin-section" style="border-color: #3b82f6;">
-            <h3 style="color:var(--primary-color); margin-top:0;">⚙️ إعدادات الأقسام والمصادر</h3>
-            
-            <!-- إضافة مادة -->
-            <div style="margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
-                <label style="font-weight:bold;">إضافة مادة جديدة:</label>
-                <div style="display:flex; gap:10px; margin-top:5px;">
-                    <input type="text" id="new-subject-name" class="admin-input" style="margin:0;" placeholder="اسم المادة (مثال: Pathology)">
-                    <button class="start-btn" onclick="addNewSubject()" style="width:auto; margin:0; background:#3b82f6;">إضافة</button>
-                </div>
-                <div id="subjects-list" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
-            </div>
-
-            <!-- إضافة مصدر (مع اختيار المادة) -->
-            <div>
-                <label style="font-weight:bold;">إضافة مصدر (كارت) جديد:</label>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:5px;">
-                    <input type="text" id="new-source-name" class="admin-input" style="margin:0;" placeholder="اسم المصدر (مثال: مراجعة)">
-                    <select id="new-source-target-subject" class="admin-input" style="margin:0;">
-                        <option value="all">لكل المواد (عام)</option>
-                    </select>
-                </div>
-                <button class="start-btn" onclick="addNewSource()" style="width:100%; margin-top:10px; background:#6366f1;">إضافة المصدر</button>
-                <div id="sources-list" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:10px;"></div>
-            </div>
-        </div>
-
-        <!-- 2. أخبار -->
-        <div class="admin-section" style="border-color: #fcd34d;">
-            <h4 style="margin-top:0; color:#d97706;">📢 تحديث التنبيه</h4>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="admin-news-input" class="admin-input" style="margin:0;" placeholder="اكتب التنبيه هنا...">
-                <button class="start-btn" onclick="updateCloudNews()" style="width:auto; margin:0; background:#d97706;">نشر ☁️</button>
-            </div>
-        </div>
-
-        <!-- 3. إضافة امتحان -->
-        <div class="admin-section" style="border-color: #10b981;">
-            <h3 style="color:#10b981; margin-top:0;">➕ إضافة امتحان جديد</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                <select id="admin-sub-select" class="admin-input"></select>
-                <select id="admin-src-select" class="admin-input"></select>
-            </div>
-            <input type="text" id="admin-quiz-title" class="admin-input" placeholder="عنوان الامتحان">
-            <textarea id="admin-quiz-content" class="admin-input" style="height:150px;" placeholder="انسخ الأسئلة هنا..."></textarea>
-            <button class="start-btn" onclick="addNewQuizFromAdmin()" style="background:#10b981;">حفظ الامتحان ✅</button>
-        </div>
-
-        <!-- 4. حذف -->
-        <h3 style="border-top: 1px solid #ccc; padding-top: 20px;">🗑️ الامتحانات اليدوية</h3>
-        <div id="admin-custom-quizzes-list" class="cards-grid" style="margin-bottom: 30px;"></div>
-
-        <!-- 5. منطقة التحكم في البيانات (زراير الحذف) -->
-        <h3 style="border-top: 1px solid #ccc; padding-top: 20px; color:#ef4444;">⛔ منطقة التحكم في البيانات</h3>
-        <div class="admin-section danger-zone">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <button onclick="deleteAllStudents()" class="start-btn danger-btn">🗑️ حذف جميع الطلاب</button>
-                <button onclick="deleteAllResults()" class="start-btn danger-btn">🗑️ حذف جميع النتائج</button>
-            </div>
-            <p style="color:var(--text-dark); opacity:0.7; font-size:0.8rem; margin-top:10px;">* تحذير: هذه الإجراءات لا يمكن التراجع عنها.</p>
-        </div>
-
-        <!-- 6. نتائج -->
-        <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #ccc; padding-top: 20px;">
-            <h3>📊 نتائج الطلاب الأخيرة</h3>
-            <button onclick="exportToExcel()" class="start-btn" style="width:auto; margin:0; background:#22c55e;">📥 تحميل Excel</button>
-        </div>
         <div class="history-table-container">
             <table id="admin-table">
-                <thead><tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th></tr></thead>
-                <tbody id="admin-table-body"><tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr></tbody>
+                <thead><tr><th>الطالب</th><th>الكويز</th><th>الدرجة</th><th>النسبة</th><th>التاريخ</th></tr></thead>
+                <tbody id="admin-table-body"></tbody>
             </table>
         </div>
+        <button class="start-btn go-back" onclick="closeAdminDashboard()" style="margin-top:20px; background:#ef4444;">خروج</button>
     </div>
 
     <!-- منطقة الاختبار -->
     <div id="quiz-container" class="quiz-container">
-      <button class="start-btn" onclick="backToQuizList()" style="position: absolute; top: 20px; right: 20px; width: auto; background: #64748b; padding: 5px 15px; font-size: 0.8rem;">خروج</button>
+      <button class="back-btn go-back" onclick="backToQuizList()">← خروج</button>
       <div class="quiz-header">
         <h2 id="current-quiz-title" class="quiz-title"></h2>
         <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
@@ -200,7 +117,7 @@
         <div id="quiz-timer">00:00</div>
       </div>
       <div id="question-container"></div>
-      <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+      <div class="quiz-navigation">
         <button id="prev-btn" class="nav-btn" disabled>السابق</button>
         <button id="next-btn" class="nav-btn">التالي</button>
       </div>
@@ -213,14 +130,15 @@
       <p id="score-message"></p>
       <p id="upload-status" style="font-size: 0.9rem; color: gray; margin-top:5px;"></p>
       <button id="review-btn" class="start-btn">مراجعة الإجابات</button>
-      <button class="start-btn" onclick="backToQuizList()" style="margin-top: 10px; background: #64748b;">العودة للقائمة</button>
+      <button class="start-btn go-back" onclick="backToQuizList()">العودة للقائمة</button>
     </div>
 
     <!-- المراجعة -->
     <div id="review-container" class="review-container">
       <h2 class="quiz-title">مراجعة الإجابات</h2>
+      <button class="back-btn" id="back-to-results">← العودة للنتائج</button>
       <div id="review-content"></div>
-      <button class="start-btn" onclick="backToQuizList()">العودة للقائمة</button>
+      <button class="start-btn go-back" onclick="backToQuizList()">العودة للقائمة</button>
     </div>
 
     <div class="footer">
@@ -229,8 +147,7 @@
     </div>
   </div>
 
-  <script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
-
 
