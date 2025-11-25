@@ -32,7 +32,9 @@ let defaultSources = [
     { id: 'doctor', name: '👨‍⚕️ كويزات الدكتور', desc: 'أسئلة المحاضرات' }
 ];
 
-// --- Global State ---
+let dbSubjects = []; 
+let dbSources = [];
+
 let currentStudentName = localStorage.getItem('studentName') || "";
 let currentSubject = subjectsConfig[0].id; 
 let currentSource = ''; 
@@ -44,7 +46,6 @@ let timerInterval = null;
 let secondsRemaining = 0;
 let isTimerDown = false; 
 
-// --- Setup on Load ---
 document.addEventListener("DOMContentLoaded", async () => {
     await fetchDynamicContent();
     generateSubjectTabs();
@@ -76,16 +77,25 @@ async function fetchDynamicContent() {
     if (!db) return;
     try {
         const subsSnap = await db.collection('subjects').get();
+        dbSubjects = []; 
         subsSnap.forEach(doc => {
             const data = doc.data();
+            dbSubjects.push({ docId: doc.id, ...data }); 
             if (!subjectsConfig.find(s => s.id === data.id)) {
                 subjectsConfig.push(data);
             }
         });
+
+        const srcSnap = await db.collection('sources').get();
+        dbSources = [];
+        srcSnap.forEach(doc => {
+            dbSources.push({ docId: doc.id, ...doc.data() });
+        });
+
     } catch (e) { console.error("Error fetching content", e); }
 }
 
-// --- Tabs Generation ---
+// --- Tabs & Navigation ---
 function generateSubjectTabs() {
     const navContainer = document.getElementById('main-nav');
     navContainer.innerHTML = ''; 
@@ -99,7 +109,6 @@ function generateSubjectTabs() {
     if(subjectsConfig.length > 0) selectSubject(currentSubject || subjectsConfig[0].id);
 }
 
-// --- Navigation & Selection ---
 async function selectSubject(subjectId) {
     currentSubject = subjectId;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -117,7 +126,6 @@ async function selectSubject(subjectId) {
         customSrcSnap.forEach(doc => renderSourceCard(doc.data(), sourceContainer));
     }
 
-    // إظهار واجهة اختيار المصدر وإخفاء الباقي
     document.getElementById('source-selection').style.display = 'flex';
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('quiz-container').style.display = 'none';
@@ -134,7 +142,12 @@ function renderSourceCard(src, container) {
     container.appendChild(div);
 }
 
-// --- Load Quizzes ---
+window.backToSources = function() {
+    document.getElementById('quiz-list-area').style.display = 'none';
+    document.getElementById('source-selection').style.display = 'flex';
+};
+
+// --- Load & Render Quizzes ---
 async function loadQuizSource(sourceId, sourceName) {
     currentSource = sourceId;
     document.getElementById('source-selection').style.display = 'none';
@@ -145,7 +158,6 @@ async function loadQuizSource(sourceId, sourceName) {
 
     let allQuizzes = {};
 
-    // 1. ملفات ثابتة
     try {
         const scriptPath = `questions/${currentSubject}/${sourceId}.js`;
         await new Promise((resolve) => {
@@ -161,24 +173,15 @@ async function loadQuizSource(sourceId, sourceName) {
         });
     } catch(e) {}
 
-    // 2. فايربيس
     if (db) {
         const qSnap = await db.collection('quizzes')
             .where('subjectId', '==', currentSubject)
             .where('sourceId', '==', sourceId).get();
         qSnap.forEach(doc => { allQuizzes[doc.id] = doc.data(); });
     }
-
     renderQuizCards(allQuizzes);
 }
 
-// 🔴 الدالة التي كانت مفقودة (تغيير المصدر) 🔴
-window.backToSources = function() {
-    document.getElementById('quiz-list-area').style.display = 'none';
-    document.getElementById('source-selection').style.display = 'flex';
-};
-
-// --- Render Cards ---
 function renderQuizCards(data) {
     const container = document.getElementById('dynamic-cards-container');
     container.innerHTML = '';
@@ -216,7 +219,7 @@ function renderQuizCards(data) {
     currentQuizData = data;
 }
 
-// --- Quiz Logic ---
+// --- Quiz Logic (With Security Update) ---
 function startQuiz(quizKey, quizTitle, timeLimit = 0) {
     const quiz = currentQuizData[quizKey];
     if (!quiz) return;
@@ -232,13 +235,28 @@ function startQuiz(quizKey, quizTitle, timeLimit = 0) {
     
     if (timerInterval) clearInterval(timerInterval);
     
+    // 🔒 نظام تأمين الامتحان 🔒
+    const exitBtn = document.querySelector('#quiz-container .back-btn');
+    
     if (timeLimit > 0) {
+        // لو الامتحان بوقت: إخفاء زر الخروج ومنع إغلاق المتصفح
         isTimerDown = true;
         secondsRemaining = timeLimit * 60;
+        
+        exitBtn.style.display = 'none'; // إخفاء زر الخروج
+        
+        // تحذير عند محاولة إغلاق الصفحة أو عمل Refresh
+        window.onbeforeunload = function() {
+            return "تحذير: الامتحان قيد التشغيل! إذا خرجت الآن ستفقد تقدمك.";
+        };
     } else {
+        // لو امتحان عادي: إظهار الزر والسماح بالخروج
         isTimerDown = false;
         secondsRemaining = 0;
+        exitBtn.style.display = 'block';
+        window.onbeforeunload = null;
     }
+
     updateTimerDisplay();
 
     timerInterval = setInterval(() => {
@@ -258,6 +276,34 @@ function startQuiz(quizKey, quizTitle, timeLimit = 0) {
     updateNavigation();
 }
 
+function finishQuiz(timeOut = false) {
+    clearInterval(timerInterval);
+    
+    // 🔓 فك تأمين الامتحان 🔓
+    window.onbeforeunload = null; // إلغاء التحذير
+    
+    let score = userAnswers.filter(a => a && a.isCorrect).length;
+    
+    const historyKey = `${currentSubject}_${currentSource}_${window.currentQuizKey}`;
+    const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
+    let entry = historyData[historyKey] || { score: 0, total: currentQuiz.length, highestScore: 0, attempts: 0, title: window.currentQuizTitle };
+    entry.score = score;
+    entry.total = currentQuiz.length;
+    entry.title = window.currentQuizTitle;
+    entry.attempts = (entry.attempts || 0) + 1;
+    entry.highestScore = Math.max(entry.highestScore || 0, score);
+    
+    historyData[historyKey] = entry;
+    localStorage.setItem('quizHistory', JSON.stringify(historyData));
+    saveScoreToFirebase(score, currentQuiz.length);
+
+    document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
+    document.getElementById("score-message").textContent = timeOut ? "⏰ انتهى الوقت!" : (score === currentQuiz.length ? "ممتاز! 🌟" : "جيد، حاول مرة أخرى");
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+}
+
+// --- Helper Functions ---
 function updateTimerDisplay() {
     const m = Math.floor(secondsRemaining / 60).toString().padStart(2, '0');
     const s = (secondsRemaining % 60).toString().padStart(2, '0');
@@ -273,7 +319,6 @@ function updateTimerDisplay() {
     }
 }
 
-// --- Display Questions ---
 function displayQuestion() {
     const qData = currentQuiz[currentQuestionIndex];
     const container = document.getElementById("question-container");
@@ -335,51 +380,6 @@ function updateNavigation() {
     document.getElementById("next-btn").textContent = currentQuestionIndex === currentQuiz.length - 1 ? "إنهاء" : "التالي";
 }
 
-function finishQuiz(timeOut = false) {
-    clearInterval(timerInterval);
-    let score = userAnswers.filter(a => a && a.isCorrect).length;
-    
-    const historyKey = `${currentSubject}_${currentSource}_${window.currentQuizKey}`;
-    const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
-    let entry = historyData[historyKey] || { score: 0, total: currentQuiz.length, highestScore: 0, attempts: 0, title: window.currentQuizTitle };
-    entry.score = score;
-    entry.total = currentQuiz.length;
-    entry.title = window.currentQuizTitle;
-    entry.attempts = (entry.attempts || 0) + 1;
-    entry.highestScore = Math.max(entry.highestScore || 0, score);
-    
-    historyData[historyKey] = entry;
-    localStorage.setItem('quizHistory', JSON.stringify(historyData));
-    saveScoreToFirebase(score, currentQuiz.length);
-
-    document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
-    document.getElementById("score-message").textContent = timeOut ? "⏰ انتهى الوقت!" : (score === currentQuiz.length ? "ممتاز! 🌟" : "جيد، حاول مرة أخرى");
-    document.getElementById('quiz-container').style.display = 'none';
-    document.getElementById('results').style.display = 'block';
-}
-
-function showReview() {
-    const container = document.getElementById("review-content");
-    container.innerHTML = '';
-    currentQuiz.forEach((q, i) => {
-        const uAns = userAnswers[i];
-        const isCorrect = uAns && uAns.isCorrect;
-        let correctText = q.type === 'tf' ? (q.a ? 'True' : 'False') : q.options[q.a];
-        let userText = uAns ? (q.type === 'tf' ? (uAns.answer ? 'True' : 'False') : q.options[uAns.answer]) : 'لم يجب';
-        
-        container.innerHTML += `
-            <div class="review-question">
-                <div class="question-number">س ${i+1}</div>
-                <div class="question-text">${q.q}</div>
-                <div class="review-option ${isCorrect ? 'correct' : 'user-incorrect'}">إجابتك: ${userText}</div>
-                ${!isCorrect ? `<div class="review-option correct">الصحيح: ${correctText}</div>` : ''}
-                ${q.explanation ? `<div class="explanation-box">💡 ${q.explanation}</div>` : ''}
-            </div>`;
-    });
-    document.getElementById('results').style.display = 'none';
-    document.getElementById('review-container').style.display = 'block';
-}
-
 function backToQuizList() {
     clearInterval(timerInterval);
     document.getElementById('quiz-container').style.display = 'none';
@@ -387,9 +387,10 @@ function backToQuizList() {
     document.getElementById('review-container').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'block';
     if (currentQuizData) renderQuizCards(currentQuizData);
+    window.onbeforeunload = null;
 }
 
-// --- Auth & User ---
+// --- Auth & Admin Utils ---
 function saveStudentName() {
     const nameInput = document.getElementById('student-name-input');
     const errorMsg = document.getElementById('login-error');
@@ -432,6 +433,27 @@ function saveScoreToFirebase(score, total) {
     }).then(() => document.getElementById('upload-status').textContent = "✅ تم الحفظ");
 }
 
+function showReview() {
+    const container = document.getElementById("review-content");
+    container.innerHTML = '';
+    currentQuiz.forEach((q, i) => {
+        const uAns = userAnswers[i];
+        const isCorrect = uAns && uAns.isCorrect;
+        let correctText = q.type === 'tf' ? (q.a ? 'True' : 'False') : q.options[q.a];
+        let userText = uAns ? (q.type === 'tf' ? (uAns.answer ? 'True' : 'False') : q.options[uAns.answer]) : 'لم يجب';
+        container.innerHTML += `
+            <div class="review-question">
+                <div class="question-number">س ${i+1}</div>
+                <div class="question-text">${q.q}</div>
+                <div class="review-option ${isCorrect ? 'correct' : 'user-incorrect'}">إجابتك: ${userText}</div>
+                ${!isCorrect ? `<div class="review-option correct">الصحيح: ${correctText}</div>` : ''}
+                ${q.explanation ? `<div class="explanation-box">💡 ${q.explanation}</div>` : ''}
+            </div>`;
+    });
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('review-container').style.display = 'block';
+}
+
 function toggleTheme() {
     document.body.classList.toggle('dark-mode');
     localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
@@ -445,17 +467,13 @@ function shuffleArray(array) {
     return array;
 }
 
-// ==========================================
-// 🔥 ADMIN PANEL LOGIC 🔥
-// ==========================================
-
-// --- Toggle Views ---
+// --- Admin Panel Logic ---
 window.openDashboard = function() {
     document.getElementById('main-nav').style.display = 'none';
     document.getElementById('source-selection').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('dashboard-view').style.display = 'block';
-    // Render Stats...
+    
     const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
     let tQ=0, tA=0, tS=0, tP=0;
     const tbody = document.getElementById('history-table-body');
@@ -492,7 +510,6 @@ window.closeAdminDashboard = function() {
     selectSubject(currentSubject);
 };
 
-// --- Admin Tabs ---
 window.switchAdminTab = function(tabName) {
     document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
     document.getElementById(`admin-tab-${tabName}`).style.display = 'block';
@@ -506,7 +523,6 @@ window.toggleTimeInput = function(show) {
     document.getElementById('time-limit-input-container').style.display = show ? 'block' : 'none';
 };
 
-// --- Add Content ---
 window.addNewSubject = async function() {
     const name = document.getElementById('new-subject-name').value;
     const id = document.getElementById('new-subject-id').value;
@@ -565,9 +581,7 @@ function parseQuestionsFromText(text) {
     return questions;
 }
 
-// --- Admin Delete & Fetch ---
-let dbSubjects = []; let dbSources = [];
-
+// 🔴 تحديث قائمة الحذف لإصلاح مشكلة undefined 🔴
 window.updateDeleteDropdown = async function() {
     const type = document.getElementById('delete-type-select').value;
     const itemSelect = document.getElementById('delete-item-select');
@@ -581,7 +595,7 @@ window.updateDeleteDropdown = async function() {
         if(dbSubjects.length === 0) itemSelect.innerHTML = '<option>لا توجد مواد مضافة</option>';
     } 
     else if (type === 'source') {
-        dbSources.forEach(src => { itemSelect.innerHTML += `<option value="${src.docId}">${src.name} (${src.subjectId})</option>`; });
+        dbSources.forEach(src => { itemSelect.innerHTML += `<option value="${src.docId}">${src.name}</option>`; });
         if(dbSources.length === 0) itemSelect.innerHTML = '<option>لا توجد مصادر مضافة</option>';
     }
     else if (type === 'quiz') {
@@ -590,7 +604,12 @@ window.updateDeleteDropdown = async function() {
             const snaps = await db.collection('quizzes').get();
             itemSelect.innerHTML = '';
             if(snaps.empty) { itemSelect.innerHTML = '<option>لا توجد كويزات</option>'; return; }
-            snaps.forEach(doc => { const q = doc.data(); itemSelect.innerHTML += `<option value="${doc.id}">${q.title} (${q.subjectId})</option>`; });
+            snaps.forEach(doc => { 
+                const q = doc.data(); 
+                // هنا الإصلاح: لو مفيش subjectId نكتب "عام" بدل undefined
+                const subName = q.subjectId || 'عام';
+                itemSelect.innerHTML += `<option value="${doc.id}">${q.title} (${subName})</option>`; 
+            });
         }
     }
 };
@@ -637,7 +656,6 @@ window.updateSourceSelect = async function() {
     }
 };
 
-// --- Legacy Admin Actions ---
 window.adminResetAllResults = function() { if(confirm("حذف الكل؟") && db) db.collection("exam_results").get().then(s => { const b=db.batch(); s.docs.forEach(d=>b.delete(d.ref)); b.commit(); }).then(()=>alert("تم")); };
 window.adminDeleteAllUsers = function() { if(confirm("حذف المستخدمين؟") && db) db.collection("users").get().then(s => { const b=db.batch(); s.docs.forEach(d=>b.delete(d.ref)); b.commit(); }).then(()=>alert("تم")); };
 window.exportToExcel = function() { const t=document.getElementById("admin-table"); let c="\uFEFF"; t.querySelectorAll("tr").forEach(r=>{ let d=[]; r.querySelectorAll("th,td").forEach(k=>d.push(`"${k.innerText}"`)); c+=d.join(",")+ "\n"; }); const l=document.createElement("a"); l.href=URL.createObjectURL(new Blob([c],{type:"text/csv"})); l.download="Results.csv"; l.click(); };
