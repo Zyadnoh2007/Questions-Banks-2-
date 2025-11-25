@@ -207,3 +207,19 @@ tr:hover { background-color: #f1f5f9; }
   .quiz-container .back-btn, #quiz-timer { position: static; width: 100%; max-width: 200px; margin: 10px auto; text-align: center; } 
   #quiz-timer { order: -1; } 
             }
+.tag-item {
+    display: inline-block;
+    background: #eff6ff;
+    border: 1px solid #3b82f6;
+    color: #1e293b;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    margin: 2px;
+    transition: 0.2s;
+}
+.tag-item:hover { background: #dbeafe; }
+body.dark-mode .tag-item {
+    background: #1e293b;
+    color: #e2e8f0;
+} 
