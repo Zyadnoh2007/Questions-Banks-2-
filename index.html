@@ -6,7 +6,6 @@
   <title> Nursing Platform </title>
   <link rel="stylesheet" href="style.css">
   
-  <!-- مكتبات Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
@@ -48,20 +47,16 @@
       <p id="welcome-message">أهلاً بك</p>
     </div>
 
-    <!-- التبويبات -->
+    <!-- المحتوى الرئيسي -->
     <div id="main-nav" class="tab-container"></div>
-    
-    <!-- منطقة اختيار المصدر -->
     <div id="source-selection" class="source-container"></div>
-
-    <!-- منطقة عرض الكروت -->
     <div id="quiz-list-area" class="tab-content active" style="display:none;">
         <button class="back-btn" onclick="backToSources()">← تغيير المصدر</button>
         <h3 id="source-title-display" style="text-align:center; color:var(--primary-color);"></h3>
         <div id="dynamic-cards-container" class="cards-grid"></div>
     </div>
 
-    <!-- لوحة تحكم الطالب -->
+    <!-- لوحة الطالب -->
     <div id="dashboard-view" class="dashboard-view" style="display:none;">
         <h2 class="quiz-title">إحصائياتي الشخصية 🚀</h2>
         <div class="stats-grid">
@@ -78,7 +73,7 @@
         <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- لوحة تحكم الأدمن -->
+    <!-- 🔥 لوحة تحكم الأدمن 🔥 -->
     <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; margin-bottom:20px;">
             <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة التحكم الشاملة</h2>
@@ -95,19 +90,23 @@
         <div id="admin-tab-results" class="admin-tab-content">
             <div class="filter-container" style="display:flex; gap:10px; margin-bottom:15px;">
                 <input type="text" id="admin-search" placeholder="ابحث باسم الطالب..." onkeyup="filterAdminTable()" style="padding: 10px; flex-grow:1; border:1px solid #ccc; border-radius:8px;">
+                <button class="start-btn" onclick="fetchAdminData()" style="background:#3b82f6; width:auto;">🔄 تحديث</button>
                 <button class="start-btn" onclick="exportToExcel()" style="background:#22c55e; width:auto;">📥 Excel</button>
             </div>
             <div class="history-table-container">
                 <table id="admin-table">
-                    <thead><tr><th>الطالب</th><th>الكويز</th><th>الدرجة</th><th>النسبة</th><th>التاريخ</th></tr></thead>
-                    <tbody id="admin-table-body"></tbody>
+                    <thead><tr><th>الطالب</th><th>المادة</th><th>الكويز</th><th>الدرجة</th><th>التاريخ</th></tr></thead>
+                    <tbody id="admin-table-body">
+                        <tr><td colspan="5" style="text-align:center">اضغط تحديث لجلب النتائج...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 2. إدارة المحتوى -->
+        <!-- 2. إدارة المحتوى (إضافة وحذف) -->
         <div id="admin-tab-content" class="admin-tab-content" style="display:none;">
             
+            <!-- إضافة مادة -->
             <div class="review-question" style="background:white; border-color:var(--primary-color);">
                 <h3>1. إضافة مادة جديدة (Tab)</h3>
                 <div style="display:flex; gap:10px;">
@@ -117,51 +116,69 @@
                 </div>
             </div>
 
+            <!-- إضافة مصدر -->
             <div class="review-question" style="background:white; border-color:var(--secondary-color);">
                 <h3>2. إضافة مصدر جديد (Card)</h3>
                 <div style="display:flex; gap:10px; flex-direction:column;">
                     <select id="source-subject-select" style="padding:10px;"></select>
                     <div style="display:flex; gap:10px;">
-                        <input type="text" id="new-source-name" placeholder="اسم المصدر (مثال: شيتات، مراجعة)..." style="padding:10px; flex-grow:1;">
+                        <input type="text" id="new-source-name" placeholder="اسم المصدر (شيتات...)" style="padding:10px; flex-grow:1;">
                         <input type="text" id="new-source-id" placeholder="ID (English)..." style="padding:10px; width:150px;">
                         <button class="start-btn" onclick="addNewSource()" style="width:auto;">➕ إضافة</button>
                     </div>
                 </div>
             </div>
 
-            <!-- إضافة امتحان جديد (التعديل هنا لاختيار نوع الوقت) -->
+            <!-- إضافة امتحان -->
             <div class="review-question" style="background:white; border-color:#22c55e;">
-                <h3>3. إضافة امتحان جديد (مع التحليل الذكي 🧠)</h3>
+                <h3>3. إضافة امتحان جديد 🧠</h3>
                 <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
                     <select id="exam-subject-select" onchange="updateSourceSelect()" style="padding:10px; flex-grow:1;"></select>
                     <select id="exam-source-select" style="padding:10px; flex-grow:1;"></select>
                 </div>
-                <input type="text" id="new-exam-title" placeholder="عنوان الامتحان (مثال: كويز الأسبوع الأول)" style="padding:10px; width:100%; margin-bottom:10px;">
+                <input type="text" id="new-exam-title" placeholder="عنوان الامتحان..." style="padding:10px; width:100%; margin-bottom:10px;">
                 
-                <!-- خيارات الوقت -->
-                <div style="background:#f0f9ff; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #bae6fd;">
-                    <label style="font-weight:bold; color:var(--text-dark); display:block; margin-bottom:5px;">نوع التوقيت:</label>
+                <!-- 🔴 تم تعديل هذا الجزء لحل مشكلة الدارك مود 🔴 -->
+                <div class="timer-box">
+                    <label style="font-weight:bold; display:block; margin-bottom:5px;">نوع التوقيت:</label>
                     <div style="display:flex; gap:20px; align-items:center;">
                         <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
                             <input type="radio" name="timerType" value="open" checked onclick="toggleTimeInput(false)"> 
-                            ⏱️ عداد مفتوح (تصاعدي)
+                            ⏱️ مفتوح
                         </label>
                         <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
                             <input type="radio" name="timerType" value="limit" onclick="toggleTimeInput(true)"> 
-                            ⏳ وقت محدد (تنازلي)
+                            ⏳ وقت محدد
                         </label>
                     </div>
-                    <!-- حقل الدقائق (مخفي افتراضياً) -->
                     <div id="time-limit-input-container" style="display:none; margin-top:10px;">
                         <input type="number" id="new-exam-time" placeholder="المدة بالدقائق" style="padding:8px; width:150px;">
                     </div>
                 </div>
                 
-                <p style="font-size:0.9rem; color:gray;">انسخ الأسئلة من الوورد أو PDF والصقها هنا.</p>
-                <textarea id="raw-exam-text" rows="10" placeholder="س: ما هو....&#10;أ) اجابة 1&#10;ب) اجابة 2&#10;*ج) الاجابة الصحيحة (ضع نجمة قبل الصحيحة)&#10;..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"></textarea>
-                
-                <button class="start-btn" onclick="parseAndSaveExam()" style="margin-top:10px; background:#22c55e;">💾 تحليل وحفظ الامتحان</button>
+                <textarea id="raw-exam-text" rows="8" placeholder="س: السؤال...&#10;أ) خيار 1&#10;*ب) خيار صحيح&#10;..." style="width:100%; padding:10px;"></textarea>
+                <button class="start-btn" onclick="parseAndSaveExam()" style="margin-top:10px; background:#22c55e;">💾 حفظ الامتحان</button>
                 <p id="parse-status" style="margin-top:5px; font-weight:bold;"></p>
+            </div>
+
+            <!-- 🔴 قسم الحذف الجديد 🔴 -->
+            <div class="delete-section">
+                <h3>4. 🗑️ حذف المحتوى</h3>
+                <div class="delete-controls">
+                    <select id="delete-type-select" onchange="updateDeleteDropdown()" style="padding:10px; border-radius:8px;">
+                        <option value="none">-- اختر ماذا تريد أن تحذف --</option>
+                        <option value="subject">حذف مادة (Tab)</option>
+                        <option value="source">حذف مصدر (Card)</option>
+                        <option value="quiz">حذف امتحان (Quiz)</option>
+                    </select>
+                    
+                    <select id="delete-item-select" style="padding:10px; border-radius:8px; flex-grow:1; display:none;">
+                        <!-- يتم ملؤه تلقائياً -->
+                    </select>
+                    
+                    <button class="btn-danger" onclick="deleteSelectedItem()">تأكيد الحذف</button>
+                </div>
+                <p style="font-size:0.8rem; margin-top:5px; color:#b91c1c;">* تحذير: الحذف نهائي ولا يمكن التراجع عنه.</p>
             </div>
         </div>
 
@@ -169,7 +186,6 @@
         <div id="admin-tab-settings" class="admin-tab-content" style="display:none;">
             <div class="admin-danger-zone" style="background: #fee2e2; padding: 20px; border-radius: 10px; border: 1px solid #ef4444; text-align:center;">
                 <h3 style="color:#b91c1c;">⚠️ منطقة الخطر</h3>
-                <p>هذه الإجراءات لا يمكن التراجع عنها!</p>
                 <div style="display:flex; gap:20px; justify-content:center; margin-top:20px;">
                     <button onclick="adminResetAllResults()" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">🗑️ حذف جميع النتائج</button>
                     <button onclick="adminDeleteAllUsers()" style="background:#b91c1c; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">👥 حذف جميع المستخدمين</button>
@@ -178,7 +194,7 @@
         </div>
     </div>
 
-    <!-- منطقة الاختبار -->
+    <!-- باقي العناصر (الامتحان والنتائج) زي ما هي -->
     <div id="quiz-container" class="quiz-container">
       <button class="back-btn go-back" onclick="backToQuizList()">← خروج</button>
       <div class="quiz-header">
@@ -194,7 +210,6 @@
       </div>
     </div>
 
-    <!-- النتائج -->
     <div id="results" class="quiz-container results">
       <h3>انتهى الاختبار!</h3>
       <div id="final-score" class="score"></div>
@@ -204,7 +219,6 @@
       <button class="start-btn go-back" onclick="backToQuizList()">العودة للقائمة</button>
     </div>
 
-    <!-- المراجعة -->
     <div id="review-container" class="review-container">
       <h2 class="quiz-title">مراجعة الإجابات</h2>
       <button class="back-btn" id="back-to-results">← العودة للنتائج</button>
