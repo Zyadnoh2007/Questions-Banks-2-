@@ -18,6 +18,26 @@ try {
 }
 
 // --- Global State ---
+const defaultSubjects = [
+    { id: 'microbiology', name: 'Microbiology' },
+    { id: 'fundamental', name: 'Fundamental' },
+    { id: 'biochemistry', name: 'Biochemistry' },
+    { id: 'anatomy', name: 'Anatomy' },
+    { id: 'physiology', name: 'Physiology' },
+    { id: 'clinical', name: 'Clinical' },
+    { id: 'ethics', name: 'Ethics' }
+];
+
+const defaultSources = [
+    { id: 'bank', name: '📚 بنك الأسئلة' },
+    { id: 'doctor', name: '👨‍⚕️ كويزات الدكتور' }
+];
+
+let appConfig = {
+    subjects: JSON.parse(localStorage.getItem('custom_subjects_list')) || [],
+    sources: JSON.parse(localStorage.getItem('custom_sources_list')) || []
+};
+
 let currentStudentName = localStorage.getItem('studentName') || "";
 let currentSubject = 'microbiology';
 let currentSource = '';
@@ -26,25 +46,16 @@ let currentQuiz = [];
 let currentQuestionIndex = 0;
 let userAnswers = [];
 let timerInterval = null;
-let secondsElapsed = 0;
 let loadedScripts = {};
 
-// تخزين المواد والمصادر المضافة يدوياً فقط (Custom Only)
-let customConfig = {
-    subjects: JSON.parse(localStorage.getItem('custom_subjects_list')) || [],
-    sources: JSON.parse(localStorage.getItem('custom_sources_list')) || []
-};
-
-// 🟢🟢 دوال الدخول (في البداية) 🟢🟢
+// 🟢🟢 دوال الدخول 🟢🟢
 window.saveStudentName = async function() {
     const nameInput = document.getElementById('student-name-input').value.trim();
     const errorMsg = document.getElementById('login-error');
     const btn = document.getElementById('login-btn');
 
     if (nameInput.length < 3) {
-        errorMsg.textContent = "الاسم قصير جداً";
-        errorMsg.style.display = "block";
-        return;
+        errorMsg.textContent = "الاسم قصير جداً"; errorMsg.style.display = "block"; return;
     }
 
     if (!db) { completeLogin(nameInput); return; }
@@ -60,16 +71,11 @@ window.saveStudentName = async function() {
             if (localStorage.getItem('studentName') === nameInput) {
                 completeLogin(nameInput); 
             } else {
-                errorMsg.textContent = "هذا الاسم مستخدم بالفعل";
-                errorMsg.style.display = "block";
-                btn.textContent = "دخول";
-                btn.disabled = false;
+                errorMsg.textContent = "هذا الاسم مستخدم بالفعل"; errorMsg.style.display = "block";
+                btn.textContent = "دخول"; btn.disabled = false;
             }
         } else {
-            await userRef.set({
-                name: nameInput,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            await userRef.set({ name: nameInput, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
             completeLogin(nameInput);
         }
     } catch (error) {
@@ -96,7 +102,6 @@ window.logoutUser = function() {
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. رسم الواجهة (إضافة العناصر الجديدة)
     renderAppUI();
 
     if (!currentStudentName) {
@@ -120,20 +125,17 @@ document.addEventListener("DOMContentLoaded", () => {
     hideAllViews();
     document.getElementById('main-nav').style.display = 'flex';
     selectSubject('microbiology');
-    
     listenToCloudNews();
 });
 
-// --- 🛠️ دوال الواجهة (الدمج: ثابت + ديناميكي) ---
+// --- 🛠️ الواجهة الديناميكية ---
 function renderAppUI() {
     const navContainer = document.getElementById('main-nav');
     const srcContainer = document.getElementById('source-selection');
 
-    // إزالة أي عناصر ديناميكية قديمة لمنع التكرار
     document.querySelectorAll('.dynamic-item').forEach(e => e.remove());
 
-    // 1. إضافة المواد الجديدة جنب القديمة
-    customConfig.subjects.forEach(sub => {
+    appConfig.subjects.forEach(sub => {
         const btn = document.createElement('button');
         btn.className = `tab-btn dynamic-item ${sub.id === currentSubject ? 'active' : ''}`;
         btn.textContent = sub.name;
@@ -141,8 +143,7 @@ function renderAppUI() {
         navContainer.appendChild(btn);
     });
 
-    // 2. إضافة المصادر الجديدة جنب القديمة
-    customConfig.sources.forEach(src => {
+    appConfig.sources.forEach(src => {
         const div = document.createElement('div');
         div.className = 'source-card dynamic-item';
         div.onclick = () => loadQuizSource(src.id);
@@ -150,35 +151,14 @@ function renderAppUI() {
         srcContainer.appendChild(div);
     });
 
-    // 3. تحديث قوائم الأدمن (لتشمل الكل)
     updateAdminSelects();
     renderSettingsLists();
 }
 
 function updateAdminSelects() {
-    // تجميع كل المواد (من الـ HTML ومن الذاكرة)
-    const allSubjects = [];
-    
-    // 1. المواد الثابتة (من DOM)
-    document.querySelectorAll('#main-nav .tab-btn:not(.dynamic-item)').forEach(btn => {
-        // نحاول نطلع الـ ID من دالة onclick
-        const onclickText = btn.getAttribute('onclick');
-        if(onclickText) {
-            const match = onclickText.match(/'([^']+)'/);
-            if(match) allSubjects.push({ id: match[1], name: btn.textContent });
-        }
-    });
-    // 2. المواد الديناميكية
-    customConfig.subjects.forEach(s => allSubjects.push(s));
+    const allSubjects = defaultSubjects.concat(appConfig.subjects);
+    const allSources = defaultSources.concat(appConfig.sources);
 
-    // تجميع المصادر
-    const allSources = [
-        {id:'bank', name:'بنك الأسئلة'},
-        {id:'doctor', name:'كويزات الدكتور'}
-    ];
-    customConfig.sources.forEach(s => allSources.push(s));
-
-    // تعبئة القوائم
     const subSelect = document.getElementById('admin-sub-select');
     const srcSelect = document.getElementById('admin-src-select');
     
@@ -186,21 +166,19 @@ function updateAdminSelects() {
     if(srcSelect) srcSelect.innerHTML = allSources.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 }
 
-// --- ⚙️ إعدادات الأدمن (إضافة/حذف) ---
+// --- ⚙️ إضافة المواد والمصادر (منفصلة) ---
 window.addNewSubject = function() {
     const name = document.getElementById('new-subject-name').value.trim();
     if(!name) return alert('اكتب اسم المادة');
     const id = name.toLowerCase().replace(/\s+/g, '_');
     
-    // تحقق من التكرار
-    const exists = Array.from(document.querySelectorAll('#main-nav .tab-btn')).some(b => b.textContent === name);
-    if(exists) return alert('موجود بالفعل');
+    if(defaultSubjects.some(s => s.id === id) || appConfig.subjects.some(s => s.id === id)) return alert('موجود بالفعل');
 
-    customConfig.subjects.push({ id, name });
-    localStorage.setItem('custom_subjects_list', JSON.stringify(customConfig.subjects));
+    appConfig.subjects.push({ id, name });
+    localStorage.setItem('custom_subjects_list', JSON.stringify(appConfig.subjects));
     document.getElementById('new-subject-name').value = '';
     renderAppUI();
-    alert('تمت الإضافة ✅');
+    alert('تم إضافة المادة ✅');
 };
 
 window.addNewSource = function() {
@@ -208,25 +186,24 @@ window.addNewSource = function() {
     if(!name) return alert('اكتب اسم المصدر');
     const id = name.toLowerCase().replace(/\s+/g, '_');
 
-    if(id === 'bank' || id === 'doctor' || customConfig.sources.some(s => s.id === id)) return alert('موجود بالفعل');
+    if(defaultSources.some(s => s.id === id) || appConfig.sources.some(s => s.id === id)) return alert('موجود بالفعل');
 
-    customConfig.sources.push({ id, name });
-    localStorage.setItem('custom_sources_list', JSON.stringify(customConfig.sources));
+    appConfig.sources.push({ id, name });
+    localStorage.setItem('custom_sources_list', JSON.stringify(appConfig.sources));
     document.getElementById('new-source-name').value = '';
     renderAppUI();
-    alert('تمت الإضافة ✅');
+    alert('تم إضافة المصدر ✅');
 };
 
 function renderSettingsLists() {
     const subList = document.getElementById('subjects-list');
     const srcList = document.getElementById('sources-list');
     
-    // عرض القابلة للحذف فقط (الجديدة)
-    subList.innerHTML = customConfig.subjects.map(s => 
+    subList.innerHTML = appConfig.subjects.map(s => 
         `<span class="tag-item">${s.name} <b onclick="deleteItem('subject', '${s.id}')" style="color:red; cursor:pointer;">×</b></span>`
     ).join('');
 
-    srcList.innerHTML = customConfig.sources.map(s => 
+    srcList.innerHTML = appConfig.sources.map(s => 
         `<span class="tag-item">${s.name} <b onclick="deleteItem('source', '${s.id}')" style="color:red; cursor:pointer;">×</b></span>`
     ).join('');
 }
@@ -234,74 +211,62 @@ function renderSettingsLists() {
 window.deleteItem = function(type, id) {
     if(!confirm('حذف هذا العنصر؟')) return;
     if(type === 'subject') {
-        customConfig.subjects = customConfig.subjects.filter(s => s.id !== id);
-        localStorage.setItem('custom_subjects_list', JSON.stringify(customConfig.subjects));
+        appConfig.subjects = appConfig.subjects.filter(s => s.id !== id);
+        localStorage.setItem('custom_subjects_list', JSON.stringify(appConfig.subjects));
     } else {
-        customConfig.sources = customConfig.sources.filter(s => s.id !== id);
-        localStorage.setItem('custom_sources_list', JSON.stringify(customConfig.sources));
+        appConfig.sources = appConfig.sources.filter(s => s.id !== id);
+        localStorage.setItem('custom_sources_list', JSON.stringify(appConfig.sources));
     }
     renderAppUI();
 };
 
-// --- التحميل الهجين (Hybrid Load) ---
-window.loadQuizSource = function(source) {
-    currentSource = source;
-    hideAllViews();
-    document.getElementById('quiz-list-area').style.display = 'block';
-    const container = document.getElementById('dynamic-cards-container');
-    container.innerHTML = '<p style="text-align:center;">جاري البحث عن الامتحانات...</p>';
-
-    const scriptPath = `questions/${currentSubject}/${source}.js`;
-    let fileQuizzes = {};
+// --- ⛔ حذف البيانات (Danger Zone) ---
+window.deleteAllStudents = async function() {
+    if(!db) return alert("يجب توفر انترنت");
+    if(!confirm("هل أنت متأكد تماماً؟ سيتم حذف جميع حسابات الطلاب ولن يتمكنوا من الدخول إلا بتسجيل جديد.")) return;
     
-    // فلترة الامتحانات المضافة يدوياً حسب المادة والمصدر
-    const customAll = JSON.parse(localStorage.getItem('custom_quizzes') || '[]');
-    const customFiltered = customAll.filter(q => q.subject === currentSubject && q.source === currentSource);
+    const promptPass = prompt("للتأكيد، اكتب كلمة السر الخاصة بالأدمن:");
+    if(promptPass !== "admin123") return alert("كلمة المرور خطأ");
 
-    loadScript(scriptPath, () => {
-        const dataVar = `${currentSubject}_${source}_data`;
-        if(window[dataVar]) fileQuizzes = window[dataVar];
-        renderCombinedQuizzes(fileQuizzes, customFiltered);
-    }, () => {
-        renderCombinedQuizzes({}, customFiltered);
-    });
+    try {
+        const snapshot = await db.collection('users').get();
+        if(snapshot.empty) return alert("لا يوجد طلاب لحذفهم");
+        
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        alert("تم حذف جميع الطلاب بنجاح 🗑️");
+    } catch(e) {
+        alert("حدث خطأ: " + e.message);
+    }
 };
 
-function renderCombinedQuizzes(fileData, customList) {
-    const container = document.getElementById('dynamic-cards-container');
-    container.innerHTML = '';
-    currentQuizData = {}; 
+window.deleteAllResults = async function() {
+    if(!db) return alert("يجب توفر انترنت");
+    if(!confirm("هل أنت متأكد؟ سيتم مسح جميع درجات الامتحانات من قاعدة البيانات.")) return;
 
-    Object.keys(fileData).forEach(key => {
-        currentQuizData[key] = fileData[key];
-        addQuizCard(key, fileData[key].title, fileData[key].questions.length, false);
-    });
+    const promptPass = prompt("للتأكيد، اكتب كلمة السر الخاصة بالأدمن:");
+    if(promptPass !== "admin123") return alert("كلمة المرور خطأ");
 
-    customList.forEach(quiz => {
-        currentQuizData[quiz.id] = quiz;
-        addQuizCard(quiz.id, quiz.title, quiz.questions.length, true);
-    });
-
-    if (container.innerHTML === '') {
-        container.innerHTML = '<p style="text-align:center; padding:20px;">لا توجد امتحانات متاحة حالياً.</p>';
+    try {
+        const snapshot = await db.collection('exam_results').get();
+        if(snapshot.empty) return alert("لا توجد نتائج لحذفها");
+        
+        const batch = db.batch();
+        snapshot.docs.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+        alert("تم حذف جميع النتائج بنجاح 🗑️");
+        fetchAdminData(); // تحديث الجدول
+    } catch(e) {
+        alert("حدث خطأ: " + e.message);
     }
-}
+};
 
-function addQuizCard(key, title, count, isCustom) {
-    const histKey = `${currentSubject}_${currentSource}_${key}`;
-    const savedHistory = JSON.parse(localStorage.getItem('quizHistory')) || {};
-    const badge = savedHistory[histKey] ? `<div class="history-badge">✅ ${savedHistory[histKey].score}</div>` : '';
-    const customTag = isCustom ? '<span style="font-size:0.8rem; color:green;">(جديد)</span>' : '';
-    document.getElementById('dynamic-cards-container').innerHTML += `
-        <div class="quiz-card" onclick="startQuiz('${key}', '${title}')">
-            ${badge}
-            <h3>${title} ${customTag}</h3>
-            <p>${count} سؤال</p>
-            <button class="start-btn">ابدأ</button>
-        </div>`;
-}
-
-// --- Admin Auth & News ---
+// --- News & Admin Auth ---
 window.checkAdminPassword = function() {
     const pass = document.getElementById('admin-password-input').value;
     const err = document.getElementById('admin-error');
@@ -313,7 +278,7 @@ window.checkAdminPassword = function() {
         renderCustomQuizzesList();
         fetchAdminData();
         document.getElementById('admin-news-input').value = localStorage.getItem('siteNews') || '';
-        updateAdminSelects(); // تحديث القوائم عند فتح الأدمن
+        updateAdminSelects();
     } else {
         err.style.display = "block";
     }
@@ -325,9 +290,7 @@ window.updateCloudNews = function() {
         db.collection('settings').doc('news').set({ text: text })
         .then(() => alert('تم النشر ✅'))
         .catch(err => alert('خطأ: ' + err.message));
-    } else {
-        alert('لا يوجد اتصال');
-    }
+    } else { alert('لا يوجد اتصال'); }
 };
 
 function listenToCloudNews() {
@@ -336,14 +299,11 @@ function listenToCloudNews() {
             if(doc.exists && doc.data().text) {
                 document.getElementById('news-text').textContent = doc.data().text;
                 document.getElementById('news-ticker-bar').style.display = 'flex';
-            } else {
-                document.getElementById('news-ticker-bar').style.display = 'none';
-            }
+            } else { document.getElementById('news-ticker-bar').style.display = 'none'; }
         });
     }
 }
 
-// --- Excel ---
 window.exportToExcel = function() {
     const table = document.getElementById("admin-table");
     let csvContent = "\uFEFF"; 
@@ -358,9 +318,7 @@ window.exportToExcel = function() {
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = "Nursing_Results.csv";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
 };
 
 function fetchAdminData() {
@@ -377,7 +335,7 @@ function fetchAdminData() {
     });
 }
 
-// --- Quiz Management (Add/Delete) ---
+// --- Quiz Management ---
 window.addNewQuizFromAdmin = function() {
     const sub = document.getElementById('admin-sub-select').value;
     const src = document.getElementById('admin-src-select').value;
@@ -412,19 +370,12 @@ function renderCustomQuizzesList() {
     container.innerHTML = '';
     if(list.length === 0) { container.innerHTML = '<p style="text-align:center; color:gray; width:100%;">لا توجد امتحانات مضافة</p>'; return; }
     list.forEach(q => {
-        // محاولة جلب الاسم (سواء ثابت أو جديد) للعرض
-        let subName = q.subject;
-        const dynSub = customConfig.subjects.find(s => s.id === q.subject);
-        if(dynSub) subName = dynSub.name;
-        // لو ملقاش في الديناميكي، هيسيب الـ ID زي ما هو (وده صح للثابت)
-
-        let srcName = q.source;
-        if(q.source === 'bank') srcName = 'بنك الأسئلة';
-        else if(q.source === 'doctor') srcName = 'كويزات الدكتور';
-        else {
-            const dynSrc = customConfig.sources.find(s => s.id === q.source);
-            if(dynSrc) srcName = dynSrc.name;
-        }
+        // البحث عن الاسم الصحيح للعرض
+        let subName = defaultSubjects.find(s => s.id === q.subject)?.name || 
+                      appConfig.subjects.find(s => s.id === q.subject)?.name || q.subject;
+                      
+        let srcName = defaultSources.find(s => s.id === q.source)?.name ||
+                      appConfig.sources.find(s => s.id === q.source)?.name || q.source;
 
         container.innerHTML += `
             <div class="quiz-card" style="border:1px solid #e2e8f0; cursor:default;">
@@ -458,24 +409,11 @@ function parseQuestionsText(text) {
     return questions;
 }
 
-// --- Navigation & Quiz Player ---
+// --- Navigation & Logic ---
 window.openAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'flex'; };
 window.closeAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'none'; };
-window.closeAdminDashboard = function() {
-    hideAllViews();
-    document.getElementById('main-nav').style.display = 'flex';
-    selectSubject(currentSubject);
-};
-
-window.toggleTheme = function() {
-    document.body.classList.toggle('dark-mode');
-    const isDark = document.body.classList.contains('dark-mode');
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    document.getElementById('theme-toggle').textContent = isDark ? '☀️' : '🌙';
-    if(isDark) document.documentElement.classList.add('dark-mode');
-    else document.documentElement.classList.remove('dark-mode');
-};
-
+window.closeAdminDashboard = function() { hideAllViews(); document.getElementById('main-nav').style.display = 'flex'; selectSubject(currentSubject); };
+window.toggleTheme = function() { document.body.classList.toggle('dark-mode'); document.documentElement.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode')?'dark':'light'); document.getElementById('theme-toggle').textContent = document.body.classList.contains('dark-mode')?'☀️':'🌙'; };
 window.hideAllViews = function() {
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('quiz-container').style.display = 'none';
@@ -485,18 +423,53 @@ window.hideAllViews = function() {
     document.getElementById('admin-dashboard-view').style.display = 'none';
     document.getElementById('source-selection').style.display = 'none';
 };
-
 window.selectSubject = function(subject) {
     currentSubject = subject;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    // بحث عن الزر (سواء ثابت أو جديد)
-    const btn = document.querySelector(`button[onclick*="${subject}"]`);
+    // بحث عن الزر في الكل
+    const allBtns = document.querySelectorAll('.tab-btn');
+    const btn = Array.from(allBtns).find(b => b.getAttribute('onclick').includes(subject));
     if(btn) btn.classList.add('active');
-    
     hideAllViews();
     document.getElementById('source-selection').style.display = 'flex';
 };
-
+window.loadQuizSource = function(source) {
+    currentSource = source;
+    hideAllViews();
+    document.getElementById('quiz-list-area').style.display = 'block';
+    const container = document.getElementById('dynamic-cards-container');
+    container.innerHTML = '<p style="text-align:center;">جاري البحث عن الامتحانات...</p>';
+    const scriptPath = `questions/${currentSubject}/${source}.js`;
+    let fileQuizzes = {};
+    const customAll = JSON.parse(localStorage.getItem('custom_quizzes') || '[]');
+    const customFiltered = customAll.filter(q => q.subject === currentSubject && q.source === currentSource);
+    loadScript(scriptPath, () => {
+        const dataVar = `${currentSubject}_${source}_data`;
+        if(window[dataVar]) fileQuizzes = window[dataVar];
+        renderCombinedQuizzes(fileQuizzes, customFiltered);
+    }, () => { renderCombinedQuizzes({}, customFiltered); });
+};
+function renderCombinedQuizzes(fileData, customList) {
+    const container = document.getElementById('dynamic-cards-container');
+    container.innerHTML = '';
+    currentQuizData = {}; 
+    Object.keys(fileData).forEach(key => {
+        currentQuizData[key] = fileData[key];
+        addQuizCard(key, fileData[key].title, fileData[key].questions.length, false);
+    });
+    customList.forEach(quiz => {
+        currentQuizData[quiz.id] = quiz;
+        addQuizCard(quiz.id, quiz.title, quiz.questions.length, true);
+    });
+    if (container.innerHTML === '') { container.innerHTML = '<p style="text-align:center; padding:20px;">لا توجد امتحانات متاحة حالياً.</p>'; }
+}
+function addQuizCard(key, title, count, isCustom) {
+    const histKey = `${currentSubject}_${currentSource}_${key}`;
+    const savedHistory = JSON.parse(localStorage.getItem('quizHistory')) || {};
+    const badge = savedHistory[histKey] ? `<div class="history-badge">✅ ${savedHistory[histKey].score}</div>` : '';
+    const customTag = isCustom ? '<span style="font-size:0.8rem; color:green;">(جديد)</span>' : '';
+    document.getElementById('dynamic-cards-container').innerHTML += `<div class="quiz-card" onclick="startQuiz('${key}', '${title}')">${badge}<h3>${title} ${customTag}</h3><p>${count} سؤال</p><button class="start-btn">ابدأ</button></div>`;
+}
 window.startQuiz = function(key, title) {
     const quiz = currentQuizData[key];
     window.currentQuizKey = key;
@@ -518,7 +491,6 @@ window.startQuiz = function(key, title) {
     displayQuestion();
     updateNav();
 };
-
 function displayQuestion() {
     const qData = currentQuiz[currentQuestionIndex];
     const container = document.getElementById("question-container");
@@ -530,38 +502,18 @@ function displayQuestion() {
         optionsHtml = `<div class="answer-options">` + 
             qData.options.map((opt, i) => `<button class="answer-btn ${dirClass} ${uAns?.answer === i ? 'selected' : ''}" onclick="selectOption(${i})">${opt}</button>`).join('') + `</div>`;
     } else if (qData.type === 'tf') {
-        optionsHtml = `<div class="tf-options" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <button class="answer-btn ${uAns?.answer === true ? 'selected' : ''}" onclick="selectOption(true)">True</button>
-            <button class="answer-btn ${uAns?.answer === false ? 'selected' : ''}" onclick="selectOption(false)">False</button>
-        </div>`;
+        optionsHtml = `<div class="tf-options" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"><button class="answer-btn ${uAns?.answer === true ? 'selected' : ''}" onclick="selectOption(true)">True</button><button class="answer-btn ${uAns?.answer === false ? 'selected' : ''}" onclick="selectOption(false)">False</button></div>`;
     }
     let hintHtml = '';
-    if (qData.hint) {
-        hintHtml = `<div class="hint-container"><button class="hint-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">💡 تلميح</button><p class="hint-text">${qData.hint}</p></div>`;
-    }
+    if (qData.hint) { hintHtml = `<div class="hint-container"><button class="hint-btn" onclick="this.nextElementSibling.style.display='block';this.style.display='none'">💡 تلميح</button><p class="hint-text">${qData.hint}</p></div>`; }
     container.innerHTML = `<div class="question-card"><div class="question-number">س ${currentQuestionIndex + 1} / ${currentQuiz.length}</div><div class="question-text ${dirClass}">${qData.q}</div>${optionsHtml}${hintHtml}</div>`;
     document.getElementById("progress-fill").style.width = `${((currentQuestionIndex + 1) / currentQuiz.length) * 100}%`;
     document.getElementById("question-counter").textContent = `${currentQuestionIndex + 1} / ${currentQuiz.length}`;
 }
-
-window.selectOption = function(val) {
-    userAnswers[currentQuestionIndex] = { answer: val, isCorrect: val === currentQuiz[currentQuestionIndex].a };
-    displayQuestion();
-};
-
-window.nextQuestion = function() {
-    if(currentQuestionIndex < currentQuiz.length - 1) { currentQuestionIndex++; displayQuestion(); updateNav(); } else { finishQuiz(); }
-};
-
-window.prevQuestion = function() {
-    if(currentQuestionIndex > 0) { currentQuestionIndex--; displayQuestion(); updateNav(); }
-};
-
-function updateNav() {
-    document.getElementById("prev-btn").disabled = currentQuestionIndex === 0;
-    document.getElementById("next-btn").textContent = currentQuestionIndex === currentQuiz.length - 1 ? "إنهاء" : "التالي";
-}
-
+window.selectOption = function(val) { userAnswers[currentQuestionIndex] = { answer: val, isCorrect: val === currentQuiz[currentQuestionIndex].a }; displayQuestion(); };
+window.nextQuestion = function() { if(currentQuestionIndex < currentQuiz.length - 1) { currentQuestionIndex++; displayQuestion(); updateNav(); } else { finishQuiz(); } };
+window.prevQuestion = function() { if(currentQuestionIndex > 0) { currentQuestionIndex--; displayQuestion(); updateNav(); } };
+function updateNav() { document.getElementById("prev-btn").disabled = currentQuestionIndex === 0; document.getElementById("next-btn").textContent = currentQuestionIndex === currentQuiz.length - 1 ? "إنهاء" : "التالي"; }
 function finishQuiz() {
     clearInterval(timerInterval);
     const score = userAnswers.filter(a => a && a.isCorrect).length;
@@ -571,52 +523,22 @@ function finishQuiz() {
     localStorage.setItem('quizHistory', JSON.stringify(hData));
     if(db) {
         document.getElementById('upload-status').textContent = "جاري الحفظ...";
-        db.collection("exam_results").add({
-            studentName: currentStudentName,
-            subject: currentSubject,
-            quizTitle: window.currentQuizTitle,
-            score: score,
-            total: currentQuiz.length,
-            date: new Date().toLocaleString(),
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            document.getElementById('upload-status').textContent = "✅ تم حفظ النتيجة";
-            document.getElementById('upload-status').style.color = "green";
-        }).catch(() => {
-            document.getElementById('upload-status').textContent = "⚠️ تم الحفظ محلياً فقط";
-        });
+        db.collection("exam_results").add({ studentName: currentStudentName, subject: currentSubject, quizTitle: window.currentQuizTitle, score: score, total: currentQuiz.length, date: new Date().toLocaleString(), timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => { document.getElementById('upload-status').textContent = "✅ تم حفظ النتيجة"; document.getElementById('upload-status').style.color = "green"; }).catch(() => { document.getElementById('upload-status').textContent = "⚠️ تم الحفظ محلياً فقط"; });
     }
-    hideAllViews();
-    document.getElementById('results').style.display = 'block';
-    document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
-    document.getElementById("score-message").textContent = score >= currentQuiz.length/2 ? "ممتاز! 👏" : "حاول مرة أخرى 💪";
+    hideAllViews(); document.getElementById('results').style.display = 'block'; document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`; document.getElementById("score-message").textContent = score >= currentQuiz.length/2 ? "ممتاز! 👏" : "حاول مرة أخرى 💪";
 }
-
 window.showReview = function() {
-    const c = document.getElementById("review-content");
-    c.innerHTML = '';
+    const c = document.getElementById("review-content"); c.innerHTML = '';
     currentQuiz.forEach((q, i) => {
-        const ua = userAnswers[i];
-        const correct = ua && ua.isCorrect;
+        const ua = userAnswers[i]; const correct = ua && ua.isCorrect;
         let cText = q.type==='tf' ? (q.a?'True':'False') : q.options[q.a];
         let uText = ua ? (q.type==='tf' ? (ua.answer?'True':'False') : q.options[ua.answer]) : "لم يجب";
         c.innerHTML += `<div class="review-question"><div style="font-weight:bold;">س ${i+1}: ${q.q}</div><div class="review-option ${correct?'correct':'user-incorrect'}">إجابتك: ${uText}</div>${!correct ? `<div class="review-option correct">الصحيح: ${cText}</div>` : ''}${q.hint ? `<div style="font-size:0.9rem; color:gray; margin-top:5px;">💡 تلميح: ${q.hint}</div>` : ''}</div>`;
     });
-    document.getElementById('results').style.display = 'none';
-    document.getElementById('review-container').style.display = 'block';
+    document.getElementById('results').style.display = 'none'; document.getElementById('review-container').style.display = 'block';
 };
-
 window.backToSources = function() { hideAllViews(); document.getElementById('main-nav').style.display = 'flex'; document.getElementById('source-selection').style.display = 'flex'; };
 window.backToQuizList = function() { hideAllViews(); document.getElementById('main-nav').style.display = 'flex'; loadQuizSource(currentSource); };
-window.openDashboard = function() {
-    hideAllViews();
-    document.getElementById('dashboard-view').style.display = 'block';
-    const hist = JSON.parse(localStorage.getItem('quizHistory')) || {};
-    let tQ=0;
-    const tbody = document.getElementById('history-table-body');
-    tbody.innerHTML = '';
-    Object.values(hist).forEach(v => { tQ++; tbody.innerHTML += `<tr><td>${v.title}</td><td>${v.score}</td><td>${v.score}</td><td>1</td></tr>`; });
-    document.getElementById('total-quizzes-taken').textContent = tQ;
-};
+window.openDashboard = function() { hideAllViews(); document.getElementById('dashboard-view').style.display = 'block'; const hist = JSON.parse(localStorage.getItem('quizHistory')) || {}; let tQ=0; const tbody = document.getElementById('history-table-body'); tbody.innerHTML = ''; Object.values(hist).forEach(v => { tQ++; tbody.innerHTML += `<tr><td>${v.title}</td><td>${v.score}</td><td>${v.score}</td><td>1</td></tr>`; }); document.getElementById('total-quizzes-taken').textContent = tQ; };
 window.closeDashboard = function() { hideAllViews(); document.getElementById('main-nav').style.display = 'flex'; selectSubject(currentSubject); };
 function loadScript(src, cb, errCb) { if(loadedScripts[src]) { cb(); return; } const s = document.createElement('script'); s.src = src; s.onload = () => { loadedScripts[src]=true; cb(); }; s.onerror = errCb; document.head.appendChild(s); }
