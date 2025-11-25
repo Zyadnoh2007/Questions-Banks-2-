@@ -19,11 +19,9 @@ try {
 }
 
 // ==========================================
-// ⚙️ إعدادات المواد (قائمة التحكم)
+// ⚙️ إعدادات المواد (لإضافة مواد جديدة)
 // ==========================================
-// ضيف أي مادة جديدة هنا، والكود هيعمل الزرار بتاعها والربط تلقائياً
-// id: لازم يكون نفس اسم الفولدر اللي في ملفاتك (بالإنجليزي)
-// name: الاسم اللي هيظهر للطالب على الزرار
+// فقط اضف سطر جديد هنا لاضافة مادة، وقم بانشاء مجلد بنفس الـ id
 const subjectsConfig = [
     { id: 'microbiology', name: 'Microbiology' },
     { id: 'fundamental', name: 'Fundamental' },
@@ -32,13 +30,12 @@ const subjectsConfig = [
     { id: 'physiology', name: 'Physiology' },
     { id: 'clinical', name: 'Clinical' },
     { id: 'ethics', name: 'Ethics' },
-    // مثال: لو عايز تضيف مادة "صحة مجتمع"
-    // { id: 'community', name: 'Community' }, 
+    // مثال لاضافة مادة: { id: 'community', name: 'Community' }, 
 ];
 
 // --- Global State ---
 let currentStudentName = localStorage.getItem('studentName') || "";
-let currentSubject = subjectsConfig[0].id; // الافتراضي أول مادة
+let currentSubject = subjectsConfig[0].id; 
 let currentSource = ''; 
 let currentQuizData = null;
 let currentQuiz = [];
@@ -50,10 +47,8 @@ let loadedScripts = {};
 
 // --- Setup on Load ---
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. توليد أزرار المواد ديناميكياً
     generateSubjectTabs();
 
-    // 2. التحقق من الاسم
     if (!currentStudentName) {
         document.getElementById('welcome-modal').style.display = 'flex';
     } else {
@@ -61,7 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('welcome-message').textContent = `أهلاً بك يا دكتور/ة ${currentStudentName} 👋`;
     }
 
-    // 3. ربط الأزرار الأساسية
     document.getElementById('next-btn').addEventListener('click', nextQuestion);
     document.getElementById('prev-btn').addEventListener('click', prevQuestion);
     document.getElementById('review-btn').addEventListener('click', showReview);
@@ -70,7 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('results').style.display = 'block';
     });
 
-    // 4. الثيم
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
         document.getElementById('theme-toggle').textContent = '☀️';
@@ -78,42 +71,94 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 });
 
-// --- دالة بناء التبويبات (الحل للمشكلة) ---
+// --- Tab Generation ---
 function generateSubjectTabs() {
     const navContainer = document.getElementById('main-nav');
-    navContainer.innerHTML = ''; // تنظيف
+    navContainer.innerHTML = ''; 
 
     subjectsConfig.forEach((sub, index) => {
         const btn = document.createElement('button');
-        // هنا بنضمن إن الستايل يتاخد صح لكل الأزرار
         btn.className = `tab-btn ${index === 0 ? 'active' : ''}`;
         btn.textContent = sub.name;
-        // ربط الزرار بوظيفة اختيار المادة
         btn.onclick = () => selectSubject(sub.id);
         navContainer.appendChild(btn);
     });
+    if(subjectsConfig.length > 0) currentSubject = subjectsConfig[0].id;
+}
 
-    // تنشيط أول مادة افتراضياً
-    if(subjectsConfig.length > 0) {
-        currentSubject = subjectsConfig[0].id;
+// --- Login & Validation Logic (المعدل) ---
+async function saveStudentName() {
+    const nameInput = document.getElementById('student-name-input');
+    const errorMsg = document.getElementById('login-error');
+    const rawName = nameInput.value.trim();
+    
+    // 1. التحقق من أن الاسم ثلاثي
+    const parts = rawName.split(/\s+/);
+    if (parts.length < 3) {
+        errorMsg.textContent = "❌ يجب إدخال الاسم الثلاثي على الأقل";
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    if (!db) {
+        // لو مفيش نت أو قاعدة بيانات، احفظ محلي وخلاص
+        completeLogin(rawName);
+        return;
+    }
+
+    // 2. التحقق من عدم تكرار الاسم في Firebase
+    nameInput.disabled = true;
+    errorMsg.textContent = "⏳ جاري التحقق من الاسم...";
+    errorMsg.style.display = 'block';
+    errorMsg.style.color = "blue";
+
+    try {
+        // بنشيك في كولكشن اسمه 'users' عشان نضمن عدم التكرار
+        const userDoc = await db.collection('users').doc(rawName).get();
+        
+        if (userDoc.exists) {
+            errorMsg.textContent = "❌ هذا الاسم مسجل بالفعل، يرجى مراجعة المشرف إذا كان هذا خطأ.";
+            errorMsg.style.color = "red";
+            nameInput.disabled = false;
+        } else {
+            // تسجيل مستخدم جديد
+            await db.collection('users').doc(rawName).set({
+                name: rawName,
+                joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            completeLogin(rawName);
+        }
+    } catch (error) {
+        console.error("Login Error:", error);
+        errorMsg.textContent = "⚠️ حدث خطأ في الاتصال، حاول مرة أخرى.";
+        nameInput.disabled = false;
     }
 }
 
-// --- Navigation Logic ---
+function completeLogin(name) {
+    currentStudentName = name;
+    localStorage.setItem('studentName', currentStudentName);
+    document.getElementById('welcome-modal').style.display = 'none';
+    document.getElementById('welcome-message').textContent = `أهلاً بك يا دكتور/ة ${currentStudentName} 👋`;
+    location.reload(); // ريفريش عشان التأكيد
+}
+
+function logout() {
+    if(confirm("هل أنت متأكد من تسجيل الخروج؟")) {
+        localStorage.removeItem('studentName');
+        location.reload();
+    }
+}
+
+// --- Navigation ---
 function selectSubject(subjectId) {
     currentSubject = subjectId;
-    
-    // تحديث شكل الأزرار (Active State)
     const buttons = document.querySelectorAll('.tab-btn');
     subjectsConfig.forEach((sub, index) => {
-        if (sub.id === subjectId) {
-            buttons[index].classList.add('active');
-        } else {
-            buttons[index].classList.remove('active');
-        }
+        if (sub.id === subjectId) buttons[index].classList.add('active');
+        else buttons[index].classList.remove('active');
     });
 
-    // إعادة الشاشة لوضع البداية
     document.getElementById('source-selection').style.display = 'flex';
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('quiz-container').style.display = 'none';
@@ -124,57 +169,39 @@ function selectSubject(subjectId) {
 
 function loadQuizSource(source) {
     currentSource = source;
-    // مسار الملف بناءً على المجلدات الموجودة عندك
-    const scriptPath = `questions/${currentSubject}/${source}.js?v=${new Date().getTime()}`; 
+    // إضافة timestamp لمنع الكاش
+    const scriptPath = `questions/${currentSubject}/${source}.js?v=${new Date().getTime()}`;
     
     document.getElementById('source-selection').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'block';
-    document.getElementById('dynamic-cards-container').innerHTML = '<p style="text-align:center; padding:20px;">جاري تحميل الأسئلة...</p>';
+    document.getElementById('dynamic-cards-container').innerHTML = '<p style="text-align:center;">جاري تحميل الأسئلة...</p>';
 
     loadScript(scriptPath, () => {
-        // اسم المتغير المتوقع وجوده داخل الملف
         const dataVarName = `${currentSubject}_${source}_data`;
         const data = window[dataVarName];
-        
-        if (data) {
-            renderQuizCards(data);
-        } else {
-            document.getElementById('dynamic-cards-container').innerHTML = `
-                <div class="coming-soon">
-                    <p>⚠️ تم تحميل الملف ولكن البيانات غير موجودة.</p>
-                    <small>تأكد أن المتغير داخل الملف اسمه: <b>${dataVarName}</b></small>
-                </div>`;
-        }
+        if (data) renderQuizCards(data);
+        else document.getElementById('dynamic-cards-container').innerHTML = `<p class="coming-soon">⚠️ الملف فارغ أو اسم المتغير خطأ (${dataVarName})</p>`;
     }, () => {
-        // في حالة الملف مش موجود
-        document.getElementById('dynamic-cards-container').innerHTML = `
-            <div class="coming-soon">
-                <p>📂 المحتوى قيد التجهيز لهذه المادة.</p>
-                <small>لم يتم العثور على الملف: ${scriptPath.split('?')[0]}</small>
-            </div>`;
+        document.getElementById('dynamic-cards-container').innerHTML = `<p class="coming-soon">📂 لا يوجد محتوى مضاف لهذه المادة بعد.</p>`;
     });
 }
 
 function renderQuizCards(data) {
     const container = document.getElementById('dynamic-cards-container');
     container.innerHTML = '';
+    const keys = Object.keys(data);
     
-    const quizKeys = Object.keys(data);
-    if (quizKeys.length === 0) {
-        container.innerHTML = '<p class="coming-soon">لا توجد اختبارات مضافة حالياً.</p>';
+    if (keys.length === 0) {
+        container.innerHTML = '<p class="coming-soon">لا توجد اختبارات.</p>';
         return;
     }
 
-    quizKeys.forEach(quizKey => {
+    keys.forEach(quizKey => {
         const quiz = data[quizKey];
         const historyKey = `${currentSubject}_${currentSource}_${quizKey}`;
         const savedHistory = JSON.parse(localStorage.getItem('quizHistory')) || {};
+        let badgeHtml = savedHistory[historyKey] ? `<div class="history-badge">✅ ${savedHistory[historyKey].score}/${savedHistory[historyKey].total}</div>` : '';
         
-        let badgeHtml = '';
-        if (savedHistory[historyKey]) {
-            badgeHtml = `<div class="history-badge">✅ ${savedHistory[historyKey].score}/${savedHistory[historyKey].total}</div>`;
-        }
-
         container.innerHTML += `
             <div class="quiz-card" onclick="startQuiz('${quizKey}', '${quiz.title}')">
                 ${badgeHtml}
@@ -278,13 +305,9 @@ function finishQuiz() {
     clearInterval(timerInterval);
     let score = userAnswers.filter(a => a && a.isCorrect).length;
     
-    // حفظ محلي
     const historyKey = `${currentSubject}_${currentSource}_${window.currentQuizKey}`;
     const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
-    
-    let entry = historyData[historyKey] || { 
-        score: 0, total: currentQuiz.length, highestScore: 0, attempts: 0, title: window.currentQuizTitle 
-    };
+    let entry = historyData[historyKey] || { score: 0, total: currentQuiz.length, highestScore: 0, attempts: 0, title: window.currentQuizTitle };
     entry.score = score;
     entry.total = currentQuiz.length;
     entry.title = window.currentQuizTitle;
@@ -293,16 +316,10 @@ function finishQuiz() {
     
     historyData[historyKey] = entry;
     localStorage.setItem('quizHistory', JSON.stringify(historyData));
-
-    // حفظ سحابي
     saveScoreToFirebase(score, currentQuiz.length);
 
-    // عرض النتائج
     document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
-    document.getElementById("score-message").textContent = 
-        score === currentQuiz.length ? "ممتاز! العلامة الكاملة 🎉" :
-        score > currentQuiz.length / 2 ? "جيد جداً، استمر 💪" : "حاول مرة أخرى 📚";
-
+    document.getElementById("score-message").textContent = score === currentQuiz.length ? "ممتاز! 🌟" : "جيد، حاول مرة أخرى";
     document.getElementById('quiz-container').style.display = 'none';
     document.getElementById('results').style.display = 'block';
 }
@@ -318,7 +335,7 @@ function showReview() {
         
         container.innerHTML += `
             <div class="review-question">
-                <div class="question-number">سؤال ${i+1}</div>
+                <div class="question-number">س ${i+1}</div>
                 <div class="question-text">${q.q}</div>
                 <div class="review-option ${isCorrect ? 'correct' : 'user-incorrect'}">إجابتك: ${userText}</div>
                 ${!isCorrect ? `<div class="review-option correct">الصحيح: ${correctText}</div>` : ''}
@@ -335,7 +352,7 @@ function backToSources() {
 }
 
 function backToQuizList() {
-    if (timerInterval) clearInterval(timerInterval);
+    clearInterval(timerInterval);
     document.getElementById('quiz-container').style.display = 'none';
     document.getElementById('results').style.display = 'none';
     document.getElementById('review-container').style.display = 'none';
@@ -361,18 +378,6 @@ function shuffleArray(array) {
     return array;
 }
 
-function saveStudentName() {
-    const nameInput = document.getElementById('student-name-input').value.trim();
-    if (nameInput.length < 3) {
-        alert("الرجاء كتابة الاسم الثلاثي بشكل صحيح");
-        return;
-    }
-    currentStudentName = nameInput;
-    localStorage.setItem('studentName', currentStudentName);
-    document.getElementById('welcome-modal').style.display = 'none';
-    document.getElementById('welcome-message').textContent = `أهلاً بك يا دكتور/ة ${currentStudentName} 👋`;
-}
-
 function toggleTheme() {
     document.body.classList.toggle('dark-mode');
     const isDark = document.body.classList.contains('dark-mode');
@@ -381,12 +386,7 @@ function toggleTheme() {
 }
 
 function saveScoreToFirebase(score, total) {
-    const statusEl = document.getElementById('upload-status');
-    if (!db) {
-        statusEl.textContent = "⚠️ النتيجة محفوظة محلياً فقط (لم يتم ربط قاعدة البيانات)";
-        return;
-    }
-    statusEl.textContent = "جاري رفع النتيجة...";
+    if (!db) return;
     const resultData = {
         studentName: currentStudentName,
         subject: currentSubject,
@@ -397,31 +397,33 @@ function saveScoreToFirebase(score, total) {
         date: new Date().toLocaleString('ar-EG'),
         timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
+    document.getElementById('upload-status').textContent = "جاري الحفظ...";
     db.collection("exam_results").add(resultData)
-    .then(() => { statusEl.textContent = "✅ تم إرسال النتيجة"; statusEl.style.color = "green"; })
-    .catch(() => { statusEl.textContent = "❌ فشل إرسال النتيجة"; statusEl.style.color = "red"; });
+    .then(() => document.getElementById('upload-status').textContent = "✅ تم حفظ النتيجة")
+    .catch(() => document.getElementById('upload-status').textContent = "❌ فشل الحفظ");
 }
 
-// --- Admin & Dashboard ---
+// --- Admin & Dashboard Functions ---
+
 window.openDashboard = function() {
     document.getElementById('main-nav').style.display = 'none';
     document.getElementById('source-selection').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('dashboard-view').style.display = 'block';
+    
     const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
-    let totalQ = 0, totalAttempts = 0, totalScore = 0, totalPossible = 0;
     const tbody = document.getElementById('history-table-body');
     tbody.innerHTML = '';
+    let tQ=0, tA=0, tS=0, tP=0;
+
     Object.entries(historyData).forEach(([key, data]) => {
-        totalQ++;
-        totalAttempts += (data.attempts || 1);
-        totalScore += data.score;
-        totalPossible += data.total;
+        tQ++; tA += data.attempts || 1; tS += data.score; tP += data.total;
         tbody.innerHTML += `<tr><td>${data.title}</td><td>${data.highestScore}</td><td>${data.score}</td><td>${data.attempts || 1}</td></tr>`;
     });
-    document.getElementById('total-quizzes-taken').textContent = totalQ;
-    document.getElementById('total-attempts').textContent = totalAttempts;
-    document.getElementById('total-accuracy').textContent = totalPossible ? Math.round((totalScore/totalPossible)*100) + '%' : '0%';
+    
+    document.getElementById('total-quizzes-taken').textContent = tQ;
+    document.getElementById('total-attempts').textContent = tA;
+    document.getElementById('total-accuracy').textContent = tP ? Math.round((tS/tP)*100) + '%' : '0%';
 };
 
 window.closeDashboard = function() {
@@ -430,12 +432,15 @@ window.closeDashboard = function() {
     selectSubject(currentSubject);
 };
 
+// Admin Auth
 window.openAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'flex'; };
 window.closeAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'none'; };
 window.checkAdminPassword = function() { 
-    if (document.getElementById('admin-password-input').value === "admin123") { closeAdminLogin(); openAdminDashboard(); }
-    else { alert("كلمة المرور خاطئة!"); }
+    if (document.getElementById('admin-password-input').value === "admin123") {
+        closeAdminLogin(); openAdminDashboard();
+    } else { alert("كلمة المرور خاطئة!"); }
 };
+
 window.openAdminDashboard = function() {
     document.getElementById('main-nav').style.display = 'none';
     document.getElementById('source-selection').style.display = 'none';
@@ -443,23 +448,89 @@ window.openAdminDashboard = function() {
     document.getElementById('admin-dashboard-view').style.display = 'block';
     fetchAdminData();
 };
+
 window.closeAdminDashboard = function() {
     document.getElementById('admin-dashboard-view').style.display = 'none';
     document.getElementById('main-nav').style.display = 'flex';
     selectSubject(currentSubject);
 };
+
 function fetchAdminData() {
     const tbody = document.getElementById('admin-table-body');
     if (!db) { tbody.innerHTML = '<tr><td colspan="5">Firebase غير مفعل</td></tr>'; return; }
-    tbody.innerHTML = '<tr><td colspan="5">تحميل...</td></tr>';
-    db.collection("exam_results").orderBy("timestamp", "desc").limit(50).get().then((snap) => {
+    tbody.innerHTML = '<tr><td colspan="5">جاري جلب البيانات...</td></tr>';
+    
+    db.collection("exam_results").orderBy("timestamp", "desc").limit(100).get().then((snap) => {
         tbody.innerHTML = '';
+        if(snap.empty) { tbody.innerHTML = '<tr><td colspan="5">لا توجد نتائج</td></tr>'; return; }
         snap.forEach(doc => {
             const d = doc.data();
             tbody.innerHTML += `<tr><td>${d.studentName}</td><td>${d.quizTitle}</td><td>${d.score}/${d.total}</td><td>${d.percentage}%</td><td dir="ltr">${d.date}</td></tr>`;
         });
     });
 }
+
+// --- Admin Danger Zone (حذف البيانات) ---
+window.adminResetAllResults = function() {
+    if(!confirm("⚠️ تحذير: هل أنت متأكد من حذف جميع نتائج الطلاب؟ لا يمكن التراجع عن هذا الإجراء!")) return;
+    if(!db) return;
+
+    // الحذف في Firestore يتطلب Looping (لا يوجد Delete All مباشر)
+    const btn = event.target;
+    btn.textContent = "جاري الحذف...";
+    btn.disabled = true;
+
+    db.collection("exam_results").get().then(snapshot => {
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        return batch.commit();
+    }).then(() => {
+        alert("تم حذف جميع النتائج بنجاح ✅");
+        fetchAdminData(); // تحديث الجدول
+        btn.textContent = "🗑️ حذف جميع النتائج";
+        btn.disabled = false;
+    }).catch(err => {
+        alert("حدث خطأ أثناء الحذف: " + err.message);
+        btn.textContent = "🗑️ حذف جميع النتائج";
+        btn.disabled = false;
+    });
+};
+
+window.adminDeleteAllUsers = function() {
+    if(!confirm("⚠️ تحذير خطير: هل تريد حذف جميع حسابات الطلاب المسجلة؟ سيضطر الجميع للتسجيل من جديد.")) return;
+    if(!db) return;
+
+    const btn = event.target;
+    btn.textContent = "جاري الحذف...";
+    btn.disabled = true;
+
+    db.collection("users").get().then(snapshot => {
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        return batch.commit();
+    }).then(() => {
+        alert("تم حذف جميع المستخدمين بنجاح 👥");
+        btn.textContent = "👥 حذف جميع المستخدمين";
+        btn.disabled = false;
+    }).catch(err => {
+        alert("حدث خطأ: " + err.message);
+        btn.disabled = false;
+    });
+};
+
+window.filterAdminTable = function() {
+    const filter = document.getElementById("admin-search").value.toUpperCase();
+    const rows = document.getElementById("admin-table").getElementsByTagName("tr");
+    for (let i = 1; i < rows.length; i++) {
+        const td = rows[i].getElementsByTagName("td")[0];
+        if (td) rows[i].style.display = (td.textContent || td.innerText).toUpperCase().indexOf(filter) > -1 ? "" : "none";
+    }
+};
+
 window.exportToExcel = function() {
     const table = document.getElementById("admin-table");
     let csv = "\uFEFF";
@@ -472,12 +543,4 @@ window.exportToExcel = function() {
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
     link.download = "Results.csv";
     link.click();
-};
-window.filterAdminTable = function() {
-    const filter = document.getElementById("admin-search").value.toUpperCase();
-    const rows = document.getElementById("admin-table").getElementsByTagName("tr");
-    for (let i = 1; i < rows.length; i++) {
-        const td = rows[i].getElementsByTagName("td")[0];
-        if (td) rows[i].style.display = (td.textContent || td.innerText).toUpperCase().indexOf(filter) > -1 ? "" : "none";
-    }
 };
