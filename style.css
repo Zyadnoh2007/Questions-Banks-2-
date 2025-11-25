@@ -327,3 +327,10 @@ body.dark-mode .tag-item {
     background: #1e293b;
     color: #e2e8f0;
 } 
+.admin-section {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px dashed #ccc;
+    margin-bottom: 20px;
+} 
