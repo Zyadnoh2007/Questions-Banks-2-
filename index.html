@@ -48,25 +48,16 @@
       <p id="welcome-message">أهلاً بك</p>
     </div>
 
-    <!-- التبويبات (يتم توليدها تلقائياً) -->
+    <!-- التبويبات -->
     <div id="main-nav" class="tab-container"></div>
     
     <!-- منطقة اختيار المصدر -->
-    <div id="source-selection" class="source-container">
-        <div class="source-card" onclick="loadQuizSource('bank')">
-            <h3>📚 بنك الأسئلة</h3>
-            <p>أسئلة البنك الشاملة للمادة</p>
-        </div>
-        <div class="source-card doctor-card" onclick="loadQuizSource('doctor')">
-            <h3>👨‍⚕️ كويزات الدكتور</h3>
-            <p>الأسئلة الخاصة بمحاضرات الدكتور</p>
-        </div>
-        <!-- تم تجهيز المكان لإضافة كروت جديدة من الكود -->
-    </div>
+    <div id="source-selection" class="source-container"></div>
 
     <!-- منطقة عرض الكروت -->
     <div id="quiz-list-area" class="tab-content active" style="display:none;">
         <button class="back-btn" onclick="backToSources()">← تغيير المصدر</button>
+        <h3 id="source-title-display" style="text-align:center; color:var(--primary-color);"></h3>
         <div id="dynamic-cards-container" class="cards-grid"></div>
     </div>
 
@@ -87,35 +78,104 @@
         <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- لوحة تحكم الأدمن (المحدثة) -->
+    <!-- لوحة تحكم الأدمن -->
     <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
-            <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف</h2>
-            <div style="display:flex; gap:5px;">
-                <button class="start-btn" onclick="exportToExcel()" style="background:#22c55e; font-size: 0.9rem;">📥 Excel</button>
-            </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; margin-bottom:20px;">
+            <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة التحكم الشاملة</h2>
+            <button class="start-btn" onclick="closeAdminDashboard()" style="background:#475569; width:auto;">خروج</button>
         </div>
-        
-        <!-- أزرار التحكم الخطيرة -->
-        <div class="admin-danger-zone" style="background: #fee2e2; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #ef4444;">
-            <h3 style="color:#b91c1c; margin-top:0;">⚠️ منطقة الخطر</h3>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button onclick="adminResetAllResults()" style="background:#ef4444; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">🗑️ حذف جميع النتائج</button>
-                <button onclick="adminDeleteAllUsers()" style="background:#b91c1c; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer;">👥 حذف جميع المستخدمين</button>
+
+        <div class="tab-container" style="justify-content: center; margin-bottom: 20px;">
+            <button class="tab-btn active" onclick="switchAdminTab('results')">📊 النتائج</button>
+            <button class="tab-btn" onclick="switchAdminTab('content')">📝 إدارة المحتوى</button>
+            <button class="tab-btn" onclick="switchAdminTab('settings')">⚙️ الإعدادات</button>
+        </div>
+
+        <!-- 1. النتائج -->
+        <div id="admin-tab-results" class="admin-tab-content">
+            <div class="filter-container" style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" id="admin-search" placeholder="ابحث باسم الطالب..." onkeyup="filterAdminTable()" style="padding: 10px; flex-grow:1; border:1px solid #ccc; border-radius:8px;">
+                <button class="start-btn" onclick="exportToExcel()" style="background:#22c55e; width:auto;">📥 Excel</button>
+            </div>
+            <div class="history-table-container">
+                <table id="admin-table">
+                    <thead><tr><th>الطالب</th><th>الكويز</th><th>الدرجة</th><th>النسبة</th><th>التاريخ</th></tr></thead>
+                    <tbody id="admin-table-body"></tbody>
+                </table>
             </div>
         </div>
 
-        <div class="filter-container" style="margin: 20px 0;">
-             <input type="text" id="admin-search" placeholder="ابحث باسم الطالب..." onkeyup="filterAdminTable()" style="padding: 10px; width: 100%;">
+        <!-- 2. إدارة المحتوى -->
+        <div id="admin-tab-content" class="admin-tab-content" style="display:none;">
+            
+            <div class="review-question" style="background:white; border-color:var(--primary-color);">
+                <h3>1. إضافة مادة جديدة (Tab)</h3>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="new-subject-name" placeholder="اسم المادة (عربي)..." style="padding:10px; flex-grow:1;">
+                    <input type="text" id="new-subject-id" placeholder="ID (English)..." style="padding:10px; width:150px;">
+                    <button class="start-btn" onclick="addNewSubject()" style="width:auto;">➕ إضافة</button>
+                </div>
+            </div>
+
+            <div class="review-question" style="background:white; border-color:var(--secondary-color);">
+                <h3>2. إضافة مصدر جديد (Card)</h3>
+                <div style="display:flex; gap:10px; flex-direction:column;">
+                    <select id="source-subject-select" style="padding:10px;"></select>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="new-source-name" placeholder="اسم المصدر (مثال: شيتات، مراجعة)..." style="padding:10px; flex-grow:1;">
+                        <input type="text" id="new-source-id" placeholder="ID (English)..." style="padding:10px; width:150px;">
+                        <button class="start-btn" onclick="addNewSource()" style="width:auto;">➕ إضافة</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- إضافة امتحان جديد (التعديل هنا لاختيار نوع الوقت) -->
+            <div class="review-question" style="background:white; border-color:#22c55e;">
+                <h3>3. إضافة امتحان جديد (مع التحليل الذكي 🧠)</h3>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                    <select id="exam-subject-select" onchange="updateSourceSelect()" style="padding:10px; flex-grow:1;"></select>
+                    <select id="exam-source-select" style="padding:10px; flex-grow:1;"></select>
+                </div>
+                <input type="text" id="new-exam-title" placeholder="عنوان الامتحان (مثال: كويز الأسبوع الأول)" style="padding:10px; width:100%; margin-bottom:10px;">
+                
+                <!-- خيارات الوقت -->
+                <div style="background:#f0f9ff; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #bae6fd;">
+                    <label style="font-weight:bold; color:var(--text-dark); display:block; margin-bottom:5px;">نوع التوقيت:</label>
+                    <div style="display:flex; gap:20px; align-items:center;">
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
+                            <input type="radio" name="timerType" value="open" checked onclick="toggleTimeInput(false)"> 
+                            ⏱️ عداد مفتوح (تصاعدي)
+                        </label>
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
+                            <input type="radio" name="timerType" value="limit" onclick="toggleTimeInput(true)"> 
+                            ⏳ وقت محدد (تنازلي)
+                        </label>
+                    </div>
+                    <!-- حقل الدقائق (مخفي افتراضياً) -->
+                    <div id="time-limit-input-container" style="display:none; margin-top:10px;">
+                        <input type="number" id="new-exam-time" placeholder="المدة بالدقائق" style="padding:8px; width:150px;">
+                    </div>
+                </div>
+                
+                <p style="font-size:0.9rem; color:gray;">انسخ الأسئلة من الوورد أو PDF والصقها هنا.</p>
+                <textarea id="raw-exam-text" rows="10" placeholder="س: ما هو....&#10;أ) اجابة 1&#10;ب) اجابة 2&#10;*ج) الاجابة الصحيحة (ضع نجمة قبل الصحيحة)&#10;..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"></textarea>
+                
+                <button class="start-btn" onclick="parseAndSaveExam()" style="margin-top:10px; background:#22c55e;">💾 تحليل وحفظ الامتحان</button>
+                <p id="parse-status" style="margin-top:5px; font-weight:bold;"></p>
+            </div>
         </div>
 
-        <div class="history-table-container">
-            <table id="admin-table">
-                <thead><tr><th>الطالب</th><th>الكويز</th><th>الدرجة</th><th>النسبة</th><th>التاريخ</th></tr></thead>
-                <tbody id="admin-table-body"></tbody>
-            </table>
+        <!-- 3. الإعدادات -->
+        <div id="admin-tab-settings" class="admin-tab-content" style="display:none;">
+            <div class="admin-danger-zone" style="background: #fee2e2; padding: 20px; border-radius: 10px; border: 1px solid #ef4444; text-align:center;">
+                <h3 style="color:#b91c1c;">⚠️ منطقة الخطر</h3>
+                <p>هذه الإجراءات لا يمكن التراجع عنها!</p>
+                <div style="display:flex; gap:20px; justify-content:center; margin-top:20px;">
+                    <button onclick="adminResetAllResults()" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">🗑️ حذف جميع النتائج</button>
+                    <button onclick="adminDeleteAllUsers()" style="background:#b91c1c; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">👥 حذف جميع المستخدمين</button>
+                </div>
+            </div>
         </div>
-        <button class="start-btn go-back" onclick="closeAdminDashboard()" style="margin-top:20px; background:#475569;">خروج</button>
     </div>
 
     <!-- منطقة الاختبار -->
@@ -125,7 +185,7 @@
         <h2 id="current-quiz-title" class="quiz-title"></h2>
         <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
         <p id="question-counter"></p>
-        <div id="quiz-timer">00:00</div>
+        <div id="quiz-timer" class="timer-badge">00:00</div>
       </div>
       <div id="question-container"></div>
       <div class="quiz-navigation">
