@@ -25,6 +25,10 @@ body.dark-mode {
   --quiz-card-bg: #1e293b;
   --quiz-card-border: #6366f1;
 }
+body.dark-mode .admin-icon { background: #831843; border-color: #ec4899; color: #fbcfe8; }
+body.dark-mode .hint-text { background: #334155; color: #e2e8f0; border-right-color: var(--secondary-color); }
+body.dark-mode .news-container { background: #451a03; border-color: #92400e; color: #fcd34d; }
+body.dark-mode .quiz-card:hover { border-color: var(--secondary-color); }
 
 /* --- تحسينات شريط الأخبار (ثابت) --- */
 .news-container {
