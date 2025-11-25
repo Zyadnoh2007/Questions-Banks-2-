@@ -841,3 +841,365 @@ textarea:focus {
   }
   #quiz-timer { order: -1; }
 }
+/* إضافة خط المراعي لضمان دعم العربية بشكل جميل */
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
+
+:root {
+  /* الألوان الافتراضية (الفاتحة) */
+  --primary-color: #3b82f6; /* أزرق مودرن */
+  --secondary-color: #6366f1; /* نيلي */
+  --card-bg: #ffffff;
+  --body-bg: #f8fafc; /* رمادي فاتح جداً */
+  --text-dark: #1e293b;
+  --text-light: #64748b;
+  --border-color: #e2e8f0;
+  --quiz-card-bg: #eff6ff;
+  --quiz-card-border: #3b82f6;
+  --shadow-light: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-heavy: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+/* --- ألوان الوضع الليلي --- */
+body.dark-mode {
+  --card-bg: #1e293b;
+  --body-bg: #0f172a;
+  --text-dark: #f1f5f9;
+  --text-light: #94a3b8;
+  --border-color: #334155;
+  --quiz-card-bg: #1e293b;
+  --quiz-card-border: #6366f1;
+}
+
+/* تعديلات خاصة للوضع الليلي */
+body.dark-mode .quiz-card:hover,
+body.dark-mode .source-card:hover {
+  background-color: #334155;
+}
+body.dark-mode .answer-btn {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+body.dark-mode .answer-btn:hover {
+  background-color: #334155;
+}
+body.dark-mode .review-question {
+  background: #1e293b !important;
+  border-right: 4px solid var(--secondary-color);
+  border-color: #334155 !important;
+  color: #f1f5f9;
+}
+body.dark-mode .review-option {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+body.dark-mode .question-card {
+    background-color: var(--card-bg);
+    border-right: 4px solid var(--secondary-color);
+}
+body.dark-mode .quiz-title, 
+body.dark-mode .question-number {
+    color: #60a5fa;
+}
+body.dark-mode .explanation-box {
+  background-color: #422006;
+  border-color: #b45309;
+  color: #fcd34d;
+}
+body.dark-mode .answer-btn.selected {
+    background: #3730a3;
+    color: white;
+}
+body.dark-mode .hint-text {
+    background: #334155;
+    color: #f1f5f9;
+    border-color: #475569;
+}
+body.dark-mode .sarhne-btn {
+    color: #60a5fa;
+    border-color: #60a5fa;
+}
+body.dark-mode .sarhne-btn:hover {
+    background: #60a5fa;
+    color: #0f172a;
+}
+body.dark-mode .header-controls .icon-btn {
+    color: var(--text-dark);
+}
+body.dark-mode .stat-card, 
+body.dark-mode .history-table-container {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+body.dark-mode .stat-icon {
+    background: #334155;
+}
+body.dark-mode th {
+    background-color: #1e293b;
+    color: var(--text-light);
+}
+body.dark-mode tr:hover {
+    background-color: #334155;
+}
+
+/* --- التنسيقات العامة --- */
+body {
+  box-sizing: border-box;
+  font-family: 'Almarai', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--body-bg);
+  min-height: 100vh;
+  color: var(--text-dark);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 25px;
+}
+
+/* --- Header --- */
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-heavy);
+  position: relative;
+}
+
+.header h1 {
+  color: var(--text-dark);
+  font-size: 2.5rem;
+  margin: 0;
+}
+.header p {
+  font-size: 1.1rem;
+  color: var(--text-light);
+  margin-top: 10px;
+}
+
+/* --- Header Controls --- */
+.header-controls {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.icon-btn {
+    background: transparent;
+    border: 2px solid var(--border-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    color: var(--text-dark);
+}
+
+.icon-btn:hover {
+    transform: scale(1.1);
+    background-color: var(--border-color);
+}
+
+.dashboard-icon { background: #e0e7ff; border-color: var(--primary-color); color: var(--primary-color); }
+.admin-icon { background: #fce7f3; border-color: #ec4899; color: #ec4899; }
+.logout-icon:hover { background: #fee2e2; }
+
+/* --- Tab Navigation --- */
+.tab-container {
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 8px;
+  margin-bottom: 30px;
+  box-shadow: var(--shadow-light);
+  gap: 5px;
+}
+
+.tab-btn {
+  flex-grow: 1;
+  text-align: center;
+  padding: 12px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--text-light);
+  border-radius: var(--radius-md);
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.tab-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-dark);
+}
+
+.tab-btn.active {
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+/* --- Source Selection --- */
+.source-container {
+    display: none; 
+    justify-content: center;
+    gap: 30px;
+    margin: 40px 0;
+    flex-wrap: wrap;
+}
+
+.source-card {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 40px 20px;
+    width: 300px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-light);
+}
+
+.source-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-heavy);
+}
+
+.source-card h3 {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+.source-card p {
+    color: var(--text-light);
+}
+
+.doctor-card h3 { color: var(--secondary-color); }
+.doctor-card:hover { border-color: var(--secondary-color); }
+
+/* --- Cards Grid --- */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 20px;
+}
+
+/* --- Quiz Card --- */
+.quiz-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 25px;
+  box-shadow: var(--shadow-light);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.history-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #22c55e;
+    color: white;
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+
+.quiz-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-heavy);
+  border-color: var(--primary-color);
+}
+
+.quiz-card h3 {
+  color: var(--text-dark);
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.quiz-card p {
+  color: var(--text-light);
+  text-align: center;
+  margin-bottom: 20px;
+  flex-grow: 1;
+}
+
+.start-btn {
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 25px;
+  font-size: 1rem;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.start-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+}
+
+/* --- Quiz Container --- */
+.quiz-container {
+  display: none;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 30px;
+  padding-top: 70px;
+  box-shadow: var(--shadow-heavy);
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.quiz-header {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.quiz-title {
+  color: #0d47a1; 
+  font-size: 2rem;
+  margin-bottom: 5px;
+}
+
+.quiz-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; 
+  gap: 10px;
+  margin-
