@@ -61,6 +61,7 @@
 
     <!-- التبويبات (القديمة ثابتة + مكان للجديد) -->
     <div id="main-nav" class="tab-container">
+      <!-- 👇👇 التبويبات القديمة ثابتة هنا 👇👇 -->
       <button class="tab-btn active" data-static="true" onclick="selectSubject('microbiology')">Microbiology</button>
       <button class="tab-btn" data-static="true" onclick="selectSubject('fundamental')">Fundamental</button>
       <button class="tab-btn" data-static="true" onclick="selectSubject('biochemistry')">Biochemistry</button>
@@ -68,11 +69,12 @@
       <button class="tab-btn" data-static="true" onclick="selectSubject('physiology')">Physiology</button>
       <button class="tab-btn" data-static="true" onclick="selectSubject('clinical')">Clinical</button>
       <button class="tab-btn" data-static="true" onclick="selectSubject('ethics')">Ethics</button>
-      <!-- المواد الجديدة هتضاف هنا أوتوماتيك -->
+      <!-- المواد الجديدة هتضاف هنا أوتوماتيك بالكود -->
     </div>
     
     <!-- اختيار المصدر (القديم ثابت + مكان للجديد) -->
     <div id="source-selection" class="source-container">
+        <!-- 👇👇 الكروت القديمة ثابتة هنا 👇👇 -->
         <div class="source-card" data-static="true" onclick="loadQuizSource('bank')">
             <h3>📚 بنك الأسئلة</h3>
             <p>أسئلة البنك الشاملة للمادة</p>
@@ -81,7 +83,7 @@
             <h3>👨‍⚕️ كويزات الدكتور</h3>
             <p>الأسئلة الخاصة بمحاضرات الدكتور</p>
         </div>
-        <!-- المصادر الجديدة هتضاف هنا أوتوماتيك -->
+        <!-- المصادر الجديدة هتضاف هنا أوتوماتيك بالكود -->
     </div>
 
     <!-- عرض الكروت -->
@@ -112,7 +114,7 @@
             <button class="start-btn" onclick="closeAdminDashboard()" style="background:#ef4444; width:auto;">خروج</button>
         </div>
 
-        <!-- 1. إعدادات الأقسام والمصادر -->
+        <!-- 1. إعدادات الأقسام والمصادر (جديد) -->
         <div style="background:var(--card-bg); padding:20px; border-radius:15px; border:1px solid #3b82f6; margin-bottom:20px;">
             <h3 style="color:var(--primary-color); margin-top:0;">⚙️ إضافة مواد/مصادر جديدة</h3>
             
@@ -214,271 +216,7 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- الكود يعمل بعد تحميل الصفحة لضمان وجود العناصر -->
+  <script src="script.js" defer></script>
 </body>
 </html>
-
-
-    </div>
-    
-    <!-- اختيار المصدر -->
-    <div id="source-selection" class="source-container">
-        <div class="source-card" onclick="loadQuizSource('bank')">
-            <h3>📚 بنك الأسئلة</h3>
-            <p>أسئلة البنك الشاملة للمادة</p>
-        </div>
-        <div class="source-card doctor-card" onclick="loadQuizSource('doctor')">
-            <h3>👨‍⚕️ كويزات الدكتور</h3>
-            <p>الأسئلة الخاصة بمحاضرات الدكتور</p>
-        </div>
-    </div>
-
-    <!-- عرض الكروت -->
-    <div id="quiz-list-area" style="display:none;">
-        <button class="start-btn" onclick="backToSources()" style="width: auto; margin-bottom: 20px; background: #64748b;">← تغيير المصدر</button>
-        <div id="dynamic-cards-container" class="cards-grid"></div>
-    </div>
-
-    <!-- لوحة الطالب -->
-    <div id="dashboard-view" style="display:none;">
-        <h2 class="quiz-title">إحصائياتي الشخصية 🚀</h2>
-        <div class="stats-grid">
-            <div class="stat-card"><div class="stat-info"><span id="total-quizzes-taken">0</span><p>كويزات</p></div></div>
-            <div class="stat-card"><div class="stat-info"><span id="total-accuracy">0%</span><p>الدقة</p></div></div>
-        </div>
-        <div class="history-table-container">
-            <table style="width:100%">
-                <tbody id="history-table-body"></tbody>
-            </table>
-        </div>
-        <button class="start-btn" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
-    </div>
-
-    <!-- لوحة الأدمن (الشاملة) -->
-    <div id="admin-dashboard-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف</h2>
-            <button class="start-btn" onclick="closeAdminDashboard()" style="background:#ef4444; width:auto;">خروج</button>
-        </div>
-
-        <!-- 1. أخبار (سحابية) -->
-        <div style="background:var(--card-bg); padding:15px; border-radius:15px; border:1px solid #fcd34d; margin-bottom:20px;">
-            <h4 style="margin-top:0; color:#d97706;">📢 تحديث شريط الأخبار (يظهر للكل)</h4>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="admin-news-input" class="admin-input" style="margin:0;" placeholder="اكتب التنبيه هنا...">
-                <button class="start-btn" onclick="updateCloudNews()" style="width:auto; margin:0; background:#d97706;">نشر ☁️</button>
-            </div>
-        </div>
-
-        <!-- 2. إضافة -->
-        <div style="background:var(--card-bg); padding:20px; border-radius:15px; border:2px dashed #ccc; margin-bottom:30px;">
-            <h3 style="color:var(--primary-color); margin-top:0;">➕ إضافة امتحان جديد</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                <select id="admin-sub-select" class="admin-input">
-                    <option value="microbiology">Microbiology</option>
-                    <option value="fundamental">Fundamental</option>
-                    <option value="biochemistry">Biochemistry</option>
-                    <option value="anatomy">Anatomy</option>
-                    <option value="physiology">Physiology</option>
-                    <option value="clinical">Clinical</option>
-                    <option value="ethics">Ethics</option>
-                </select>
-                <select id="admin-src-select" class="admin-input">
-                    <option value="bank">📚 بنك الأسئلة</option>
-                    <option value="doctor">👨‍⚕️ كويزات الدكتور</option>
-                </select>
-            </div>
-            <input type="text" id="admin-quiz-title" class="admin-input" placeholder="عنوان الامتحان">
-            <textarea id="admin-quiz-content" class="admin-input" style="height:150px;" placeholder="انسخ الأسئلة هنا..."></textarea>
-            <button class="start-btn" onclick="addNewQuizFromAdmin()" style="background:#10b981;">حفظ الامتحان ✅</button>
-        </div>
-
-        <!-- 3. حذف -->
-        <h3 style="border-top: 1px solid #ccc; padding-top: 20px;">🗑️ الامتحانات اليدوية</h3>
-        <div id="admin-custom-quizzes-list" class="cards-grid" style="margin-bottom: 30px;"></div>
-
-        <!-- 4. نتائج وإكسيل -->
-        <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #ccc; padding-top: 20px;">
-            <h3>📊 نتائج الطلاب الأخيرة</h3>
-            <button onclick="exportToExcel()" class="start-btn" style="width:auto; margin:0; background:#22c55e;">📥 تحميل Excel</button>
-        </div>
-        <div class="history-table-container">
-            <table id="admin-table">
-                <thead><tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th></tr></thead>
-                <tbody id="admin-table-body"><tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- منطقة الاختبار -->
-    <div id="quiz-container" class="quiz-container">
-      <button class="start-btn" onclick="backToQuizList()" style="position: absolute; top: 20px; right: 20px; width: auto; background: #64748b; padding: 5px 15px; font-size: 0.8rem;">خروج</button>
-      <div class="quiz-header">
-        <h2 id="current-quiz-title" class="quiz-title"></h2>
-        <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
-        <p id="question-counter"></p>
-        <div id="quiz-timer">00:00</div>
-      </div>
-      <div id="question-container"></div>
-      <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-        <button id="prev-btn" class="nav-btn" disabled>السابق</button>
-        <button id="next-btn" class="nav-btn">التالي</button>
-      </div>
-    </div>
-
-    <!-- النتائج -->
-    <div id="results" class="quiz-container results">
-      <h3>انتهى الاختبار!</h3>
-      <div id="final-score" class="score"></div>
-      <p id="score-message"></p>
-      <p id="upload-status" style="font-size: 0.9rem; color: gray; margin-top:5px;"></p>
-      <button id="review-btn" class="start-btn">مراجعة الإجابات</button>
-      <button class="start-btn" onclick="backToQuizList()" style="margin-top: 10px; background: #64748b;">العودة للقائمة</button>
-    </div>
-
-    <!-- المراجعة -->
-    <div id="review-container" class="review-container">
-      <h2 class="quiz-title">مراجعة الإجابات</h2>
-      <div id="review-content"></div>
-      <button class="start-btn" onclick="backToQuizList()">العودة للقائمة</button>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
-</html>
-
-
-    <!-- اختيار المصدر -->
-    <div id="source-selection" class="source-container">
-        <div class="source-card" onclick="loadQuizSource('bank')">
-            <h3>📚 بنك الأسئلة</h3>
-            <p>أسئلة البنك الشاملة للمادة</p>
-        </div>
-        <div class="source-card doctor-card" onclick="loadQuizSource('doctor')">
-            <h3>👨‍⚕️ كويزات الدكتور</h3>
-            <p>الأسئلة الخاصة بمحاضرات الدكتور</p>
-        </div>
-    </div>
-
-    <!-- عرض الكروت -->
-    <div id="quiz-list-area" style="display:none;">
-        <button class="start-btn" onclick="backToSources()" style="width: auto; margin-bottom: 20px; background: #64748b;">← تغيير المصدر</button>
-        <div id="dynamic-cards-container" class="cards-grid"></div>
-    </div>
-
-    <!-- لوحة الطالب -->
-    <div id="dashboard-view" style="display:none;">
-        <h2 class="quiz-title">إحصائياتي الشخصية 🚀</h2>
-        <div class="stats-grid">
-            <div class="stat-card"><div class="stat-info"><span id="total-quizzes-taken">0</span><p>كويزات</p></div></div>
-            <div class="stat-card"><div class="stat-info"><span id="total-accuracy">0%</span><p>الدقة</p></div></div>
-        </div>
-        <div class="history-table-container">
-            <table style="width:100%">
-                <tbody id="history-table-body"></tbody>
-            </table>
-        </div>
-        <button class="start-btn" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
-    </div>
-
-    <!-- لوحة الأدمن (الشاملة) -->
-    <div id="admin-dashboard-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة المشرف</h2>
-            <button class="start-btn" onclick="closeAdminDashboard()" style="background:#ef4444; width:auto;">خروج</button>
-        </div>
-
-        <!-- 1. أخبار -->
-        <div style="background:var(--card-bg); padding:15px; border-radius:15px; border:1px solid #fcd34d; margin-bottom:20px;">
-            <h4 style="margin-top:0; color:#d97706;">📢 تحديث شريط الأخبار</h4>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="admin-news-input" class="admin-input" style="margin:0;" placeholder="اكتب التنبيه هنا...">
-                <button class="start-btn" onclick="updateNewsTicker()" style="width:auto; margin:0; background:#d97706;">تحديث</button>
-            </div>
-        </div>
-
-        <!-- 2. إضافة -->
-        <div style="background:var(--card-bg); padding:20px; border-radius:15px; border:2px dashed #ccc; margin-bottom:30px;">
-            <h3 style="color:var(--primary-color); margin-top:0;">➕ إضافة امتحان جديد</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-                <select id="admin-sub-select" class="admin-input">
-                    <option value="microbiology">Microbiology</option>
-                    <option value="fundamental">Fundamental</option>
-                    <option value="biochemistry">Biochemistry</option>
-                    <option value="anatomy">Anatomy</option>
-                    <option value="physiology">Physiology</option>
-                    <option value="clinical">Clinical</option>
-                    <option value="ethics">Ethics</option>
-                </select>
-                <select id="admin-src-select" class="admin-input">
-                    <option value="bank">📚 بنك الأسئلة</option>
-                    <option value="doctor">👨‍⚕️ كويزات الدكتور</option>
-                </select>
-            </div>
-            <input type="text" id="admin-quiz-title" class="admin-input" placeholder="عنوان الامتحان">
-            <textarea id="admin-quiz-content" class="admin-input" style="height:150px;" placeholder="انسخ الأسئلة هنا..."></textarea>
-            <button class="start-btn" onclick="addNewQuizFromAdmin()" style="background:#10b981;">حفظ الامتحان ✅</button>
-        </div>
-
-        <!-- 3. حذف -->
-        <h3 style="border-top: 1px solid #ccc; padding-top: 20px;">🗑️ الامتحانات اليدوية</h3>
-        <div id="admin-custom-quizzes-list" class="cards-grid" style="margin-bottom: 30px;"></div>
-
-        <!-- 4. نتائج وإكسيل -->
-        <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid #ccc; padding-top: 20px;">
-            <h3>📊 نتائج الطلاب الأخيرة</h3>
-            <button onclick="exportToExcel()" class="start-btn" style="width:auto; margin:0; background:#22c55e;">📥 تحميل Excel</button>
-        </div>
-        <div class="history-table-container">
-            <table id="admin-table">
-                <thead><tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th></tr></thead>
-                <tbody id="admin-table-body"><tr><td colspan="4" style="text-align:center;">جاري التحميل...</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- منطقة الاختبار -->
-    <div id="quiz-container" class="quiz-container">
-      <button class="start-btn" onclick="backToQuizList()" style="position: absolute; top: 20px; right: 20px; width: auto; background: #64748b; padding: 5px 15px; font-size: 0.8rem;">خروج</button>
-      <div class="quiz-header">
-        <h2 id="current-quiz-title" class="quiz-title"></h2>
-        <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
-        <p id="question-counter"></p>
-        <div id="quiz-timer">00:00</div>
-      </div>
-      <div id="question-container"></div>
-      <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-        <button id="prev-btn" class="nav-btn" disabled>السابق</button>
-        <button id="next-btn" class="nav-btn">التالي</button>
-      </div>
-    </div>
-
-    <!-- النتائج -->
-    <div id="results" class="quiz-container results">
-      <h3>انتهى الاختبار!</h3>
-      <div id="final-score" class="score"></div>
-      <p id="score-message"></p>
-      <p id="upload-status" style="font-size: 0.9rem; color: gray; margin-top:5px;"></p>
-      <button id="review-btn" class="start-btn">مراجعة الإجابات</button>
-      <button class="start-btn" onclick="backToQuizList()" style="margin-top: 10px; background: #64748b;">العودة للقائمة</button>
-    </div>
-
-    <!-- المراجعة -->
-    <div id="review-container" class="review-container">
-      <h2 class="quiz-title">مراجعة الإجابات</h2>
-      <div id="review-content"></div>
-      <button class="start-btn" onclick="backToQuizList()">العودة للقائمة</button>
-    </div>
-
-    <div class="footer">
-      <p>Created by Zyad & Yusuf</p>
-      <a href="https://zyadyasser2007.sarhne.com" target="_blank" class="sarhne-btn">صارحني 🙂❤️</a>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
-</html>
-
-
