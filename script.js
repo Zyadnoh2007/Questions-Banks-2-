@@ -40,6 +40,7 @@ let currentSubject = subjectsConfig[0].id;
 let currentSource = ''; 
 let currentQuizData = null;
 let currentQuiz = [];
+let currentQuizDetails = null; // New: To store quiz metadata like options
 let currentQuestionIndex = 0;
 let userAnswers = [];
 let timerInterval = null;
@@ -161,6 +162,7 @@ async function loadQuizSource(sourceId, sourceName) {
     container.innerHTML = '<p style="text-align:center;">جاري البحث عن كويزات...</p>';
 
     let allQuizzes = {};
+    // Load local scripts if any (legacy support)
     try {
         const scriptPath = `questions/${currentSubject}/${sourceId}.js`;
         await new Promise((resolve) => {
@@ -197,6 +199,26 @@ function renderQuizCards(data) {
         const quiz = data[quizKey];
         const historyKey = `${currentSubject}_${currentSource}_${quizKey}`;
         const savedHistory = JSON.parse(localStorage.getItem('quizHistory')) || {};
+        
+        // 🔴 Logic: One Attempt Only 🔴
+        let isLocked = false;
+        let lockMessage = "";
+        if (quiz.oneAttempt && savedHistory[historyKey]) {
+            isLocked = true;
+            lockMessage = "🔒 (تم التقديم)";
+        }
+        
+        // 🔴 Logic: Date Restrictions 🔴
+        const now = new Date();
+        if (quiz.startDate && new Date(quiz.startDate) > now) {
+            isLocked = true;
+            lockMessage = `⏳ يبدأ في: ${new Date(quiz.startDate).toLocaleString('ar-EG')}`;
+        }
+        if (quiz.endDate && new Date(quiz.endDate) < now) {
+            isLocked = true;
+            lockMessage = "🔒 (انتهى الوقت)";
+        }
+
         let badgeHtml = savedHistory[historyKey] ? `<div class="history-badge">✅ ${savedHistory[historyKey].score}/${savedHistory[historyKey].total}</div>` : '';
         
         let timeBadge = '';
@@ -206,26 +228,64 @@ function renderQuizCards(data) {
             timeBadge = `<span style="font-size:0.8rem; background:#dcfce7; padding:2px 8px; border-radius:10px; color:#15803d;">⏱️ مفتوح</span>`;
         }
 
-        container.innerHTML += `
-            <div class="quiz-card" onclick="startQuiz('${quizKey}', '${quiz.title}', ${quiz.timeLimit || 0})">
-                ${badgeHtml}
-                <h3>${quiz.title}</h3>
-                <div style="display:flex; justify-content:center; gap:10px; margin-bottom:10px;">
-                    <span>📝 ${quiz.questions.length} سؤال</span>
-                    ${timeBadge}
-                </div>
-                <button class="start-btn">ابدأ</button>
-            </div>`;
+        const div = document.createElement('div');
+        div.className = "quiz-card";
+        if (!isLocked) {
+            div.onclick = () => startQuiz(quizKey, quiz.title, quiz);
+        } else {
+            div.style.opacity = "0.6";
+            div.style.cursor = "not-allowed";
+        }
+
+        div.innerHTML = `
+            ${badgeHtml}
+            <h3>${quiz.title}</h3>
+            <div style="display:flex; justify-content:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+                <span>📝 ${quiz.questions.length} سؤال</span>
+                ${timeBadge}
+            </div>
+            ${isLocked ? `<p style="color:red; font-weight:bold;">${lockMessage}</p>` : `<button class="start-btn">ابدأ</button>`}
+        `;
+        container.appendChild(div);
     });
     currentQuizData = data;
 }
 
-function startQuiz(quizKey, quizTitle, timeLimit = 0) {
-    const quiz = currentQuizData[quizKey];
+function startQuiz(quizKey, quizTitle, quizData = null) {
+    const quiz = quizData || currentQuizData[quizKey];
     if (!quiz) return;
+    
     window.currentQuizKey = quizKey;
     window.currentQuizTitle = quizTitle;
-    currentQuiz = shuffleArray([...quiz.questions]);
+    currentQuizDetails = quiz; // Store metadata
+    
+    // 🔴 Logic: Random Questions 🔴
+    if (quiz.randomQuestions) {
+        currentQuiz = shuffleArray([...quiz.questions]);
+    } else {
+        currentQuiz = [...quiz.questions];
+    }
+    
+    // 🔴 Logic: Random Answers 🔴
+    if (quiz.randomAnswers) {
+        currentQuiz.forEach(q => {
+             // Basic shuffle for MCQ options
+             if(q.type === 'mcq') {
+                 // Creating objects to keep track of correct answer index
+                 let optionsWithIndex = q.options.map((opt, idx) => ({txt: opt, originalIdx: idx}));
+                 optionsWithIndex = shuffleArray(optionsWithIndex);
+                 q.options = optionsWithIndex.map(o => o.txt);
+                 // We need to find where the correct answer went
+                 // Assuming q.a was the index. This is tricky with simple shuffle.
+                 // Ideally, we re-map the answer index.
+                 // For now, simpler approach: Don't shuffle answers unless strict structure exists.
+                 // Let's assume standard index-based:
+                 const newCorrectIndex = optionsWithIndex.findIndex(o => o.originalIdx === q.a);
+                 q.a = newCorrectIndex;
+             }
+        });
+    }
+
     currentQuestionIndex = 0;
     userAnswers = new Array(currentQuiz.length).fill(null);
     
@@ -236,6 +296,7 @@ function startQuiz(quizKey, quizTitle, timeLimit = 0) {
     if (timerInterval) clearInterval(timerInterval);
     
     const exitBtn = document.querySelector('#quiz-container .back-btn');
+    const timeLimit = quiz.timeLimit || 0;
     
     if (timeLimit > 0) {
         isTimerDown = true;
@@ -281,8 +342,28 @@ function finishQuiz(timeOut = false) {
     historyData[historyKey] = entry;
     localStorage.setItem('quizHistory', JSON.stringify(historyData));
     saveScoreToFirebase(score, currentQuiz.length);
-    document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
-    document.getElementById("score-message").textContent = timeOut ? "⏰ انتهى الوقت!" : (score === currentQuiz.length ? "ممتاز! 🌟" : "جيد، حاول مرة أخرى");
+    
+    // 🔴 Logic: Hide Result 🔴
+    const hideResult = currentQuizDetails?.hideResult;
+    if (hideResult) {
+        document.getElementById("final-score").textContent = "تم التسليم بنجاح";
+        document.getElementById("final-score").style.fontSize = "1.5rem";
+        document.getElementById("score-message").textContent = "تم إخفاء النتيجة حسب إعدادات الامتحان.";
+    } else {
+        document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
+        document.getElementById("final-score").style.fontSize = "3rem";
+        document.getElementById("score-message").textContent = timeOut ? "⏰ انتهى الوقت!" : (score === currentQuiz.length ? "ممتاز! 🌟" : "جيد، حاول مرة أخرى");
+    }
+
+    // 🔴 Logic: Show Solution 🔴
+    const showSolution = currentQuizDetails?.showSolution;
+    const reviewBtn = document.getElementById('review-btn');
+    if (showSolution) {
+        reviewBtn.style.display = 'inline-block';
+    } else {
+        reviewBtn.style.display = 'none';
+    }
+
     document.getElementById('quiz-container').style.display = 'none';
     document.getElementById('results').style.display = 'block';
 }
@@ -316,7 +397,22 @@ function displayQuestion() {
 function selectOption(val) { userAnswers[currentQuestionIndex] = { answer: val, isCorrect: val === currentQuiz[currentQuestionIndex].a }; displayQuestion(); }
 function nextQuestion() { if (currentQuestionIndex < currentQuiz.length - 1) { currentQuestionIndex++; displayQuestion(); } else { finishQuiz(); } updateNavigation(); }
 function prevQuestion() { if (currentQuestionIndex > 0) { currentQuestionIndex--; displayQuestion(); updateNavigation(); } }
-function updateNavigation() { document.getElementById("prev-btn").disabled = currentQuestionIndex === 0; document.getElementById("next-btn").textContent = currentQuestionIndex === currentQuiz.length - 1 ? "إنهاء" : "التالي"; }
+
+function updateNavigation() { 
+    // 🔴 Logic: One Way Exam 🔴
+    const isOneWay = currentQuizDetails?.oneWay;
+    const prevBtn = document.getElementById("prev-btn");
+    
+    if (isOneWay) {
+        prevBtn.style.display = 'none'; // Hide completely in One-Way
+    } else {
+        prevBtn.style.display = 'inline-block';
+        prevBtn.disabled = currentQuestionIndex === 0;
+    }
+    
+    document.getElementById("next-btn").textContent = currentQuestionIndex === currentQuiz.length - 1 ? "إنهاء" : "التالي"; 
+}
+
 function backToQuizList() { clearInterval(timerInterval); document.getElementById('quiz-container').style.display = 'none'; document.getElementById('results').style.display = 'none'; document.getElementById('review-container').style.display = 'none'; document.getElementById('quiz-list-area').style.display = 'block'; if (currentQuizData) renderQuizCards(currentQuizData); window.onbeforeunload = null; }
 
 // 🔴 Logic for Registration + Allow Re-entry 🔴
@@ -337,7 +433,6 @@ async function saveStudentName() {
     errorMsg.style.color = "blue";
 
     try {
-        // 1. Check Strict Mode Setting
         let strictMode = true; 
         const configDoc = await db.collection('settings').doc('config').get();
         if(configDoc.exists) strictMode = configDoc.data().strictNames;
@@ -345,21 +440,18 @@ async function saveStudentName() {
         const userDoc = await db.collection('users').doc(rawName).get();
         
         if (userDoc.exists) {
-            // 2. Check if allowed specifically
             const userData = userDoc.data();
             if (strictMode && !userData.allowReentry) {
                 errorMsg.textContent = "❌ الاسم مسجل بالفعل (تواصل مع المشرف لفك الحظر)";
                 errorMsg.style.color = "red";
                 nameInput.disabled = false;
             } else {
-                // Allowed! (Consume the permission)
                 if (userData.allowReentry) {
                     await db.collection('users').doc(rawName).update({ allowReentry: false });
                 }
                 completeLogin(rawName);
             }
         } else {
-            // New User
             await db.collection('users').doc(rawName).set({ 
                 name: rawName, 
                 joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -370,7 +462,6 @@ async function saveStudentName() {
     } catch (error) { errorMsg.textContent = "خطأ في الاتصال"; nameInput.disabled = false; console.log(error); }
 }
 
-// 🔴 New Admin Function: Grant Access 🔴
 window.grantOneTimeAccess = async function() {
     const name = document.getElementById('unblock-user-name').value.trim();
     if(!name) { alert("اكتب اسم الطالب الأول"); return; }
@@ -381,7 +472,6 @@ window.grantOneTimeAccess = async function() {
             alert("⚠️ هذا الطالب غير مسجل أصلاً.");
             return;
         }
-        // Set flag to true
         await db.collection('users').doc(name).update({ allowReentry: true });
         alert(`✅ تم السماح للطالب (${name}) بالدخول مرة واحدة.`);
         document.getElementById('unblock-user-name').value = "";
@@ -395,7 +485,7 @@ function showReview() { const container = document.getElementById("review-conten
 function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); }
 function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
 
-// --- Admin Panel ---
+// --- Admin Panel Functions ---
 window.openDashboard = function() { document.getElementById('main-nav').style.display = 'none'; document.getElementById('source-selection').style.display = 'none'; document.getElementById('quiz-list-area').style.display = 'none'; document.getElementById('dashboard-view').style.display = 'block'; const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {}; let tQ=0, tA=0, tS=0, tP=0; const tbody = document.getElementById('history-table-body'); tbody.innerHTML = ''; Object.entries(historyData).forEach(([key, data]) => { tQ++; tA += data.attempts || 1; tS += data.score; tP += data.total; tbody.innerHTML += `<tr><td>${data.title || key}</td><td>${data.highestScore}</td><td>${data.score}</td><td>${data.attempts || 1}</td></tr>`; }); document.getElementById('total-quizzes-taken').textContent = tQ; document.getElementById('total-attempts').textContent = tA; document.getElementById('total-accuracy').textContent = tP ? Math.round((tS/tP)*100) + '%' : '0%'; };
 window.closeDashboard = function() { document.getElementById('dashboard-view').style.display = 'none'; document.getElementById('main-nav').style.display = 'flex'; selectSubject(currentSubject); };
 window.openAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'flex'; };
@@ -432,10 +522,50 @@ window.updateLoginSettings = async function() {
     } catch(e) { alert("خطأ في حفظ الإعدادات"); }
 };
 
-window.toggleTimeInput = function(show) { document.getElementById('time-limit-input-container').style.display = show ? 'block' : 'none'; };
 window.addNewSubject = async function() { const name = document.getElementById('new-subject-name').value; const id = document.getElementById('new-subject-id').value; if(!name || !id) { alert("بيانات ناقصة"); return; } try { await db.collection('subjects').add({ id, name }); alert("تم!"); location.reload(); } catch(e) { alert("خطأ"); } };
 window.addNewSource = async function() { const subjectId = document.getElementById('source-subject-select').value; const name = document.getElementById('new-source-name').value; const id = document.getElementById('new-source-id').value; if(!name || !id) { alert("بيانات ناقصة"); return; } try { await db.collection('sources').add({ subjectId, id, name }); alert("تم!"); location.reload(); } catch(e) { alert("خطأ"); } };
-window.parseAndSaveExam = async function() { const subjectId = document.getElementById('exam-subject-select').value; const sourceId = document.getElementById('exam-source-select').value; const title = document.getElementById('new-exam-title').value; const timerType = document.querySelector('input[name="timerType"]:checked').value; let timeLimit = (timerType === 'limit') ? (parseInt(document.getElementById('new-exam-time').value) || 0) : 0; const rawText = document.getElementById('raw-exam-text').value; if(!title || !rawText) { alert("الرجاء كتابة البيانات"); return; } const questions = parseQuestionsFromText(rawText); if(questions.length === 0) { document.getElementById('parse-status').textContent = "❌ لا توجد أسئلة"; return; } if(confirm(`حفظ ${questions.length} سؤال؟`)) { try { await db.collection('quizzes').add({ subjectId, sourceId, title, timeLimit, questions, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); alert("تم!"); location.reload(); } catch(e) { alert("خطأ"); } } };
+
+// 🔴 UPDATED: New Exam Parsing with Features 🔴
+window.parseAndSaveExam = async function() { 
+    const subjectId = document.getElementById('exam-subject-select').value; 
+    const sourceId = document.getElementById('exam-source-select').value; 
+    const title = document.getElementById('new-exam-title').value; 
+    const rawText = document.getElementById('raw-exam-text').value; 
+    
+    // New Fields
+    const timeLimit = parseInt(document.getElementById('new-exam-time').value) || 0;
+    const startDate = document.getElementById('new-exam-start').value;
+    const endDate = document.getElementById('new-exam-end').value;
+    
+    const oneAttempt = document.getElementById('opt-one-attempt').checked;
+    const randomQuestions = document.getElementById('opt-random-q').checked;
+    const randomAnswers = document.getElementById('opt-random-a').checked;
+    const oneWay = document.getElementById('opt-one-way').checked;
+    const hideResult = document.getElementById('opt-hide-result').checked;
+    const showSolution = document.getElementById('opt-show-solution').checked;
+
+    if(!title || !rawText) { alert("الرجاء كتابة العنوان والأسئلة"); return; } 
+    
+    const questions = parseQuestionsFromText(rawText); 
+    if(questions.length === 0) { document.getElementById('parse-status').textContent = "❌ لا توجد أسئلة"; return; } 
+    
+    if(confirm(`حفظ ${questions.length} سؤال بالإعدادات الجديدة؟`)) { 
+        try { 
+            await db.collection('quizzes').add({ 
+                subjectId, sourceId, title, 
+                questions, 
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                // New Fields Saved
+                timeLimit, startDate, endDate,
+                oneAttempt, randomQuestions, randomAnswers, oneWay,
+                hideResult, showSolution
+            }); 
+            alert("✅ تم حفظ الامتحان بنجاح!"); 
+            location.reload(); 
+        } catch(e) { alert("خطأ: " + e.message); } 
+    } 
+};
+
 function parseQuestionsFromText(text) { const lines = text.split('\n').filter(l => l.trim()); let questions = []; let currentQ = null; lines.forEach(line => { line = line.trim(); if (line.match(/^(س|Q|\d+)[\.:\/]/) || line.includes('?')) { if (currentQ && currentQ.options.length > 1) questions.push(currentQ); currentQ = { q: line.replace(/^(س|Q|\d+)[\.:\/]\s*/, ''), options: [], a: 0, type: 'mcq' }; } else if (currentQ) { let isCorrect = line.startsWith('*'); let optionText = line.replace(/^[\*\-\)\.]\s*/, '').replace(/^[أ-يa-z][\)\.]\s*/, ''); if (isCorrect) currentQ.a = currentQ.options.length; currentQ.options.push(optionText); } }); if (currentQ && currentQ.options.length > 1) questions.push(currentQ); return questions; }
 window.updateDeleteDropdown = async function() { const type = document.getElementById('delete-type-select').value; const itemSelect = document.getElementById('delete-item-select'); itemSelect.innerHTML = ''; if(type === 'none') { itemSelect.style.display = 'none'; return; } itemSelect.style.display = 'block'; if (type === 'subject') { dbSubjects.forEach(sub => { itemSelect.innerHTML += `<option value="${sub.docId}">${sub.name}</option>`; }); if(dbSubjects.length === 0) itemSelect.innerHTML = '<option>لا توجد مواد</option>'; } else if (type === 'source') { dbSources.forEach(src => { itemSelect.innerHTML += `<option value="${src.docId}">${src.name}</option>`; }); if(dbSources.length === 0) itemSelect.innerHTML = '<option>لا توجد مصادر</option>'; } else if (type === 'quiz') { itemSelect.innerHTML = '<option>تحميل...</option>'; if(db) { const snaps = await db.collection('quizzes').get(); itemSelect.innerHTML = ''; if(snaps.empty) { itemSelect.innerHTML = '<option>فارغ</option>'; return; } snaps.forEach(doc => { const q = doc.data(); const subName = q.subjectId || 'عام'; itemSelect.innerHTML += `<option value="${doc.id}">${q.title} (${subName})</option>`; }); } } };
 window.deleteSelectedItem = async function() { const type = document.getElementById('delete-type-select').value; const id = document.getElementById('delete-item-select').value; if(type === 'none' || !id) return; if(!confirm("تأكيد الحذف؟")) return; let col = type === 'subject' ? 'subjects' : (type === 'source' ? 'sources' : 'quizzes'); try { await db.collection(col).doc(id).delete(); alert("تم الحذف"); location.reload(); } catch(e) { alert("خطأ: " + e.message); } };
