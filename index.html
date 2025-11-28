@@ -103,10 +103,8 @@
             </div>
         </div>
 
-        <!-- 2. Users (Updated with Manual Unblock) -->
+        <!-- 2. Users -->
         <div id="admin-tab-users" class="admin-tab-content" style="display:none;">
-            
-            <!-- 🔴 قسم التصريح الاستثنائي الجديد 🔴 -->
             <div class="review-question" style="background:white; border-color:#22c55e; margin-bottom:20px;">
                 <h3>🔓 تصريح دخول استثنائي</h3>
                 <p style="font-size:0.9rem; color:gray; margin-top:0;">لو الطالب "محظور" بسبب تكرار الاسم، اكتب اسمه هنا عشان تسمحله يدخل مرة تانية.</p>
@@ -130,7 +128,7 @@
             </div>
         </div>
 
-        <!-- 3. Content -->
+        <!-- 3. Content (تم تحديث قسم إضافة الامتحان) -->
         <div id="admin-tab-content" class="admin-tab-content" style="display:none;">
             <div class="review-question" style="background:white; border-color:var(--primary-color);">
                 <h3>1. إضافة مادة جديدة</h3>
@@ -151,31 +149,100 @@
                     </div>
                 </div>
             </div>
+
+            <!-- إضافة امتحان جديد بالمميزات الجديدة -->
             <div class="review-question" style="background:white; border-color:#22c55e;">
                 <h3>3. إضافة امتحان جديد 🧠</h3>
+                
+                <!-- البيانات الأساسية -->
                 <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
                     <select id="exam-subject-select" onchange="updateSourceSelect()" style="padding:10px; flex-grow:1;"></select>
                     <select id="exam-source-select" style="padding:10px; flex-grow:1;"></select>
                 </div>
                 <input type="text" id="new-exam-title" placeholder="عنوان الامتحان..." style="padding:10px; width:100%; margin-bottom:10px;">
-                <div class="timer-box">
-                    <label style="font-weight:bold; display:block; margin-bottom:5px;">نوع التوقيت:</label>
-                    <div style="display:flex; gap:20px; align-items:center;">
-                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
-                            <input type="radio" name="timerType" value="open" checked onclick="toggleTimeInput(false)"> ⏱️ مفتوح
-                        </label>
-                        <label style="cursor:pointer; display:flex; align-items:center; gap:5px;">
-                            <input type="radio" name="timerType" value="limit" onclick="toggleTimeInput(true)"> ⏳ وقت محدد
-                        </label>
-                    </div>
-                    <div id="time-limit-input-container" style="display:none; margin-top:10px;">
-                        <input type="number" id="new-exam-time" placeholder="المدة بالدقائق" style="padding:8px; width:150px;">
+                
+                <!-- إعدادات الوقت -->
+                <div class="settings-group">
+                    <h4>🕒 إعدادات الوقت</h4>
+                    <div class="timer-box" style="background: transparent; border: none; padding: 0;">
+                        <div style="display:flex; gap:15px; flex-wrap: wrap;">
+                            <div style="flex:1;">
+                                <label>مدة الامتحان (دقائق):</label>
+                                <input type="number" id="new-exam-time" placeholder="0 = مفتوح" style="padding:8px; width:100%;">
+                            </div>
+                            <div style="flex:1;">
+                                <label>تاريخ البدء:</label>
+                                <input type="datetime-local" id="new-exam-start" style="padding:8px; width:100%;">
+                            </div>
+                            <div style="flex:1;">
+                                <label>تاريخ الانتهاء:</label>
+                                <input type="datetime-local" id="new-exam-end" style="padding:8px; width:100%;">
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <textarea id="raw-exam-text" rows="8" placeholder="س: السؤال...&#10;أ) خيار 1&#10;*ب) خيار صحيح&#10;..." style="width:100%; padding:10px;"></textarea>
-                <button class="start-btn" onclick="parseAndSaveExam()" style="margin-top:10px; background:#22c55e;">💾 حفظ</button>
-                <p id="parse-status" style="margin-top:5px; font-weight:bold;"></p>
+
+                <!-- إعدادات العرض والمراجعة -->
+                <div class="settings-grid">
+                    <!-- خيارات العرض -->
+                    <div class="settings-column">
+                        <h4>👁️ خيارات العرض</h4>
+                        <label class="custom-check-label">
+                            <input type="checkbox" id="opt-one-attempt">
+                            <div>
+                                <span>تقديم لمرة واحدة فقط</span>
+                                <small>يمنع الطالب من إعادة المحاولة بعد التسليم.</small>
+                            </div>
+                        </label>
+                        <label class="custom-check-label">
+                            <input type="checkbox" id="opt-random-q">
+                            <div>
+                                <span>ترتيب عشوائي للأسئلة</span>
+                                <small>يغير ترتيب الأسئلة لكل طالب.</small>
+                            </div>
+                        </label>
+                        <label class="custom-check-label">
+                            <input type="checkbox" id="opt-random-a">
+                            <div>
+                                <span>ترتيب عشوائي للإجابات</span>
+                                <small>يلخبط الاختيارات داخل السؤال.</small>
+                            </div>
+                        </label>
+                        <label class="custom-check-label">
+                            <input type="checkbox" id="opt-one-way">
+                            <div>
+                                <span>اتجاه واحد (One Way)</span>
+                                <small>يمنع الرجوع للسؤال السابق.</small>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- خيارات المراجعة -->
+                    <div class="settings-column">
+                        <h4>📊 خيارات المراجعة</h4>
+                        <label class="custom-check-label">
+                            <input type="checkbox" id="opt-hide-result">
+                            <div>
+                                <span>عدم إظهار النتيجة</span>
+                                <small>يخفي الدرجة النهائية عن الطالب.</small>
+                            </div>
+                        </label>
+                        <label class="custom-check-label">
+                            <input type="checkbox" id="opt-show-solution">
+                            <div>
+                                <span>إظهار نموذج الحل</span>
+                                <small>يعرض الإجابات الصحيحة بعد الانتهاء.</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <textarea id="raw-exam-text" rows="8" placeholder="س: السؤال...&#10;أ) خيار 1&#10;*ب) خيار صحيح&#10;..." style="width:100%; padding:10px; margin-top:15px;"></textarea>
+                
+                <button class="start-btn" onclick="parseAndSaveExam()" style="margin-top:10px; background:#22c55e; width: 100%;">💾 حفظ الامتحان بالإعدادات</button>
+                <p id="parse-status" style="margin-top:5px; font-weight:bold; text-align: center;"></p>
             </div>
+
             <div class="delete-section">
                 <h3>4. 🗑️ حذف المحتوى</h3>
                 <div class="delete-controls">
@@ -233,7 +300,10 @@
       <div id="final-score" class="score"></div>
       <p id="score-message"></p>
       <p id="upload-status" style="font-size: 0.9rem; color: gray; margin-top:5px;"></p>
+      
+      <!-- زر المراجعة سيتم التحكم فيه برمجياً -->
       <button id="review-btn" class="start-btn">مراجعة الإجابات</button>
+      
       <button class="start-btn go-back" onclick="backToQuizList()">العودة للقائمة</button>
     </div>
 
@@ -253,5 +323,4 @@
   <script src="script.js"></script>
 </body>
 </html>
-
 
