@@ -829,7 +829,7 @@ textarea:focus {
     color: white;
 }
 
-/* Timer Box (Dark Mode Fixed) */
+/* Timer Box */
 .timer-box {
     background: #f0f9ff;
     padding: 15px;
@@ -894,8 +894,84 @@ body.dark-mode .delete-section h3 {
     background: #dc2626;
 }
 
-body.dark-mode .review-question h3 {
-    color: var(--primary-color);
+/* --- New Settings Grid Styles (الإضافات الجديدة) --- */
+.settings-group {
+    margin-bottom: 15px;
+    padding: 15px;
+    background-color: var(--body-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.settings-group h4, .settings-column h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--secondary-color);
+    font-size: 1rem;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+@media (max-width: 600px) {
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.settings-column {
+    background-color: var(--body-bg);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.custom-check-label {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    cursor: pointer;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.custom-check-label:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.custom-check-label input[type="checkbox"] {
+    margin-top: 4px;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.custom-check-label span {
+    display: block;
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+}
+
+.custom-check-label small {
+    display: block;
+    font-size: 0.8rem;
+    color: #ef4444; /* لون التوضيح (أحمر) كما طلبت */
+    background-color: #fff1f2;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 3px;
+    display: inline-block;
+}
+
+body.dark-mode .custom-check-label small {
+    background-color: #450a0a;
+    color: #fca5a5;
 }
 
 /* --- Toggle Switch (Settings) --- */
@@ -961,17 +1037,15 @@ input:checked + .slider:before {
   .container { padding: 15px; }
   
   .header {
-      /* الفليكس بوكس هنا بيخلي العناصر فوق بعض */
       display: flex;
       flex-direction: column;
       align-items: center;
       padding-top: 20px;
   }
 
-  /* ترتيب الأيقونات فوق العنوان */
   .header-controls {
-      position: static; /* يلغي الوضع الحر */
-      margin-bottom: 15px; /* مسافة تحت الأزرار */
+      position: static;
+      margin-bottom: 15px;
       justify-content: center;
       width: 100%;
   }
@@ -991,4 +1065,4 @@ input:checked + .slider:before {
   
   .delete-controls { flex-direction: column; align-items: stretch; }
   .delete-controls select, .delete-controls button { width: 100%; }
-  }
+      }
