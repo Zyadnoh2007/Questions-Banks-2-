@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nursing Platform</title>
+  <!-- مكتبة الخطوط والأيقونات -->
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+  
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -16,47 +19,73 @@
   <!-- شريط الإعلانات العلوية -->
   <div id="announcement-bar" class="announcement-bar" style="display:none;">
     <span id="announcement-text"></span>
-    <button onclick="this.parentElement.style.display='none'" class="close-announcement">×</button>
+    <button onclick="closeAnnouncement()" class="close-announcement">×</button>
   </div>
 
-  <!-- Welcome / Login / Register Modal -->
+  <!-- ✅ نافذة الدخول الاحترافية الجديدة ✅ -->
   <div id="auth-modal" class="modal-overlay">
-    <div class="modal-box auth-box">
-      <div class="auth-tabs">
-        <button class="auth-tab active" onclick="switchAuthMode('login')">تسجيل دخول</button>
-        <button class="auth-tab" onclick="switchAuthMode('register')">حساب جديد</button>
+    <div class="modal-box auth-card">
+      
+      <!-- التبويبات العلوية -->
+      <div class="auth-tabs-wrapper">
+        <div class="auth-tabs">
+          <button id="tab-login" class="auth-tab active" onclick="switchAuthMode('login')">تسجيل دخول</button>
+          <button id="tab-register" class="auth-tab" onclick="switchAuthMode('register')">حساب جديد</button>
+        </div>
       </div>
 
-      <!-- Login Form -->
-      <div id="login-form" class="auth-content">
-        <h3>أهلاً بعودتك يا دكتور 🩺</h3>
-        <p>ادخل اسم المستخدم (User ID) الخاص بك</p>
-        <input type="text" id="login-username" placeholder="Username (English)..." class="ltr-input" />
-        <button class="start-btn" onclick="loginUser()">دخول</button>
+      <!-- محتوى تسجيل الدخول -->
+      <div id="login-form" class="auth-content fade-in">
+        <div class="auth-header">
+          <h3>أهلاً بعودتك يا دكتور 🩺</h3>
+          <p>ادخل الكود الخاص بك للمتابعة</p>
+        </div>
+        
+        <div class="input-group">
+          <label>اسم المستخدم (User ID)</label>
+          <input type="text" id="login-username" placeholder="Username..." class="pro-input ltr-input" />
+        </div>
+
+        <button class="pro-btn primary-btn" onclick="loginUser()">دخول للسيستم 🚀</button>
       </div>
 
-      <!-- Register Form -->
-      <div id="register-form" class="auth-content" style="display:none;">
-        <h3>إنشاء حساب جديد 🆕</h3>
-        <p>بياناتك ستستخدم في الشهادات والنتائج</p>
-        <input type="text" id="reg-fullname" placeholder="الاسم الثلاثي (بالعربي)" />
-        <input type="text" id="reg-username" placeholder="اسم المستخدم (English Only)" class="ltr-input" />
-        <small style="color:gray; display:block; margin-bottom:10px;">مثال: ahmed99 (حروف وأرقام فقط)</small>
-        <button class="start-btn" onclick="registerUser()">تسجيل حساب</button>
+      <!-- محتوى الحساب الجديد -->
+      <div id="register-form" class="auth-content fade-in" style="display:none;">
+        <div class="auth-header">
+          <h3>انضم لأبطال التمريض 🆕</h3>
+          <p>أنشئ حسابك الشخصي الآن</p>
+        </div>
+
+        <div class="input-group">
+          <label>الاسم الثلاثي (بالعربي)</label>
+          <input type="text" id="reg-fullname" placeholder="مثال: أحمد محمد علي" class="pro-input" />
+        </div>
+
+        <div class="input-group">
+          <label>اختر اسم مستخدم (إنجليزي)</label>
+          <input type="text" id="reg-username" placeholder="ex: ahmed99" class="pro-input ltr-input" />
+          <small class="hint-text">حروف إنجليزية وأرقام فقط (بدون مسافات)</small>
+        </div>
+
+        <button class="pro-btn success-btn" onclick="registerUser()">إنشاء الحساب ✅</button>
       </div>
       
       <p id="auth-error" class="error-msg"></p>
+
     </div>
   </div>
 
   <!-- Admin Login -->
   <div id="admin-login-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-box">
-      <h2>دخول المشرفين 🔒</h2>
-      <input type="password" id="admin-password-input" placeholder="كلمة المرور..." />
+    <div class="modal-box admin-box">
+      <div class="auth-header">
+        <h2>دخول المشرفين 🔒</h2>
+        <p>منطقة محظورة إلا للمسؤولين</p>
+      </div>
+      <input type="password" id="admin-password-input" placeholder="كلمة المرور..." class="pro-input ltr-input" />
       <div class="modal-buttons">
-          <button class="start-btn" onclick="checkAdminPassword()">دخول</button>
-          <button class="back-btn" onclick="closeAdminLogin()">إلغاء</button>
+          <button class="pro-btn primary-btn" onclick="checkAdminPassword()">دخول</button>
+          <button class="pro-btn secondary-btn" onclick="closeAdminLogin()">إلغاء</button>
       </div>
     </div>
   </div>
@@ -75,7 +104,7 @@
       <p id="welcome-message">أهلاً بك</p>
     </div>
 
-    <!-- Leaderboard (Optional) -->
+    <!-- Leaderboard -->
     <div id="leaderboard-section" class="leaderboard-container" style="display:none;">
         <h3>🏆 لوحة الشرف - الأوائل 🏆</h3>
         <div id="leaderboard-list" class="leaderboard-grid"></div>
@@ -87,7 +116,7 @@
     
     <div id="quiz-list-area" class="tab-content active" style="display:none;">
         <button class="back-btn" onclick="backToSources()">← تغيير المصدر</button>
-        <h3 id="source-title-display" style="text-align:center; color:var(--primary-color);"></h3>
+        <h3 id="source-title-display" style="text-align:center; color:var(--primary-color); margin-bottom:20px;"></h3>
         <div id="dynamic-cards-container" class="cards-grid"></div>
     </div>
 
@@ -105,14 +134,14 @@
                 <tbody id="history-table-body"></tbody>
             </table>
         </div>
-        <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
+        <button class="pro-btn secondary-btn" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- Admin Dashboard (The New One) -->
+    <!-- Admin Dashboard -->
     <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
         <div class="admin-header-flex">
             <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة التحكم</h2>
-            <button class="start-btn" onclick="adminLogout()" style="background:#475569; width:auto;">تسجيل خروج</button>
+            <button class="pro-btn secondary-btn" onclick="adminLogout()" style="width:auto;">تسجيل خروج</button>
         </div>
 
         <div class="tab-container center-tabs">
@@ -122,26 +151,27 @@
             <button class="tab-btn" onclick="switchAdminTab('settings')">⚙️ الإعدادات</button>
         </div>
 
-        <!-- 1. Results & Reports (Grouped) -->
+        <!-- 1. Results & Reports -->
         <div id="admin-tab-results" class="admin-tab-content">
             <div class="filter-container">
-                <input type="text" id="results-search" placeholder="ابحث باسم الطالب أو اليوزر..." onkeyup="filterResults()" class="search-box">
-                <button class="start-btn" onclick="fetchGroupedResults()" style="width:auto; background:#3b82f6;">🔄 تحديث</button>
-                <button class="start-btn" onclick="printAllReports()" style="width:auto; background:#22c55e;">🖨️ طباعة الكل</button>
-                <button class="start-btn" onclick="exportGroupedExcel()" style="width:auto; background:#16a34a;">📥 Excel شامل</button>
+                <input type="text" id="results-search" placeholder="ابحث باسم الطالب أو اليوزر..." onkeyup="filterResults()" class="search-box pro-input">
+                <div class="action-buttons">
+                    <button class="pro-btn primary-btn sm" onclick="fetchGroupedResults()">🔄 تحديث</button>
+                    <button class="pro-btn success-btn sm" onclick="printAllReports()">🖨️ طباعة الكل</button>
+                    <button class="pro-btn success-btn sm" onclick="exportGroupedExcel()">📥 Excel شامل</button>
+                </div>
             </div>
             
             <div id="results-accordion-container" class="accordion-container">
-                <!-- Students Results Cards will be loaded here -->
-                <p style="text-align:center;">جاري تحميل البيانات...</p>
+                <p style="text-align:center; padding:20px; color:#666;">جاري تحميل البيانات...</p>
             </div>
         </div>
 
-        <!-- 2. Students Management -->
+        <!-- 2. Users Management -->
         <div id="admin-tab-users" class="admin-tab-content" style="display:none;">
             <div class="filter-container">
-                <input type="text" id="users-search" placeholder="ابحث عن طالب..." onkeyup="filterUsersTable()" class="search-box">
-                <button class="start-btn" onclick="fetchAdminUsers()" style="width:auto; background:#3b82f6;">🔄 تحديث</button>
+                <input type="text" id="users-search" placeholder="ابحث عن طالب..." onkeyup="filterUsersTable()" class="search-box pro-input">
+                <button class="pro-btn primary-btn sm" onclick="fetchAdminUsers()">🔄 تحديث</button>
             </div>
             <div class="history-table-container">
                 <table id="users-table">
@@ -151,58 +181,51 @@
             </div>
         </div>
 
-        <!-- 3. Add Exam (Visual + Smart Paste) -->
+        <!-- 3. Add Exam -->
         <div id="admin-tab-content" class="admin-tab-content" style="display:none;">
-            <!-- Basic Info -->
             <div class="review-question" style="background:white; border-color:#22c55e;">
                 <h3>بيانات الامتحان الأساسية</h3>
                 <div class="form-grid">
-                    <select id="exam-subject-select" onchange="updateSourceSelect()"></select>
-                    <select id="exam-source-select"></select>
-                    <input type="text" id="new-exam-title" placeholder="عنوان الامتحان (مثال: Quiz 1)...">
+                    <select id="exam-subject-select" onchange="updateSourceSelect()" class="pro-input"></select>
+                    <select id="exam-source-select" class="pro-input"></select>
+                    <input type="text" id="new-exam-title" placeholder="عنوان الامتحان (مثال: Quiz 1)..." class="pro-input">
                 </div>
                 
-                <!-- Time & Settings -->
                 <div class="settings-group">
                     <h4>🕒 الوقت والخصائص</h4>
                     <div class="form-grid">
-                        <input type="number" id="new-exam-time" placeholder="المدة (د) - 0 مفتوح">
+                        <input type="number" id="new-exam-time" placeholder="المدة (د) - 0 مفتوح" class="pro-input">
                         <div class="check-wrap"><input type="checkbox" id="opt-one-attempt"> <span>مرة واحدة</span></div>
                         <div class="check-wrap"><input type="checkbox" id="opt-random-q"> <span>أسئلة عشوائية</span></div>
                         <div class="check-wrap"><input type="checkbox" id="opt-hide-result"> <span>إخفاء النتيجة</span></div>
                     </div>
                 </div>
 
-                <!-- Smart Paste Area -->
                 <div class="smart-paste-area">
                     <h4>⚡ الاستيراد الذكي (Smart Paste)</h4>
-                    <p style="font-size:0.9rem; color:#666;">انسخ الأسئلة من Word/PDF (إنجليزي) وضعها هنا. الصيغ المدعومة: <code>1. / Q1. / a) / *Correct</code></p>
-                    <textarea id="smart-paste-input" rows="6" placeholder="Example:&#10;1. What is the capital of Egypt?&#10;a) Cairo&#10;b) Alex&#10;*c) Giza" class="ltr-input"></textarea>
-                    <button class="start-btn" onclick="parseSmartPaste()" style="margin-top:10px; background:#6366f1;">🪄 تحويل لكروت</button>
+                    <p class="hint-text">انسخ الأسئلة من Word/PDF (إنجليزي) وضعها هنا. الصيغ المدعومة: <code>1. / Q1. / a) / *Correct</code></p>
+                    <textarea id="smart-paste-input" rows="6" placeholder="Example:&#10;1. What is the capital of Egypt?&#10;a) Cairo&#10;b) Alex&#10;*c) Giza" class="ltr-input pro-input"></textarea>
+                    <button class="pro-btn secondary-btn" onclick="parseSmartPaste()" style="margin-top:10px;">🪄 تحويل لكروت</button>
                 </div>
 
-                <!-- Visual Editor Container -->
-                <div id="visual-editor-container">
-                    <!-- Cards will appear here -->
-                </div>
+                <div id="visual-editor-container"></div>
                 
-                <button class="start-btn" onclick="saveExamFinal()" style="margin-top:20px; width:100%; background:#22c55e;">💾 حفظ الامتحان</button>
+                <button class="pro-btn success-btn" onclick="saveExamFinal()" style="margin-top:20px; width:100%;">💾 حفظ الامتحان</button>
             </div>
 
-            <!-- Add Subject/Source Helpers -->
             <div class="review-question" style="margin-top:20px;">
                 <details>
                     <summary>➕ إضافة مادة أو مصدر جديد</summary>
                     <div class="form-grid" style="margin-top:10px;">
-                        <input type="text" id="new-subject-name" placeholder="اسم المادة">
-                        <input type="text" id="new-subject-id" placeholder="ID">
-                        <button onclick="addNewSubject()" class="sm-btn">إضافة مادة</button>
+                        <input type="text" id="new-subject-name" placeholder="اسم المادة" class="pro-input">
+                        <input type="text" id="new-subject-id" placeholder="ID" class="pro-input">
+                        <button onclick="addNewSubject()" class="pro-btn primary-btn sm">إضافة مادة</button>
                     </div>
                     <div class="form-grid" style="margin-top:10px;">
-                        <select id="source-subject-select"></select>
-                        <input type="text" id="new-source-name" placeholder="اسم المصدر">
-                        <input type="text" id="new-source-id" placeholder="Source ID">
-                        <button onclick="addNewSource()" class="sm-btn">إضافة مصدر</button>
+                        <select id="source-subject-select" class="pro-input"></select>
+                        <input type="text" id="new-source-name" placeholder="اسم المصدر" class="pro-input">
+                        <input type="text" id="new-source-id" placeholder="Source ID" class="pro-input">
+                        <button onclick="addNewSource()" class="pro-btn primary-btn sm">إضافة مصدر</button>
                     </div>
                 </details>
             </div>
@@ -212,9 +235,11 @@
         <div id="admin-tab-settings" class="admin-tab-content" style="display:none;">
             <div class="admin-setting-card">
                 <h3>📢 إعلانات المنصة</h3>
-                <textarea id="announcement-input" rows="2" placeholder="اكتب التنبيه هنا ليظهر للطلاب..."></textarea>
-                <button onclick="saveAnnouncement()" class="start-btn" style="margin-top:10px;">نشر الإعلان</button>
-                <button onclick="clearAnnouncement()" class="btn-danger" style="margin-top:10px;">إلغاء الإعلان</button>
+                <textarea id="announcement-input" rows="2" placeholder="اكتب التنبيه هنا ليظهر للطلاب..." class="pro-input"></textarea>
+                <div class="action-buttons" style="margin-top:10px;">
+                    <button onclick="saveAnnouncement()" class="pro-btn primary-btn sm">نشر الإعلان</button>
+                    <button onclick="clearAnnouncement()" class="pro-btn danger-btn sm">إلغاء الإعلان</button>
+                </div>
             </div>
 
             <div class="admin-setting-card">
@@ -228,7 +253,7 @@
         </div>
     </div>
 
-    <!-- Quiz & Results Views (Same as before but refined) -->
+    <!-- Quiz & Results Views -->
     <div id="quiz-container" class="quiz-container">
       <div class="quiz-header">
         <h2 id="current-quiz-title" class="quiz-title"></h2>
@@ -247,15 +272,15 @@
       <h3>انتهى الاختبار!</h3>
       <div id="final-score" class="score"></div>
       <p id="score-message"></p>
-      <button id="review-btn" class="start-btn">مراجعة الإجابات</button>
-      <button class="start-btn go-back" onclick="backToQuizList()">العودة للقائمة</button>
+      <button id="review-btn" class="pro-btn primary-btn">مراجعة الإجابات</button>
+      <button class="pro-btn secondary-btn" onclick="backToQuizList()">العودة للقائمة</button>
     </div>
 
     <div id="review-container" class="review-container">
       <h2 class="quiz-title">مراجعة الإجابات</h2>
       <button class="back-btn" id="back-to-results">← العودة للنتائج</button>
       <div id="review-content"></div>
-      <button class="start-btn go-back" onclick="backToQuizList()">العودة للقائمة</button>
+      <button class="pro-btn secondary-btn" onclick="backToQuizList()">العودة للقائمة</button>
     </div>
 
     <div class="footer">
@@ -264,7 +289,7 @@
     </div>
   </div>
 
-  <!-- Hidden Print Area -->
+  <!-- Print Area -->
   <div id="print-area"></div>
 
   <script src="script.js"></script>
