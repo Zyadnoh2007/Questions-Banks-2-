@@ -1,4 +1,4 @@
-// --- Firebase Config (تأكد من صحة البيانات) ---
+// --- Firebase Config ---
 const firebaseConfig = {
   apiKey: "AIzaSyCzv8U8Syd71OK5uXF7MbOTdT77jXldWqE",
   authDomain: "nursing-quiz-63de2.firebaseapp.com",
@@ -13,131 +13,103 @@ try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
     console.log("Firebase Connected ✅");
-} catch (e) { console.error("Firebase Error", e); }
+} catch (e) { console.error(e); }
 
-// --- Global Variables ---
-let currentUser = null; 
+// --- Global Vars ---
+let currentUser = null;
 let subjectsConfig = [];
 let defaultSources = [
     { id: 'bank', name: '📚 بنك الأسئلة' },
     { id: 'doctor', name: '👨‍⚕️ كويزات الدكتور' }
 ];
+let currentExamQuestions = []; // For visual builder
+let groupedResults = {};
 
-let currentExamQuestions = []; 
-let groupedResults = {}; 
-let currentQuiz = [];
-let userAnswers = [];
-let currentQuestionIndex = 0;
-let timerInterval = null;
-
-// --- عند تحميل الصفحة ---
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. استعادة جلسة الأدمن
-    if (sessionStorage.getItem('isAdmin') === 'true') {
+    // Admin Session Check
+    if(sessionStorage.getItem('isAdmin') === 'true') {
         currentUser = { name: 'Admin', isAdmin: true };
     }
-    
-    // 2. استعادة جلسة الطالب
-    const savedUser = localStorage.getItem('nursingUser');
-    if (savedUser && !currentUser) {
-        const parsed = JSON.parse(savedUser);
-        // التحقق من الحظر
-        if(await verifyUserBan(parsed.username)) {
-            logout(); return;
+    // Student Session Check
+    else {
+        const saved = localStorage.getItem('nursingUser');
+        if(saved) {
+            const parsed = JSON.parse(saved);
+            if(!(await verifyUserBan(parsed.username))) currentUser = parsed;
         }
-        currentUser = parsed;
     }
 
-    // 3. توجيه المستخدم
-    if (!currentUser) {
+    if(!currentUser) {
         document.getElementById('auth-modal').style.display = 'flex';
-        switchAuthMode('login'); // Default tab
-    } else if (currentUser.isAdmin) {
+        switchAuthMode('login');
+    } else if(currentUser.isAdmin) {
         openAdminDashboard(true);
     } else {
         initStudentView();
     }
 
-    // 4. تحميل البيانات
     loadAnnouncement();
     loadLeaderboard();
     fetchSubjects();
 
-    // 5. الثيم
-    if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark-mode');
+    // Theme Logic
+    if(localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
     document.getElementById('theme-toggle').onclick = () => {
         document.body.classList.toggle('dark-mode');
-        localStorage.setItem('theme', document.body.classList.contains('dark-mode')?'dark':'light');
-    };
+        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    }
 });
 
-// ================= AUTH SYSTEM (تم إصلاح الأزرار) =================
+// ================= AUTH =================
 function switchAuthMode(mode) {
-    document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
-    document.getElementById(mode === 'login' ? 'tab-login' : 'tab-register').classList.add('active');
-    
-    document.getElementById('login-form').style.display = mode === 'login' ? 'block' : 'none';
-    document.getElementById('register-form').style.display = mode === 'register' ? 'block' : 'none';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(mode === 'login' ? 'btn-mode-login' : 'btn-mode-register').classList.add('active');
+    document.getElementById('login-section').style.display = mode === 'login' ? 'block' : 'none';
+    document.getElementById('register-section').style.display = mode === 'register' ? 'block' : 'none';
     document.getElementById('auth-error').style.display = 'none';
 }
 
 async function loginUser() {
-    const username = document.getElementById('login-username').value.trim().toLowerCase();
-    if(!username) return showError("⚠️ ادخل اسم المستخدم");
-
+    const user = document.getElementById('login-username').value.trim().toLowerCase();
+    if(!user) return authError("ادخل اليوزر");
     try {
-        showError("⏳ جاري التحقق...", true);
-        const doc = await db.collection('users').doc(username).get();
-        if(!doc.exists) return showError("❌ اسم المستخدم غير موجود");
+        const doc = await db.collection('users').doc(user).get();
+        if(!doc.exists) return authError("غير موجود");
+        if(doc.data().isBanned) return authError("محظور");
         
-        const data = doc.data();
-        if(data.isBanned) return showError("⛔ تم حظر هذا الحساب. راجع الإدارة.");
-
-        currentUser = { username: username, name: data.name, isAdmin: false };
+        currentUser = { username: user, name: doc.data().name, isAdmin: false };
         localStorage.setItem('nursingUser', JSON.stringify(currentUser));
         location.reload();
-    } catch(e) { showError("خطأ في الاتصال"); }
+    } catch(e) { authError("خطأ اتصال"); }
 }
 
 async function registerUser() {
     const name = document.getElementById('reg-fullname').value.trim();
-    const username = document.getElementById('reg-username').value.trim().toLowerCase();
-    
-    if(name.split(" ").length < 3) return showError("⚠️ يجب كتابة الاسم الثلاثي");
-    if(!/^[a-z0-9]+$/.test(username)) return showError("⚠️ اسم المستخدم إنجليزي وأرقام فقط (بدون مسافات)");
+    const user = document.getElementById('reg-username').value.trim().toLowerCase();
+    if(name.split(" ").length < 3) return authError("الاسم ثلاثي مطلوب");
+    if(!/^[a-z0-9]+$/.test(user)) return authError("يوزر إنجليزي فقط");
 
     try {
-        showError("⏳ جاري إنشاء الحساب...", true);
-        const doc = await db.collection('users').doc(username).get();
-        if(doc.exists) return showError("⛔ اسم المستخدم هذا محجوز مسبقاً، اختر غيره");
-
-        await db.collection('users').doc(username).set({
-            name: name,
-            username: username,
-            joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            isBanned: false
+        const doc = await db.collection('users').doc(user).get();
+        if(doc.exists) return authError("مستخدم مسبقاً");
+        await db.collection('users').doc(user).set({
+            name, username: user, joinedAt: firebase.firestore.FieldValue.serverTimestamp(), isBanned: false
         });
-
-        currentUser = { username: username, name: name, isAdmin: false };
+        currentUser = { username: user, name, isAdmin: false };
         localStorage.setItem('nursingUser', JSON.stringify(currentUser));
         location.reload();
-    } catch(e) { showError("❌ خطأ في التسجيل: " + e.message); }
+    } catch(e) { authError("خطأ"); }
 }
 
-function showError(msg, isInfo = false) {
+function authError(msg) {
     const el = document.getElementById('auth-error');
-    el.textContent = msg; 
-    el.style.display = 'block';
-    el.style.color = isInfo ? '#3b82f6' : '#ef4444';
-    el.style.borderColor = isInfo ? '#3b82f6' : '#fecaca';
+    el.textContent = msg; el.style.display = 'block';
 }
 
-async function verifyUserBan(username) {
+async function verifyUserBan(user) {
     if(!db) return false;
-    try {
-        const doc = await db.collection('users').doc(username).get();
-        return doc.exists && doc.data().isBanned;
-    } catch(e) { return false; }
+    const doc = await db.collection('users').doc(user).get();
+    return doc.exists && doc.data().isBanned;
 }
 
 function logout() {
@@ -146,492 +118,269 @@ function logout() {
     location.reload();
 }
 
-// ================= ADMIN SYSTEM =================
+// ================= ADMIN & SESSION =================
 function checkAdminSession() {
-    if(sessionStorage.getItem('isAdmin')) {
-        openAdminDashboard(true);
-    } else {
-        document.getElementById('admin-login-modal').style.display = 'flex';
-    }
+    if(sessionStorage.getItem('isAdmin')) openAdminDashboard(true);
+    else document.getElementById('admin-login-modal').style.display = 'flex';
 }
-
 function closeAdminLogin() { document.getElementById('admin-login-modal').style.display = 'none'; }
-
 function checkAdminPassword() {
-    const pass = document.getElementById('admin-password-input').value;
-    if(pass === "admin123") { 
+    if(document.getElementById('admin-password-input').value === 'admin123') {
         sessionStorage.setItem('isAdmin', 'true');
         closeAdminLogin();
         openAdminDashboard(true);
-    } else {
-        alert("كلمة مرور خاطئة");
-    }
+    } else alert("خطأ");
 }
-
-function openAdminDashboard(skipAuth=false) {
-    document.getElementById('main-nav').style.display = 'none';
-    document.getElementById('quiz-list-area').style.display = 'none';
-    document.getElementById('source-selection').style.display = 'none';
-    document.getElementById('admin-dashboard-view').style.display = 'block';
-    if(skipAuth) switchAdminTab('results');
-}
-
 function adminLogout() {
     sessionStorage.removeItem('isAdmin');
     location.reload();
 }
-
-function switchAdminTab(tab) {
-    document.querySelectorAll('.admin-tab-content').forEach(d => d.style.display = 'none');
-    document.getElementById(`admin-tab-${tab}`).style.display = 'block';
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    if(tab === 'results') fetchGroupedResults();
-    if(tab === 'users') fetchAdminUsers();
-    if(tab === 'content') { populateDropdowns(); currentExamQuestions = []; renderVisualCards(); }
-}
-
-// --- 1. Admin: Users ---
-async function fetchAdminUsers() {
-    const tbody = document.getElementById('users-table-body');
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">جاري التحميل...</td></tr>';
-    
-    const snap = await db.collection('users').orderBy('joinedAt', 'desc').get();
-    tbody.innerHTML = '';
-    snap.forEach(doc => {
-        const u = doc.data();
-        const date = u.joinedAt ? new Date(u.joinedAt.toDate()).toLocaleDateString() : '-';
-        const isBanned = u.isBanned || false;
-        
-        tbody.innerHTML += `
-            <tr>
-                <td><input value="${u.name}" onchange="updateUserName('${u.username}', this.value)" class="pro-input" style="padding:5px;"></td>
-                <td>${u.username}</td>
-                <td>${date}</td>
-                <td>${isBanned ? '<span style="color:red; font-weight:bold;">محظور ⛔</span>' : '<span style="color:green; font-weight:bold;">نشط ✅</span>'}</td>
-                <td>
-                    <button onclick="toggleBan('${u.username}', ${!isBanned})" class="pro-btn sm ${isBanned ? 'success-btn' : 'danger-btn'}">
-                        ${isBanned ? 'فك الحظر' : 'حظر'}
-                    </button>
-                    <button onclick="deleteUser('${u.username}')" class="pro-btn sm danger-btn" style="background:#7f1d1d;">حذف</button>
-                </td>
-            </tr>
-        `;
-    });
-}
-
-async function toggleBan(username, status) {
-    if(!confirm(status ? "حظر الطالب؟ لن يتمكن من الدخول." : "فك الحظر عن الطالب؟")) return;
-    await db.collection('users').doc(username).update({ isBanned: status });
-    fetchAdminUsers();
-}
-
-async function updateUserName(username, newName) {
-    await db.collection('users').doc(username).update({ name: newName });
-}
-
-async function deleteUser(username) {
-    if(!confirm("⚠️ حذف الطالب نهائياً؟ هذا الإجراء لا يمكن التراجع عنه!")) return;
-    await db.collection('users').doc(username).delete();
-    fetchAdminUsers();
-}
-
-// --- 2. Admin: Results (Grouped) ---
-async function fetchGroupedResults() {
-    const container = document.getElementById('results-accordion-container');
-    container.innerHTML = '<p style="text-align:center;">جاري التحميل...</p>';
-    
-    const snap = await db.collection('exam_results').orderBy('timestamp', 'desc').get();
-    groupedResults = {};
-
-    snap.forEach(doc => {
-        const r = doc.data();
-        const userKey = r.username || r.studentName; 
-        if(!groupedResults[userKey]) groupedResults[userKey] = { name: r.studentName, username: r.username, results: [] };
-        groupedResults[userKey].results.push({ id: doc.id, ...r });
-    });
-
-    renderAccordion();
-}
-
-function renderAccordion(filterText = '') {
-    const container = document.getElementById('results-accordion-container');
-    container.innerHTML = '';
-    
-    Object.keys(groupedResults).forEach(key => {
-        const student = groupedResults[key];
-        if(filterText && !student.name.includes(filterText) && !key.includes(filterText)) return;
-
-        const html = `
-            <div class="student-result-card">
-                <div class="student-header" onclick="this.nextElementSibling.classList.toggle('open')">
-                    <div class="student-info">
-                        <h4 style="margin:0;">👤 ${student.name} <span style="color:#666; font-size:0.9rem;">(${student.username || key})</span></h4>
-                        <span style="font-size:0.8rem; color:gray;">📄 ${student.results.length} امتحان</span>
-                    </div>
-                    <div style="display:flex; gap:10px;">
-                        <button onclick="event.stopPropagation(); printStudentReport('${key}')" class="pro-btn sm secondary-btn">🖨️</button>
-                        <span>🔽</span>
-                    </div>
-                </div>
-                <div class="result-details">
-                    <table class="mini-table">
-                        <thead><tr><th>المادة</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th><th>حذف</th></tr></thead>
-                        <tbody>
-                            ${student.results.map(r => `
-                                <tr>
-                                    <td>${r.subject||'-'}</td>
-                                    <td>${r.quizTitle}</td>
-                                    <td style="color:${r.score/r.total >= 0.5 ? 'green':'red'}; font-weight:bold;">${r.score}/${r.total}</td>
-                                    <td dir="ltr">${r.date}</td>
-                                    <td><button class="pro-btn sm danger-btn" onclick="deleteResult('${r.id}')" style="padding:2px 8px;">🗑️</button></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-        container.innerHTML += html;
-    });
-}
-
-function filterResults() { renderAccordion(document.getElementById('results-search').value); }
-
-async function deleteResult(docId) {
-    if(!confirm("حذف هذه النتيجة؟ سيتمكن الطالب من إعادة الامتحان.")) return;
-    await db.collection('exam_results').doc(docId).delete();
-    fetchGroupedResults();
-}
-
-// --- 3. Printing System ---
-function printStudentReport(userKey) {
-    const student = groupedResults[userKey];
-    const content = `
-        <div class="print-page">
-            <h2 style="text-align:center; border-bottom:2px solid black; padding-bottom:10px;">تقرير درجات الطالب</h2>
-            <div style="display:flex; justify-content:space-between; margin-top:20px;">
-                <h3>الاسم: ${student.name}</h3>
-                <h3>User ID: ${student.username || userKey}</h3>
-            </div>
-            <table class="print-table">
-                <thead><tr><th>م</th><th>المادة</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th></tr></thead>
-                <tbody>
-                    ${student.results.map((r, i) => `<tr><td>${i+1}</td><td>${r.subject||'-'}</td><td>${r.quizTitle}</td><td>${r.score}/${r.total}</td><td>${r.date}</td></tr>`).join('')}
-                </tbody>
-            </table>
-            <p style="margin-top:40px;">التوقيع: ................................</p>
-        </div>
-    `;
-    document.getElementById('print-area').innerHTML = content;
-    window.print();
-}
-
-function printAllReports() {
-    let content = '';
-    Object.values(groupedResults).sort((a,b) => a.name.localeCompare(b.name)).forEach(student => {
-        content += `
-            <div class="print-page">
-                <h2 style="text-align:center;">منصة الاختبارات - تقرير شامل</h2>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <h3>${student.name}</h3>
-                    <h3>ID: ${student.username || '-'}</h3>
-                </div>
-                <hr>
-                <table class="print-table">
-                    <thead><tr><th>المادة</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th></tr></thead>
-                    <tbody>
-                        ${student.results.map(r => `<tr><td>${r.subject||'-'}</td><td>${r.quizTitle}</td><td>${r.score}/${r.total}</td><td>${r.date}</td></tr>`).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    });
-    document.getElementById('print-area').innerHTML = content;
-    window.print();
-}
-
-function exportGroupedExcel() {
-    let data = [];
-    Object.values(groupedResults).sort((a,b) => a.name.localeCompare(b.name)).forEach(s => {
-        s.results.forEach(r => {
-            data.push({
-                "اسم الطالب": s.name,
-                "User ID": s.username || '-',
-                "المادة": r.subject || '-',
-                "الامتحان": r.quizTitle,
-                "الدرجة": r.score,
-                "المجموع": r.total,
-                "التاريخ": r.date
-            });
-        });
-    });
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "نتائج شاملة");
-    XLSX.writeFile(wb, "Student_Results_Full.xlsx");
-}
-
-// ================= EXAM CREATION (SMART PASTE) =================
-function parseSmartPaste() {
-    const text = document.getElementById('smart-paste-input').value;
-    const lines = text.split('\n').filter(l => l.trim());
-    let newQs = [];
-    let currentQ = null;
-
-    lines.forEach(line => {
-        line = line.trim();
-        // Detect Question (Starts with number or Q or ?)
-        if (/^(\d+|Q\d+|Question)\s*[\.:]/.test(line) || (line.includes('?') && !currentQ)) {
-            if(currentQ) newQs.push(currentQ);
-            currentQ = { q: line.replace(/^(\d+|Q\d+|Question)\s*[\.:]\s*/i, ''), options: [], a: 0 };
-        } 
-        // Detect Options (Starts with a,b,c or -)
-        else if (currentQ && (/^[a-zA-Z][\)\.]\s/.test(line) || line.startsWith('-'))) {
-            let isCorrect = line.includes('*') || line.toLowerCase().includes('correct');
-            let optText = line.replace(/^[a-zA-Z][\)\.]\s/, '').replace(/^\-\s/, '').replace('*','').replace('(Correct)','').trim();
-            if(isCorrect) currentQ.a = currentQ.options.length;
-            currentQ.options.push(optText);
-        }
-    });
-    if(currentQ) newQs.push(currentQ);
-
-    currentExamQuestions = [...currentExamQuestions, ...newQs];
-    renderVisualCards();
-    document.getElementById('smart-paste-input').value = ''; 
-}
-
-function renderVisualCards() {
-    const div = document.getElementById('visual-editor-container');
-    div.innerHTML = '';
-    currentExamQuestions.forEach((q, qIdx) => {
-        div.innerHTML += `
-            <div class="visual-card">
-                <button class="delete-card" onclick="deleteQuestion(${qIdx})">×</button>
-                <div style="font-weight:bold; margin-bottom:10px; direction:ltr;">Q${qIdx+1}: ${q.q}</div>
-                <div class="visual-options">
-                    ${q.options.map((opt, oIdx) => `
-                        <div class="v-opt ${qIdx === q.a ? 'correct' : ''}" onclick="setCorrect(${qIdx}, ${oIdx})">
-                            ${oIdx === q.a ? '✅' : '⚪'} <span style="direction:ltr;">${opt}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-    });
-}
-
-function setCorrect(qIdx, oIdx) {
-    currentExamQuestions[qIdx].a = oIdx; 
-    renderVisualCards();
-}
-
-function deleteQuestion(idx) {
-    currentExamQuestions.splice(idx, 1);
-    renderVisualCards();
-}
-
-async function saveExamFinal() {
-    const title = document.getElementById('new-exam-title').value;
-    const subId = document.getElementById('exam-subject-select').value;
-    const srcId = document.getElementById('exam-source-select').value;
-    
-    if(!title || currentExamQuestions.length === 0) return alert("❌ البيانات ناقصة! تأكد من العنوان والأسئلة");
-
-    const examData = {
-        title: title,
-        subjectId: subId,
-        sourceId: srcId,
-        questions: currentExamQuestions,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        // Settings
-        timeLimit: parseInt(document.getElementById('new-exam-time').value) || 0,
-        oneAttempt: document.getElementById('opt-one-attempt').checked,
-        randomQuestions: document.getElementById('opt-random-q').checked,
-        hideResult: document.getElementById('opt-hide-result').checked
-    };
-
-    await db.collection('quizzes').add(examData);
-    alert("✅ تم حفظ الامتحان بنجاح");
-    currentExamQuestions = [];
-    renderVisualCards();
-    document.getElementById('new-exam-title').value = '';
-}
-
-// ================= HELPERS (الطلاب) =================
-function initStudentView() {
-    document.getElementById('welcome-message').textContent = `أهلاً بك، د. ${currentUser.name} 👋`;
-    document.getElementById('auth-modal').style.display = 'none';
-    generateSubjectTabs();
-}
-
-async function fetchSubjects() {
-    if(!db) return;
-    const subSnap = await db.collection('subjects').get();
-    subjectsConfig = [
-        { id: 'microbiology', name: 'Microbiology' },
-        { id: 'fundamental', name: 'Fundamental' },
-        { id: 'biochemistry', name: 'Biochemistry' },
-        { id: 'anatomy', name: 'Anatomy' },
-        { id: 'physiology', name: 'Physiology' },
-        { id: 'clinical', name: 'Clinical' },
-        { id: 'ethics', name: 'Ethics' }
-    ];
-    subSnap.forEach(doc => {
-        if(!subjectsConfig.find(s=>s.id === doc.data().id)) subjectsConfig.push(doc.data());
-    });
-    generateSubjectTabs();
-    populateDropdowns();
-}
-
-function generateSubjectTabs() {
-    const nav = document.getElementById('main-nav');
-    nav.innerHTML = '';
-    subjectsConfig.forEach(sub => {
-        const btn = document.createElement('button');
-        btn.className = 'tab-btn';
-        btn.textContent = sub.name;
-        btn.onclick = () => {
-            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-            btn.classList.add('active');
-            loadSourcesForSubject(sub.id);
-        };
-        nav.appendChild(btn);
-    });
-}
-
-async function loadSourcesForSubject(subId) {
-    const container = document.getElementById('source-selection');
-    container.innerHTML = '';
+function openAdminDashboard(skip) {
+    document.getElementById('main-nav').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'none';
-    
-    // Default Sources
-    defaultSources.forEach(src => renderSourceCard(src, subId, container));
-    
-    // Custom Sources
-    if(db) {
-        const snap = await db.collection('sources').where('subjectId', '==', subId).get();
-        snap.forEach(doc => renderSourceCard(doc.data(), subId, container));
-    }
-    document.getElementById('source-selection').style.display = 'flex';
+    document.getElementById('admin-dashboard-view').style.display = 'block';
+    if(skip) switchAdminTab('results');
+}
+function switchAdminTab(tab) {
+    document.querySelectorAll('.admin-tab-content').forEach(e=>e.style.display='none');
+    document.getElementById('admin-tab-'+tab).style.display='block';
+    if(tab==='results') fetchGroupedResults();
+    if(tab==='users') fetchAdminUsers();
+    if(tab==='content') { populateDropdowns(); currentExamQuestions=[]; renderVisualCards(); }
 }
 
-function renderSourceCard(src, subId, container) {
-    const div = document.createElement('div');
-    div.className = 'quiz-card';
-    div.innerHTML = `<h3>${src.name}</h3>`;
-    div.onclick = () => loadQuizzes(subId, src.id, src.name);
-    container.appendChild(div);
-}
-
-async function loadQuizzes(subId, srcId, srcName) {
+// ================= QUIZ LOGIC + LOCAL FILE PATH SUPPORT =================
+async function loadQuizSource(sourceId, sourceName) {
+    // This function preserves your OLD logic for loading files from paths
     document.getElementById('source-selection').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'block';
-    document.getElementById('source-title-display').textContent = srcName;
+    document.getElementById('source-title-display').textContent = sourceName;
     const container = document.getElementById('dynamic-cards-container');
     container.innerHTML = '<p>جاري التحميل...</p>';
-    
-    const snap = await db.collection('quizzes')
-        .where('subjectId', '==', subId)
-        .where('sourceId', '==', srcId).get();
-        
-    container.innerHTML = '';
-    if(snap.empty) { container.innerHTML = '<p>لا توجد اختبارات</p>'; return; }
 
-    snap.forEach(doc => {
-        const q = doc.data();
+    let allQuizzes = {};
+    
+    // 1. Try Loading Local Script (Your Old Feature)
+    try {
+        const currentSubject = subjectsConfig.find(s => document.querySelector('.tab-btn.active').textContent === s.name)?.id;
+        const scriptPath = `questions/${currentSubject}/${sourceId}.js`;
+        await new Promise(resolve => {
+            const script = document.createElement('script');
+            script.src = scriptPath;
+            script.onload = () => {
+                const varName = `${currentSubject}_${sourceId}_data`;
+                if(window[varName]) Object.assign(allQuizzes, window[varName]);
+                resolve();
+            };
+            script.onerror = resolve; // Continue if file not found
+            document.head.appendChild(script);
+        });
+    } catch(e) {}
+
+    // 2. Load From Firebase
+    if(db) {
+        const currentSubject = subjectsConfig.find(s => document.querySelector('.tab-btn.active').textContent === s.name)?.id;
+        const snap = await db.collection('quizzes').where('subjectId','==',currentSubject).where('sourceId','==',sourceId).get();
+        snap.forEach(doc => { allQuizzes[doc.id] = doc.data(); });
+    }
+
+    renderQuizCards(allQuizzes);
+}
+
+function renderQuizCards(data) {
+    const container = document.getElementById('dynamic-cards-container');
+    container.innerHTML = '';
+    Object.keys(data).forEach(key => {
+        const q = data[key];
         const div = document.createElement('div');
         div.className = 'quiz-card';
         div.innerHTML = `<h3>${q.title}</h3><p>${q.questions.length} سؤال</p><button class="start-btn">ابدأ</button>`;
-        div.onclick = () => startQuiz(q);
+        div.onclick = () => startQuiz(q, key);
         container.appendChild(div);
     });
 }
 
-function startQuiz(quizData) {
-    currentQuiz = quizData.questions;
-    currentQuestionIndex = 0;
-    userAnswers = new Array(currentQuiz.length).fill(null);
+function startQuiz(quizData, key) {
+    window.currentQuizKey = key;
+    window.currentQuizTitle = quizData.title;
+    let qs = [...quizData.questions];
+    if(quizData.randomQuestions) qs.sort(() => Math.random() - 0.5);
+    
+    window.currentQuiz = qs;
+    window.currentQuestionIndex = 0;
+    window.userAnswers = new Array(qs.length).fill(null);
+    
     document.getElementById('quiz-list-area').style.display = 'none';
     document.getElementById('quiz-container').style.display = 'block';
     document.getElementById('current-quiz-title').textContent = quizData.title;
+    
+    // Timer Logic
+    if(window.timerInterval) clearInterval(window.timerInterval);
+    if(quizData.timeLimit > 0) {
+        let sec = quizData.timeLimit * 60;
+        window.timerInterval = setInterval(() => {
+            sec--;
+            let m=Math.floor(sec/60), s=sec%60;
+            document.getElementById('quiz-timer').textContent = `${m}:${s}`;
+            if(sec<=0) { clearInterval(window.timerInterval); finishQuiz(true); }
+        }, 1000);
+    }
+    
     displayQuestion();
 }
 
 function displayQuestion() {
-    const q = currentQuiz[currentQuestionIndex];
+    const q = window.currentQuiz[window.currentQuestionIndex];
     document.getElementById('question-container').innerHTML = `
-        <div class="question-text">Q${currentQuestionIndex+1}: ${q.q}</div>
-        <div>${q.options.map((o,i) => `<button class="answer-btn" onclick="selectAnswer(${i})">${o}</button>`).join('')}</div>
+        <div class="question-text" style="direction:ltr; text-align:left;">Q${window.currentQuestionIndex+1}: ${q.q}</div>
+        <div>${q.options.map((o,i) => `<button class="answer-btn" onclick="selAns(${i})">${o}</button>`).join('')}</div>
     `;
+    document.getElementById('question-counter').textContent = `${window.currentQuestionIndex+1}/${window.currentQuiz.length}`;
 }
 
-function selectAnswer(idx) {
-    userAnswers[currentQuestionIndex] = { answer: idx, isCorrect: idx === currentQuiz[currentQuestionIndex].a };
-    document.querySelectorAll('.answer-btn').forEach((b, i) => {
-        b.classList.toggle('selected', i === idx);
+window.selAns = function(idx) {
+    window.userAnswers[window.currentQuestionIndex] = { answer: idx, isCorrect: idx === window.currentQuiz[window.currentQuestionIndex].a };
+    displayQuestion(); // Refresh UI
+}
+
+document.getElementById('next-btn').onclick = () => {
+    if(window.currentQuestionIndex < window.currentQuiz.length - 1) {
+        window.currentQuestionIndex++; displayQuestion();
+    } else finishQuiz();
+};
+
+function finishQuiz() {
+    clearInterval(window.timerInterval);
+    let score = window.userAnswers.filter(a => a && a.isCorrect).length;
+    document.getElementById('final-score').textContent = `${score}/${window.currentQuiz.length}`;
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+    
+    if(db && currentUser) {
+        db.collection('exam_results').add({
+            studentName: currentUser.name, username: currentUser.username,
+            quizTitle: window.currentQuizTitle, score: score, total: window.currentQuiz.length,
+            date: new Date().toLocaleString(), timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+}
+
+// ================= ADMIN FEATURES =================
+// 1. Grouped Results & Printing
+async function fetchGroupedResults() {
+    const container = document.getElementById('results-accordion-container');
+    container.innerHTML = 'تحميل...';
+    const snap = await db.collection('exam_results').orderBy('timestamp','desc').get();
+    groupedResults = {};
+    snap.forEach(doc => {
+        const d = doc.data();
+        const key = d.username || d.studentName;
+        if(!groupedResults[key]) groupedResults[key] = {name: d.studentName, username: d.username, results:[]};
+        groupedResults[key].results.push({id:doc.id, ...d});
+    });
+    renderAccordion();
+}
+
+function renderAccordion(filter='') {
+    const div = document.getElementById('results-accordion-container');
+    div.innerHTML = '';
+    Object.keys(groupedResults).forEach(key => {
+        const s = groupedResults[key];
+        if(filter && !s.name.includes(filter)) return;
+        div.innerHTML += `
+            <div class="student-result-card">
+                <div class="student-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                    <b>${s.name} (${key})</b> <span>${s.results.length} امتحان</span>
+                    <button onclick="event.stopPropagation(); printOne('${key}')">طباعة</button>
+                </div>
+                <div class="result-details">
+                    <table class="mini-table">
+                        ${s.results.map(r => `<tr><td>${r.quizTitle}</td><td>${r.score}/${r.total}</td><td>${r.date}</td><td><button onclick="delRes('${r.id}')">🗑️</button></td></tr>`).join('')}
+                    </table>
+                </div>
+            </div>`;
     });
 }
 
-// ... (باقي وظائف التنقل والحفظ والـ Announcements زي ما هي) ...
-// (تم دمجها في الرد السابق، تأكد فقط من نسخ الكود كاملاً)
-
-function populateDropdowns() {
-    const s1 = document.getElementById('exam-subject-select');
-    const s2 = document.getElementById('source-subject-select');
-    [s1, s2].forEach(s => {
-        s.innerHTML = '';
-        subjectsConfig.forEach(sub => s.innerHTML += `<option value="${sub.id}">${sub.name}</option>`);
+window.filterResults = () => renderAccordion(document.getElementById('results-search').value);
+window.delRes = async (id) => { if(confirm("حذف؟")) await db.collection('exam_results').doc(id).delete(); fetchGroupedResults(); };
+window.printOne = (key) => {
+    const s = groupedResults[key];
+    document.getElementById('print-area').innerHTML = `
+        <div class="print-page">
+            <h2>${s.name} (${s.username})</h2><hr>
+            <table class="print-table">
+                ${s.results.map(r => `<tr><td>${r.quizTitle}</td><td>${r.score}/${r.total}</td><td>${r.date}</td></tr>`).join('')}
+            </table>
+        </div>`;
+    window.print();
+}
+window.printAllReports = () => {
+    let html = '';
+    Object.values(groupedResults).forEach(s => {
+        html += `<div class="print-page"><h2>${s.name} (${s.username})</h2><hr><table class="print-table">${s.results.map(r => `<tr><td>${r.quizTitle}</td><td>${r.score}/${r.total}</td><td>${r.date}</td></tr>`).join('')}</table></div>`;
     });
-    updateSourceSelect();
+    document.getElementById('print-area').innerHTML = html;
+    window.print();
 }
 
-async function updateSourceSelect() {
-    const subId = document.getElementById('exam-subject-select').value;
-    const sel = document.getElementById('exam-source-select');
-    sel.innerHTML = '';
-    defaultSources.forEach(s => sel.innerHTML += `<option value="${s.id}">${s.name}</option>`);
-    const snap = await db.collection('sources').where('subjectId', '==', subId).get();
-    snap.forEach(doc => sel.innerHTML += `<option value="${doc.data().id}">${doc.data().name}</option>`);
-}
-
-async function addNewSubject() {
-    await db.collection('subjects').add({
-        name: document.getElementById('new-subject-name').value,
-        id: document.getElementById('new-subject-id').value
-    });
-    alert("تم"); fetchSubjects();
-}
-
-async function addNewSource() {
-    await db.collection('sources').add({
-        subjectId: document.getElementById('source-subject-select').value,
-        name: document.getElementById('new-source-name').value,
-        id: document.getElementById('new-source-id').value
-    });
-    alert("تم"); updateSourceSelect();
-}
-
-async function loadAnnouncement() {
-    try {
-        const doc = await db.collection('settings').doc('announcement').get();
-        if(doc.exists && doc.data().active) {
-            document.getElementById('announcement-bar').style.display = 'flex';
-            document.getElementById('announcement-text').textContent = doc.data().text;
+// 2. Visual Editor + Smart Paste
+window.parseSmartPaste = () => {
+    const txt = document.getElementById('smart-paste-input').value;
+    const lines = txt.split('\n');
+    let q = null;
+    lines.forEach(l => {
+        l = l.trim();
+        if(/^(\d+|Q\d+)\./.test(l) || (l.includes('?') && !q)) {
+            if(q) currentExamQuestions.push(q);
+            q = { q: l, options: [], a: 0 };
+        } else if(q && (/^[a-z]\)/.test(l) || l.startsWith('-'))) {
+            let isCor = l.includes('*');
+            q.options.push(l.replace('*',''));
+            if(isCor) q.a = q.options.length - 1;
         }
-    } catch(e){}
-}
-function closeAnnouncement() { document.getElementById('announcement-bar').style.display = 'none'; }
-async function saveAnnouncement() {
-    await db.collection('settings').doc('announcement').set({
-        text: document.getElementById('announcement-input').value,
-        active: true
     });
-    alert("تم النشر");
+    if(q) currentExamQuestions.push(q);
+    renderVisualCards();
 }
-async function clearAnnouncement() {
-    await db.collection('settings').doc('announcement').update({ active: false });
-    alert("تم الإخفاء");
+function renderVisualCards() {
+    document.getElementById('visual-editor-container').innerHTML = currentExamQuestions.map((q,i) => `
+        <div class="visual-card">
+            <button class="delete-card" onclick="delQ(${i})">x</button>
+            <b>${q.q}</b>
+            <div class="visual-options">${q.options.map((o,ox) => `<div class="v-opt ${q.a==ox?'correct':''}" onclick="setQ(${i},${ox})">${o}</div>`).join('')}</div>
+        </div>`).join('');
 }
-async function loadLeaderboard() {/* ... */}
+window.delQ = (i) => { currentExamQuestions.splice(i,1); renderVisualCards(); };
+window.setQ = (i,o) => { currentExamQuestions[i].a = o; renderVisualCards(); };
+window.saveExamFinal = async () => {
+    await db.collection('quizzes').add({
+        title: document.getElementById('new-exam-title').value,
+        subjectId: document.getElementById('exam-subject-select').value,
+        sourceId: document.getElementById('exam-source-select').value,
+        questions: currentExamQuestions,
+        timeLimit: document.getElementById('new-exam-time').value,
+        oneAttempt: document.getElementById('opt-one-attempt').checked
+    });
+    alert("تم");
+}
+
+// 3. User Mgmt
+window.fetchAdminUsers = async () => {
+    const snap = await db.collection('users').get();
+    let html = '';
+    snap.forEach(doc => {
+        const u = doc.data();
+        html += `<tr><td>${u.name}</td><td>${u.username}</td><td>${u.joinedAt?.toDate().toLocaleDateString()}</td><td>${u.isBanned?'محظور':'نشط'}</td><td><button onclick="togBan('${u.username}',${!u.isBanned})">حظر/فك</button></td></tr>`;
+    });
+    document.getElementById('users-table-body').innerHTML = html;
+}
+window.togBan = async (u, s) => { await db.collection('users').doc(u).update({isBanned:s}); fetchAdminUsers(); };
+
+// Helpers
+function initStudentView() {
+    document.getElementById('welcome-message').textContent = `أهلاً د. ${currentUser.name}`;
+    document.getElementById('auth-modal').style.display = 'none';
+}
+function fetchSubjects() { /* ... Populate from DB + Config ... */ }
+function populateDropdowns() { /* ... Fill Selects ... */ }
