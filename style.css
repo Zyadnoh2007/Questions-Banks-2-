@@ -1,22 +1,28 @@
-/* --- الرجوع للتصميم القديم بالكامل --- */
+/* --- Google Fonts --- */
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 
 :root {
-  --primary-color: #3b82f6; /* الأزرق القديم */
-  --secondary-color: #6366f1;
-  --card-bg: #ffffff;
-  --body-bg: #f8fafc;
-  --text-dark: #1e293b;
-  --text-light: #64748b;
-  --border-color: #e2e8f0;
-  --quiz-card-bg: #eff6ff;
-  --quiz-card-border: #3b82f6;
+  /* الألوان الأصلية القديمة */
+  --primary-color: #3b82f6;      /* الأزرق الأساسي */
+  --secondary-color: #6366f1;    /* النيلي */
+  --card-bg: #ffffff;            /* خلفية الكروت بيضاء */
+  --body-bg: #f8fafc;            /* خلفية الموقع رمادي فاتح جداً */
+  --text-dark: #1e293b;          /* لون النص الأساسي */
+  --text-light: #64748b;         /* لون النص الفرعي */
+  --border-color: #e2e8f0;       /* لون الحدود */
+  --quiz-card-bg: #eff6ff;       /* خلفية كارت السؤال */
+  --quiz-card-border: #3b82f6;   /* حدود كارت السؤال */
+  --success-color: #22c55e;      /* الأخضر (للإجابة الصحيحة) */
+  --danger-color: #ef4444;       /* الأحمر (للخطأ أو الحذف) */
+  --radius-md: 12px;             /* تدوير الحواف المتوسط */
+  --radius-lg: 16px;             /* تدوير الحواف الكبير */
+  
+  /* الظلال القديمة */
   --shadow-light: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-heavy: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --radius-md: 12px;
-  --radius-lg: 16px;
 }
 
+/* --- وضع الدارك مود (Dark Mode) --- */
 body.dark-mode {
   --card-bg: #1e293b;
   --body-bg: #0f172a;
@@ -27,23 +33,26 @@ body.dark-mode {
   --quiz-card-border: #6366f1;
 }
 
+/* --- التنسيقات العامة للصفحة --- */
 body {
   font-family: 'Almarai', sans-serif;
   margin: 0; padding: 0;
   background-color: var(--body-bg);
   color: var(--text-dark);
+  min-height: 100vh;
 }
 
 .container { max-width: 1200px; margin: 0 auto; padding: 25px; }
 
-/* --- Modal (التصميم الأبيض القديم البسيط) --- */
+/* --- تصميم نافذة الدخول (Modal) - التصميم الأبيض البسيط --- */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.8); /* خلفية سوداء شفافة */
     display: flex; justify-content: center; align-items: center;
-    z-index: 1000;
+    z-index: 2000;
     backdrop-filter: blur(5px);
 }
+
 .modal-box {
     background: var(--card-bg);
     padding: 40px;
@@ -51,7 +60,11 @@ body {
     text-align: center;
     width: 90%; max-width: 400px;
     box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
 }
+
+.modal-box h2, .modal-box h3 { margin-top: 0; color: var(--primary-color); }
+
 .modal-box input {
     width: 100%; padding: 12px;
     border: 2px solid var(--border-color);
@@ -59,22 +72,32 @@ body {
     margin: 10px 0;
     font-size: 1.1rem;
     background: var(--body-bg); color: var(--text-dark);
+    box-sizing: border-box; /* عشان الـ padding ميوسعش الخانة */
 }
 
-/* --- Buttons (نفس الأزرار القديمة) --- */
+.modal-box input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.modal-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+
+/* --- الأزرار القديمة (Classic Buttons) --- */
 .start-btn {
   background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
   color: white; border: none; padding: 12px 25px; border-radius: 25px;
   font-size: 1rem; cursor: pointer; width: 100%; font-weight: bold;
   transition: transform 0.2s;
+  text-align: center;
 }
-.start-btn:hover { transform: scale(1.03); }
+.start-btn:hover { transform: scale(1.03); opacity: 0.9; }
 
 .back-btn {
   background: var(--text-light); color: white; border: none;
   padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold;
   margin-bottom: 20px;
 }
+.back-btn:hover { background: var(--text-dark); }
 
 .nav-btn {
   background: var(--primary-color); color: white; border: none;
@@ -82,57 +105,207 @@ body {
 }
 .nav-btn:disabled { background: #64748b; cursor: not-allowed; }
 
-/* --- Accordion Results --- */
+/* أزرار التبويبات (Tabs) في المودال والأدمن */
+.tab-btn {
+  padding: 10px 20px; background: transparent; border: none;
+  font-weight: bold; color: var(--text-light); cursor: pointer;
+  border-bottom: 3px solid transparent; font-size: 1rem;
+}
+.tab-btn.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+/* تنسيق خاص لتبويبات الأدمن عشان تكون واضحة */
+.dashboard-view .tab-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-radius: 20px;
+    border-bottom: none;
+}
+
+/* --- الهيدر (Header) --- */
+.header {
+  text-align: center; margin-bottom: 30px;
+  background: var(--card-bg); padding: 30px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-heavy);
+  position: relative;
+}
+.header h1 { margin: 0; color: var(--text-dark); }
+.header p { color: var(--text-light); }
+
+.header-controls {
+  position: absolute; top: 20px; left: 20px;
+  display: flex; gap: 10px;
+}
+
+.icon-btn {
+  width: 45px; height: 45px; border-radius: 50%;
+  border: 2px solid var(--border-color); background: transparent;
+  cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dark);
+}
+.icon-btn:hover { background: var(--border-color); }
+
+/* --- كروت الامتحانات والمصادر --- */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
+
+.quiz-card {
+  background: var(--card-bg); padding: 25px;
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-light);
+  text-align: center; cursor: pointer;
+  border: 2px solid transparent; transition: 0.3s;
+}
+.quiz-card:hover { transform: translateY(-5px); border-color: var(--primary-color); }
+.quiz-card h3 { color: var(--primary-color); margin-top: 0; }
+
+/* --- صفحة الامتحان (Quiz View) --- */
+.quiz-container {
+  display: none; background: var(--card-bg); padding: 30px;
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-heavy);
+}
+
+.quiz-header { text-align: center; margin-bottom: 20px; position: relative; }
+.quiz-title { color: var(--primary-color); margin: 0; }
+
+.timer-badge {
+    position: absolute; top: 0; left: 0;
+    background: var(--danger-color); color: white;
+    padding: 5px 15px; border-radius: 20px; font-weight: bold;
+}
+
+.question-text {
+  font-size: 1.3rem; margin-bottom: 20px;
+  text-align: left; direction: ltr; font-weight: bold;
+}
+
+.answer-btn {
+  display: block; width: 100%; padding: 15px; margin-bottom: 10px;
+  background: white; border: 2px solid var(--border-color);
+  border-radius: 10px; cursor: pointer;
+  text-align: left; direction: ltr; font-size: 1rem;
+  color: var(--text-dark);
+}
+.answer-btn:hover { border-color: var(--primary-color); background: #f0f9ff; }
+.answer-btn.selected { background: #e0e7ff; border-color: var(--secondary-color); color: #1e1e24; font-weight: bold; }
+
+/* --- صفحة الأدمن والنتائج (الجديدة) --- */
+
+/* 1. نظام الأكورديون للنتائج المجمعة */
 .student-result-card {
-    background: var(--card-bg); border: 1px solid var(--border-color);
-    margin-bottom: 10px; border-radius: 8px; overflow: hidden;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    margin-bottom: 15px; border-radius: 8px; overflow: hidden;
 }
 .student-header {
-    padding: 15px; background: #f1f5f9; cursor: pointer;
+    padding: 15px 20px; background: #f1f5f9; cursor: pointer;
     display: flex; justify-content: space-between; align-items: center;
 }
+body.dark-mode .student-header { background: #334155; }
 .student-header:hover { background: #e2e8f0; }
-.result-details { display: none; padding: 15px; border-top: 1px solid #ddd; }
-.result-details.open { display: block; }
-.mini-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.mini-table th, .mini-table td { border-bottom: 1px solid #eee; padding: 8px; text-align: right; }
 
-/* --- Visual Editor & Smart Paste --- */
+.result-details { display: none; padding: 20px; border-top: 1px solid var(--border-color); }
+.result-details.open { display: block; animation: fadeIn 0.3s; }
+
+.mini-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.mini-table th { text-align: right; color: var(--text-light); padding: 8px; border-bottom: 1px solid var(--border-color); }
+.mini-table td { padding: 10px 8px; border-bottom: 1px solid var(--border-color); }
+
+/* 2. محرر الامتحانات المرئي (Visual Editor) */
 .visual-card {
     background: var(--card-bg); border: 1px solid var(--border-color);
-    padding: 15px; margin-bottom: 10px; border-radius: 8px;
-    border-left: 4px solid var(--success-color, green); position: relative;
+    padding: 15px; margin-bottom: 15px; border-radius: 8px;
+    border-left: 5px solid var(--success-color); position: relative;
 }
 .visual-card .delete-card {
-    position: absolute; top: 5px; left: 5px; background: #fee2e2; color: red;
-    border: none; cursor: pointer; border-radius: 50%; width: 25px; height: 25px;
+    position: absolute; top: 10px; left: 10px;
+    background: #fee2e2; color: #b91c1c; border: none;
+    cursor: pointer; border-radius: 50%; width: 25px; height: 25px;
+    font-weight: bold;
 }
-.visual-options { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
-.v-opt { padding: 5px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; }
-.v-opt.correct { background: #dcfce7; border-color: green; font-weight: bold; }
+.visual-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.v-opt {
+    padding: 10px; border: 1px solid var(--border-color);
+    border-radius: 5px; cursor: pointer; direction: ltr; text-align: left;
+}
+.v-opt:hover { border-color: var(--primary-color); }
+.v-opt.correct { background: #dcfce7; border-color: var(--success-color); color: #14532d; font-weight: bold; }
 
-/* --- General Layout (Legacy) --- */
-.header { text-align: center; margin-bottom: 30px; background: var(--card-bg); padding: 30px; border-radius: var(--radius-lg); box-shadow: var(--shadow-heavy); position: relative; }
-.header-controls { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; }
-.icon-btn { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--border-color); background: transparent; cursor: pointer; font-size: 1.3rem; }
-.quiz-card { background: var(--card-bg); padding: 25px; border-radius: var(--radius-lg); box-shadow: var(--shadow-light); text-align: center; cursor: pointer; border: 2px solid transparent; }
-.quiz-card:hover { transform: translateY(-5px); border-color: var(--primary-color); }
-.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+/* 3. منطقة النسخ الذكي (Smart Paste) */
+.smart-paste-area {
+    background: #eef2ff; padding: 15px; border-radius: 8px;
+    margin-bottom: 20px; border: 1px dashed var(--secondary-color);
+}
+.smart-paste-area textarea {
+    width: 100%; border: 1px solid #ccc; border-radius: 5px; padding: 10px;
+    font-family: monospace;
+}
 
-/* --- Leaderboard --- */
-.leaderboard-container { background: #fffbeb; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #fcd34d; text-align: center; }
-.leaderboard-grid { display: flex; gap: 10px; overflow-x: auto; justify-content: center; padding: 10px; }
-.leader-card { background: white; padding: 10px; border-radius: 8px; min-width: 100px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+/* 4. لوحة الشرف والإعلانات */
+.leaderboard-container {
+    background: #fffbeb; padding: 20px; border-radius: 12px;
+    margin-bottom: 25px; border: 1px solid #fcd34d; text-align: center;
+}
+.leaderboard-grid { display: flex; gap: 15px; overflow-x: auto; padding: 10px; justify-content: center; }
+.leader-card {
+    background: white; padding: 10px 20px; border-radius: 8px;
+    min-width: 120px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+}
 
-/* --- Announcement --- */
-.announcement-bar { background: #d97706; color: white; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: center; gap: 15px; }
+.announcement-bar {
+    background: #d97706; color: white; padding: 10px;
+    text-align: center; position: sticky; top: 0; z-index: 1000;
+    display: flex; justify-content: center; gap: 15px; font-weight: bold;
+}
 
-/* --- Print Styles --- */
+/* --- جداول الأدمن العامة --- */
+.history-table-container { overflow-x: auto; margin-top: 20px; }
+table { width: 100%; border-collapse: collapse; min-width: 600px; }
+th, td { padding: 12px; text-align: right; border-bottom: 1px solid var(--border-color); }
+th { background-color: #f1f5f9; color: var(--text-light); }
+body.dark-mode th { background-color: #334155; }
+
+/* --- إعدادات الطباعة (Print Styles) - ضروري جداً --- */
 @media print {
+    /* إخفاء كل حاجة في الموقع ما عدا منطقة الطباعة */
     body * { visibility: hidden; }
     #print-area, #print-area * { visibility: visible; }
-    #print-area { position: absolute; left: 0; top: 0; width: 100%; }
-    .print-page { page-break-after: always; padding: 20px; border: 1px solid #ccc; margin-bottom: 20px; }
-    .print-table { width: 100%; border-collapse: collapse; direction: rtl; margin-top: 10px; }
-    .print-table th, .print-table td { border: 1px solid black; padding: 5px; text-align: center; font-size: 12px; }
-  }
+    
+    /* ضبط مكان منطقة الطباعة في الصفحة */
+    #print-area {
+        position: absolute; left: 0; top: 0; width: 100%;
+        background: white; color: black;
+    }
+
+    /* تنسيق الصفحة المطبوعة */
+    .print-page {
+        page-break-after: always; /* ابدأ صفحة جديدة بعد كل طالب */
+        padding: 40px;
+        border: none;
+    }
+
+    .print-table {
+        width: 100%; border-collapse: collapse;
+        direction: rtl; margin-top: 20px;
+    }
+    .print-table th, .print-table td {
+        border: 1px solid #000; padding: 8px;
+        text-align: center; font-size: 12px;
+    }
+    
+    /* إخفاء الخلفيات والألوان لتوفير الحبر */
+    .print-page h2, .print-page h3 { color: black !important; }
+}
+
+/* --- إصلاحات الموبايل --- */
+@media (max-width: 768px) {
+    .header-controls {
+        position: static; margin-bottom: 15px; justify-content: center;
+    }
+    .quiz-card { margin-bottom: 15px; }
+    .visual-options { grid-template-columns: 1fr; }
+}
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
