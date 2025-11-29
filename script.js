@@ -1,4 +1,4 @@
-// --- Firebase Config (نفس بياناتك) ---
+// --- Firebase Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyCzv8U8Syd71OK5uXF7MbOTdT77jXldWqE",
   authDomain: "nursing-quiz-63de2.firebaseapp.com",
@@ -13,39 +13,60 @@ try {
     firebase.initializeApp(firebaseConfig);
     db = firebase.firestore();
     console.log("Firebase Connected ✅");
-} catch (e) { console.error(e); }
+} catch (e) {
+    console.log("Firebase Error ⚠️");
+}
 
-// --- متغيرات ---
-let currentUser = null;
-let subjectsConfig = [];
+let subjectsConfig = [
+    { id: 'microbiology', name: 'Microbiology' },
+    { id: 'fundamental', name: 'Fundamental' },
+    { id: 'biochemistry', name: 'Biochemistry' },
+    { id: 'anatomy', name: 'Anatomy' },
+    { id: 'physiology', name: 'Physiology' },
+    { id: 'clinical', name: 'Clinical' },
+    { id: 'ethics', name: 'Ethics' }
+];
+
 let defaultSources = [
     { id: 'bank', name: '📚 بنك الأسئلة' },
     { id: 'doctor', name: '👨‍⚕️ كويزات الدكتور' }
 ];
-let currentExamQuestions = [];
-let groupedResults = {};
+
+// المتغيرات العالمية
+let currentUser = null;
+let currentSubject = subjectsConfig[0].id;
+let currentSource = ''; 
+let currentQuizData = null;
 let currentQuiz = [];
+let currentQuestionIndex = 0;
 let userAnswers = [];
 let timerInterval = null;
+let currentExamQuestions = []; // لتخزين أسئلة الامتحان الجديد
+let groupedResults = {}; // لتخزين النتائج المجمعة
 
-// --- عند التحميل ---
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. فحص أدمن
+    // 1. فحص جلسة الأدمن
     if (sessionStorage.getItem('isAdmin') === 'true') {
         currentUser = { name: 'Admin', isAdmin: true };
     } 
-    // 2. فحص طالب
+    // 2. فحص جلسة الطالب (مع التصحيح الذكي)
     else {
-        const saved = localStorage.getItem('nursingUser');
-        if (saved) {
+        const savedUser = localStorage.getItem('nursingUser') || localStorage.getItem('studentName'); // دعم الاسم القديم والجديد
+        if (savedUser) {
+            // هل هو JSON (النظام الجديد) ولا نص عادي (القديم)؟
             try {
-                const parsed = JSON.parse(saved);
+                const parsed = JSON.parse(savedUser);
                 // إصلاح مشكلة undefined: لو الطالب قديم ومعهوش يوزر، نستخدم اسمه كيوزر مؤقت
                 if(!parsed.username) parsed.username = parsed.name; 
-                
-                // التأكد من الحظر
                 if(!(await verifyBan(parsed.username))) currentUser = parsed;
-            } catch(e) { localStorage.removeItem('nursingUser'); }
+            } catch(e) {
+                // ده طالب من النظام القديم (مسجل اسمه نص فقط)
+                if(!(await verifyBan(savedUser))) {
+                    currentUser = { name: savedUser, username: savedUser, isAdmin: false };
+                    // تحديث تخزينه للنظام الجديد
+                    localStorage.setItem('nursingUser', JSON.stringify(currentUser));
+                }
+            }
         }
     }
 
@@ -71,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 });
 
-// ================= AUTH SYSTEM =================
+// ================= AUTH SYSTEM (نظام الدخول) =================
 function toggleAuthView(mode) {
     document.getElementById('login-view').style.display = mode === 'login' ? 'block' : 'none';
     document.getElementById('register-view').style.display = mode === 'register' ? 'block' : 'none';
@@ -93,19 +114,28 @@ async function handleLogin() {
             const snap = await db.collection('users').where('name', '==', input).get();
             if(!snap.empty) {
                 userData = snap.docs[0].data();
-                // تحديث بياناته القديمة عشان يكون ليه يوزر
-                userData.username = userData.name; 
+                userData.username = userData.name; // تصحيح فوري
             }
         }
 
-        if(!userData) return alert("بيانات غير صحيحة");
-        if(userData.isBanned) return alert("حسابك محظور");
+        // لو لسه ملقناش، ممكن يكون طالب قديم مش متسجل في كولكشن users أصلاً (كان بيعتمد على LocalStorage)
+        // نسمح له بالدخول مرة واحدة وننشئ له سجل
+        if(!userData) {
+             if(confirm("اسمك غير مسجل في النظام الجديد. هل تريد إنشاء حساب بهذا الاسم؟")) {
+                 await db.collection('users').doc(input).set({
+                    name: input, username: input, joinedAt: firebase.firestore.FieldValue.serverTimestamp(), isBanned: false
+                 });
+                 userData = { name: input, username: input, isBanned: false };
+             } else return;
+        }
+
+        if(userData.isBanned) return alert("حسابك محظور. راجع الأدمن.");
 
         currentUser = { name: userData.name, username: userData.username || userData.name, isAdmin: false };
         localStorage.setItem('nursingUser', JSON.stringify(currentUser));
         location.reload();
 
-    } catch(e) { alert("خطأ في الاتصال"); }
+    } catch(e) { alert("خطأ في الاتصال: " + e.message); }
 }
 
 async function handleRegister() {
@@ -131,6 +161,7 @@ async function handleRegister() {
 
 async function verifyBan(user) {
     if(!db) return false;
+    // لو اليوزر مش موجود كـ Doc، نتجاهل الحظر
     const d = await db.collection('users').doc(user).get();
     return d.exists && d.data().isBanned;
 }
@@ -139,7 +170,7 @@ function logout() {
     localStorage.clear(); sessionStorage.clear(); location.reload();
 }
 
-// ================= ADMIN DASHBOARD =================
+// ================= ADMIN SYSTEM (الأدمن) =================
 function checkAdminSession() {
     if(sessionStorage.getItem('isAdmin')) openAdminDashboard(true);
     else document.getElementById('admin-login-modal').style.display='flex';
@@ -168,10 +199,10 @@ function switchAdminTab(tab) {
     
     if(tab==='results') fetchGroupedResults();
     if(tab==='users') fetchAdminUsers();
-    if(tab==='content') { populateDropdowns(); currentExamQuestions=[]; renderVisualEditor(); }
+    if(tab==='content') { populateAdminDropdowns(); currentExamQuestions=[]; renderVisualEditor(); }
 }
 
-// --- النتائج المجمعة (مع إصلاح undefined) ---
+// --- النتائج المجمعة (Smart Grouping) ---
 async function fetchGroupedResults() {
     const cont = document.getElementById('results-container');
     cont.innerHTML = 'جاري التحميل...';
@@ -258,12 +289,15 @@ function parseSmartPaste() {
     let q = null;
     lines.forEach(l => {
         l = l.trim();
+        // Detect Question (1. / Q1. / ?)
         if((/^(\d+|Q\d+)/.test(l) || l.includes('?')) && !q) {
             if(q) currentExamQuestions.push(q);
             q = { q: l, options: [], a: 0 };
-        } else if(q && (/^[a-z]\)/i.test(l) || l.startsWith('-'))) {
+        } 
+        // Detect Option (a) / - / *)
+        else if(q && (/^[a-z]\)/i.test(l) || l.startsWith('-') || l.startsWith('*'))) {
             let isC = l.includes('*');
-            q.options.push(l.replace('*',''));
+            q.options.push(l.replace('*','').replace(/^[a-z]\)/i,'').replace('-','').trim());
             if(isC) q.a = q.options.length - 1;
         }
     });
@@ -287,7 +321,7 @@ async function saveExamFinal() {
         subjectId: document.getElementById('exam-subject-select').value,
         sourceId: document.getElementById('exam-source-select').value,
         questions: currentExamQuestions,
-        timeLimit: document.getElementById('new-exam-time').value,
+        timeLimit: parseInt(document.getElementById('new-exam-time').value) || 0,
         oneAttempt: document.getElementById('opt-one-attempt').checked,
         randomQuestions: document.getElementById('opt-random-q').checked,
         hideResult: document.getElementById('opt-hide-result').checked
@@ -304,8 +338,7 @@ async function fetchAdminUsers() {
     tbody.innerHTML = '';
     snap.forEach(doc => {
         const u = doc.data();
-        // عرض الاسم لو اليوزر مش موجود (للطلاب القدام)
-        const displayUser = u.username || 'طالب قديم';
+        const displayUser = u.username || 'طالب قديم'; // Fix for undefined
         tbody.innerHTML += `
             <tr>
                 <td>${u.name}</td>
@@ -328,6 +361,7 @@ function initStudentView() {
 }
 function fetchSubjects() {
     db.collection('subjects').get().then(snap => {
+        // Reset to default config then add new ones
         subjectsConfig = [
             { id: 'microbiology', name: 'Microbiology' },
             { id: 'fundamental', name: 'Fundamental' },
@@ -338,13 +372,20 @@ function fetchSubjects() {
             { id: 'ethics', name: 'Ethics' }
         ];
         snap.forEach(d => { if(!subjectsConfig.find(s=>s.id===d.data().id)) subjectsConfig.push(d.data()); });
-        generateTabs(); populateDropdowns();
+        generateTabs(); 
+        if(currentUser.isAdmin) populateAdminDropdowns();
     });
 }
 function generateTabs() {
-    const n = document.getElementById('main-nav'); n.innerHTML='';
+    const n = document.getElementById('main-nav'); 
+    if(!n) return;
+    n.innerHTML='';
     subjectsConfig.forEach(s => {
-        n.innerHTML += `<button class="tab-btn" onclick="loadSources('${s.id}', this)">${s.name}</button>`;
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.textContent = s.name;
+        btn.onclick = () => loadSources(s.id, btn);
+        n.appendChild(btn);
     });
 }
 function loadSources(subId, btn) {
@@ -355,7 +396,6 @@ function loadSources(subId, btn) {
     cont.innerHTML = '';
     document.getElementById('quiz-list-area').style.display='none';
     
-    // Default + DB Sources
     [...defaultSources].forEach(src => renderSrcCard(src, subId, cont));
     db.collection('sources').where('subjectId','==',subId).get().then(snap => {
         snap.forEach(d => renderSrcCard(d.data(), subId, cont));
@@ -370,7 +410,7 @@ function renderSrcCard(src, subId, cont) {
     cont.appendChild(d);
 }
 
-// --- تحميل الامتحانات (الملفات + قاعدة البيانات) ---
+// --- تحميل الامتحانات (دعم الملفات القديمة + DB) ---
 async function loadQuizzes(subId, srcId, srcName) {
     document.getElementById('source-selection').style.display = 'none';
     document.getElementById('quiz-list-area').style.display = 'block';
@@ -380,7 +420,7 @@ async function loadQuizzes(subId, srcId, srcName) {
     
     let quizzes = {};
     
-    // 1. ملفات محلية (النظام القديم)
+    // 1. ملفات محلية (Your Old Path Logic)
     try {
         await new Promise(r => {
             const s = document.createElement('script');
@@ -396,8 +436,10 @@ async function loadQuizzes(subId, srcId, srcName) {
     } catch(e){}
 
     // 2. فايربيس
-    const snap = await db.collection('quizzes').where('subjectId','==',subId).where('sourceId','==',srcId).get();
-    snap.forEach(d => quizzes[d.id] = d.data());
+    if(db) {
+        const snap = await db.collection('quizzes').where('subjectId','==',subId).where('sourceId','==',srcId).get();
+        snap.forEach(d => quizzes[d.id] = d.data());
+    }
     
     renderQuizCards(quizzes);
 }
@@ -406,18 +448,16 @@ function renderQuizCards(qs) {
     const c = document.getElementById('dynamic-cards-container'); c.innerHTML='';
     Object.keys(qs).forEach(k => {
         const q = qs[k];
-        c.innerHTML += `
-            <div class="quiz-card" onclick="startQuiz(this, '${k}')">
-                <h3>${q.title}</h3><p>${q.questions.length} سؤال</p>
-                <button class="start-btn">ابدأ</button>
-            </div>`;
-        // Store data in element for easy access
-        c.lastElementChild.quizData = q; 
+        const div = document.createElement('div');
+        div.className = 'quiz-card';
+        div.innerHTML = `<h3>${q.title}</h3><p>${q.questions.length} سؤال</p><button class="start-btn">ابدأ</button>`;
+        // Attach data directly
+        div.onclick = () => startQuiz(q);
+        c.appendChild(div);
     });
 }
 
-function startQuiz(el, id) {
-    const q = el.quizData;
+function startQuiz(q) {
     window.currentQuiz = q.questions;
     window.userAnswers = new Array(q.questions.length).fill(null);
     window.currentQuestionIndex = 0;
@@ -465,7 +505,7 @@ function finishQuiz() {
     document.getElementById('results').style.display='block';
     document.getElementById('final-score').textContent = `${score}/${window.currentQuiz.length}`;
     
-    if(currentUser) {
+    if(currentUser && db) {
         db.collection('exam_results').add({
             studentName: currentUser.name, username: currentUser.username,
             score, total: window.currentQuiz.length, quizTitle: document.getElementById('current-quiz-title').textContent,
@@ -475,22 +515,35 @@ function finishQuiz() {
 }
 
 // Helpers
-function populateDropdowns() {
+function populateAdminDropdowns() {
     const s1 = document.getElementById('exam-subject-select');
-    const s2 = document.getElementById('src-sub-select');
-    [s1,s2].forEach(s=>{ s.innerHTML=''; subjectsConfig.forEach(sub=>s.innerHTML+=`<option value="${sub.id}">${sub.name}</option>`) });
+    const s2 = document.getElementById('source-subject-select'); // For adding new source
+    if(!s1) return;
+    
+    [s1, s2].forEach(s => {
+        if(s) {
+            s.innerHTML = '';
+            subjectsConfig.forEach(sub => s.innerHTML += `<option value="${sub.id}">${sub.name}</option>`);
+        }
+    });
     updateSourceSelect();
 }
 async function updateSourceSelect() {
     const sub = document.getElementById('exam-subject-select').value;
-    const s = document.getElementById('exam-source-select'); s.innerHTML='';
-    defaultSources.forEach(d=>s.innerHTML+=`<option value="${d.id}">${d.name}</option>`);
-    const snap = await db.collection('sources').where('subjectId','==',sub).get();
-    snap.forEach(d=>s.innerHTML+=`<option value="${d.data().id}">${d.data().name}</option>`);
+    const s = document.getElementById('exam-source-select'); 
+    if(!s) return;
+    s.innerHTML = '';
+    
+    defaultSources.forEach(d => s.innerHTML += `<option value="${d.id}">${d.name}</option>`);
+    if(db) {
+        const snap = await db.collection('sources').where('subjectId','==',sub).get();
+        snap.forEach(d => s.innerHTML += `<option value="${d.data().id}">${d.data().name}</option>`);
+    }
 }
 async function addNewSubject() { await db.collection('subjects').add({name:document.getElementById('new-sub-name').value, id:document.getElementById('new-sub-id').value}); fetchSubjects(); alert("تم"); }
 async function addNewSource() { await db.collection('sources').add({subjectId:document.getElementById('src-sub-select').value, name:document.getElementById('new-src-name').value, id:document.getElementById('new-src-id').value}); updateSourceSelect(); alert("تم"); }
 async function loadAnnouncement() {
+    if(!db) return;
     const d = await db.collection('settings').doc('announcement').get();
     if(d.exists && d.data().active) {
         document.getElementById('announcement-bar').style.display='flex';
