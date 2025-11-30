@@ -10,29 +10,31 @@
 </head>
 <body>
 
-  <!-- شريط الأخبار (إضافة جديدة) -->
+  <!-- شريط أخبار متحرك (إضافة جديدة) -->
   <div id="news-ticker" class="news-ticker" style="display:none;">
     <div class="ticker-content" id="ticker-text"></div>
   </div>
 
-  <!-- مودال الدخول (تعديل بسيط ليقبل اليوزر والاسم) -->
+  <!-- مودال الدخول (النظام الجديد: دخول / تسجيل) -->
   <div id="welcome-modal" class="modal-overlay">
-    <div class="modal-box">
-      <h2>تسجيل الدخول 🔐</h2>
+    <div class="modal-box auth-box">
+      <h2>بوابة الطلاب 🔐</h2>
       
-      <!-- تبديل بين دخول وتسجيل -->
-      <div style="margin-bottom:15px; display:flex; gap:10px; justify-content:center;">
-        <button class="tab-btn active" id="btn-mode-login" onclick="setAuthMode('login')">دخول</button>
-        <button class="tab-btn" id="btn-mode-register" onclick="setAuthMode('register')">جديد</button>
+      <!-- تبديل التبويبات -->
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active" onclick="setAuthMode('login')">تسجيل دخول</button>
+        <button id="tab-register" class="auth-tab" onclick="setAuthMode('register')">حساب جديد</button>
       </div>
 
-      <div id="auth-inputs">
-          <input type="text" id="reg-fullname" placeholder="الاسم الثلاثي (للتسجيل الجديد)" style="display:none; margin-bottom:10px;">
-          <input type="text" id="student-user-input" placeholder="اسم المستخدم (User ID) إنجليزي" dir="ltr" style="text-align:center;">
+      <!-- الحقول -->
+      <div id="auth-forms">
+          <input type="text" id="reg-fullname" placeholder="الاسم الثلاثي (للحساب الجديد)" style="display:none; margin-bottom:10px;">
+          <input type="text" id="student-user-input" placeholder="اسم المستخدم (User ID - English)" dir="ltr" style="text-align:center;">
+          <p id="auth-hint" style="font-size:0.8rem; color:gray; display:none;">* احفظ اسم المستخدم جيداً للدخول به لاحقاً.</p>
       </div>
 
-      <p id="login-error" style="color:red; font-size:0.9rem; display:none;"></p>
-      <button class="start-btn" onclick="handleAuth()">بدء</button>
+      <p id="login-error" style="color:red; font-size:0.9rem; display:none; margin-top:5px;"></p>
+      <button class="start-btn" onclick="handleAuth()">تنفيذ</button>
     </div>
   </div>
 
@@ -64,10 +66,10 @@
     <!-- لوحة الشرف -->
     <div id="honor-board" class="honor-board" style="display:none;">
         <h3>🏆 لوحة الشرف 🏆</h3>
-        <div id="honor-list"></div>
+        <div id="honor-list" style="display:flex; justify-content:center; gap:15px; flex-wrap:wrap;"></div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Main Navigation -->
     <div id="main-nav" class="tab-container"></div>
     <div id="source-selection" class="source-container"></div>
     
@@ -93,15 +95,14 @@
         <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- Admin Dashboard -->
+    <!-- Admin Dashboard (Fixed Layout) -->
     <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h2 class="quiz-title" style="color:var(--secondary-color);">⚙️ لوحة التحكم</h2>
             <button class="start-btn" onclick="closeAdminDashboard()" style="background:#475569; width:auto;">خروج</button>
         </div>
 
-        <!-- التبويبات ثابتة في HTML عشان متهربش -->
-        <div class="tab-container" style="justify-content:center; margin-bottom:20px;">
+        <div class="tab-container">
             <button class="tab-btn active" onclick="switchAdminTab('results')">النتائج</button>
             <button class="tab-btn" onclick="switchAdminTab('users')">الطلاب</button>
             <button class="tab-btn" onclick="switchAdminTab('content')">المحتوى</button>
@@ -110,21 +111,19 @@
 
         <!-- 1. Results Tab -->
         <div id="admin-tab-results" class="admin-tab-content">
-            <div class="filter-container" style="display:flex; gap:10px; margin-bottom:10px;">
+            <div class="filter-container" style="margin-bottom:10px; display:flex; gap:10px;">
                 <button class="start-btn" onclick="fetchAdminData()" style="width:auto; background:#3b82f6;">تحديث</button>
                 <button class="start-btn" onclick="window.print()" style="width:auto; background:#22c55e;">طباعة</button>
             </div>
-            <!-- Accordion Container -->
             <div id="results-accordion-container">
-                <p style="text-align:center;">اضغط تحديث لتحميل النتائج...</p>
+                <p style="text-align:center;">اضغط تحديث...</p>
             </div>
         </div>
 
         <!-- 2. Users Tab -->
         <div id="admin-tab-users" class="admin-tab-content" style="display:none;">
             <div class="filter-container" style="margin-bottom:10px;">
-                <input type="text" id="users-search" placeholder="بحث..." onkeyup="filterUsers()" style="padding:10px; width:100%;">
-                <button class="start-btn" onclick="fetchAdminUsers()" style="width:auto; margin-top:5px;">تحديث القائمة</button>
+                <button class="start-btn" onclick="fetchAdminUsers()" style="width:auto;">تحديث القائمة</button>
             </div>
             <div class="history-table-container">
                 <table id="users-table">
@@ -136,59 +135,57 @@
 
         <!-- 3. Content Tab (Hybrid System) -->
         <div id="admin-tab-content" class="admin-tab-content" style="display:none;">
-            <!-- اضافة مادة -->
-            <div class="review-question" style="background:white; border-color:var(--primary-color);">
+            <!-- إضافة مادة -->
+            <div class="review-question" style="background:white;">
                 <h3>إضافة مادة</h3>
                 <div style="display:flex; gap:5px;">
-                    <input type="text" id="new-subject-name" placeholder="اسم المادة" style="flex:1; padding:5px;">
-                    <input type="text" id="new-subject-id" placeholder="ID" style="width:80px; padding:5px;">
+                    <input type="text" id="new-subject-name" placeholder="اسم المادة" style="flex:1;">
+                    <input type="text" id="new-subject-id" placeholder="ID" style="width:80px;">
                     <button class="start-btn" onclick="addNewSubject()" style="width:auto;">+</button>
                 </div>
             </div>
-            <!-- اضافة مصدر -->
-            <div class="review-question" style="background:white; border-color:var(--secondary-color);">
+            <!-- إضافة مصدر -->
+            <div class="review-question" style="background:white;">
                 <h3>إضافة مصدر</h3>
-                <select id="source-subject-select" style="width:100%; padding:5px; margin-bottom:5px;"></select>
+                <select id="source-subject-select" style="width:100%; margin-bottom:5px; padding:8px;"></select>
                 <div style="display:flex; gap:5px;">
-                    <input type="text" id="new-source-name" placeholder="اسم المصدر" style="flex:1; padding:5px;">
-                    <input type="text" id="new-source-id" placeholder="ID" style="width:80px; padding:5px;">
+                    <input type="text" id="new-source-name" placeholder="اسم المصدر" style="flex:1;">
+                    <input type="text" id="new-source-id" placeholder="ID" style="width:80px;">
                     <button class="start-btn" onclick="addNewSource()" style="width:auto;">+</button>
                 </div>
             </div>
-
-            <!-- اضافة امتحان (Hybrid) -->
+            <!-- إضافة امتحان (Hybrid) -->
             <div class="review-question" style="background:white; border-color:#22c55e;">
                 <h3>منشئ الامتحانات (Hybrid)</h3>
                 <div style="display:flex; gap:5px; margin-bottom:5px;">
                     <select id="exam-subject-select" onchange="updateSourceSelect()" style="flex:1; padding:5px;"></select>
                     <select id="exam-source-select" style="flex:1; padding:5px;"></select>
                 </div>
-                <input type="text" id="new-exam-title" placeholder="عنوان الامتحان" style="width:100%; padding:5px; margin-bottom:5px;">
+                <input type="text" id="new-exam-title" placeholder="عنوان الامتحان" style="width:100%; margin-bottom:5px;">
                 
-                <!-- أدوات البناء -->
-                <div style="display:flex; gap:10px; margin-bottom:10px; justify-content:center;">
-                    <button class="start-btn" onclick="addManualCard()" style="width:auto; background:#3b82f6; font-size:0.8rem;">+ سؤال يدوي</button>
-                    <button class="start-btn" onclick="document.getElementById('smart-import-area').style.display='block'" style="width:auto; background:#8b5cf6; font-size:0.8rem;">نسخ نص (Smart)</button>
+                <div style="display:flex; gap:10px; justify-content:center; margin-bottom:10px;">
+                    <button class="start-btn" onclick="addManualCard()" style="width:auto; font-size:0.9rem; background:#3b82f6;">+ سؤال يدوي</button>
+                    <button class="start-btn" onclick="toggleSmartImport()" style="width:auto; font-size:0.9rem; background:#8b5cf6;">نسخ نص (Smart)</button>
                 </div>
 
-                <!-- منطقة النسخ الذكي (مخفية) -->
+                <!-- Smart Import Area -->
                 <div id="smart-import-area" style="display:none; margin-bottom:10px;">
-                    <textarea id="smart-text" rows="5" placeholder="الصق الأسئلة هنا..." style="width:100%;"></textarea>
-                    <button class="start-btn" onclick="parseSmartText()" style="background:#8b5cf6;">تحويل لكروت</button>
+                    <textarea id="smart-text" rows="5" placeholder="الصق الأسئلة هنا..." style="width:100%; border:1px solid #ccc;"></textarea>
+                    <button class="start-btn" onclick="parseSmartText()" style="background:#8b5cf6;">تحويل</button>
                 </div>
 
-                <!-- مكان ظهور الكروت -->
+                <!-- Cards Area -->
                 <div id="builder-cards-area" style="max-height:300px; overflow-y:auto; border:1px solid #eee; padding:5px; margin-bottom:10px;"></div>
 
                 <div style="text-align:center;">
-                    <span id="q-count">0 سؤال</span>
+                    <span id="q-count" style="font-weight:bold;">0 سؤال</span>
                     <button class="start-btn" onclick="saveHybridExam()" style="background:#22c55e;">حفظ الامتحان</button>
                 </div>
             </div>
 
-            <!-- الحذف -->
+            <!-- حذف -->
             <div class="review-question" style="background:#fee2e2; border-color:red;">
-                <h3>حذف</h3>
+                <h3>حذف محتوى</h3>
                 <select id="delete-type-select" onchange="updateDeleteDropdown()" style="padding:5px;">
                     <option value="none">-- اختر --</option>
                     <option value="quiz">امتحان</option>
@@ -196,15 +193,15 @@
                     <option value="source">مصدر</option>
                 </select>
                 <select id="delete-item-select" style="padding:5px; width:150px;"></select>
-                <button class="btn-danger" onclick="deleteSelectedItem()" style="padding:5px;">حذف</button>
+                <button class="btn-danger" onclick="deleteSelectedItem()" style="padding:5px; background:red; color:white; border:none; cursor:pointer;">حذف</button>
             </div>
         </div>
 
-        <!-- 4. Settings Tab -->
+        <!-- 4. Settings -->
         <div id="admin-tab-settings" class="admin-tab-content" style="display:none;">
             <div class="review-question">
                 <h3>شريط الأخبار</h3>
-                <input type="text" id="setting-news" placeholder="اكتب الخبر..." style="width:100%; padding:8px;">
+                <input type="text" id="setting-news" placeholder="اكتب الخبر..." style="width:100%; padding:10px;">
                 <button class="start-btn" onclick="saveGlobalSettings()" style="margin-top:5px;">حفظ</button>
             </div>
             <div class="review-question">
@@ -215,7 +212,7 @@
         </div>
     </div>
 
-    <!-- Quiz Container -->
+    <!-- Quiz Elements -->
     <div id="quiz-container" class="quiz-container">
       <button class="back-btn go-back" onclick="backToQuizList()">← خروج</button>
       <div class="quiz-header">
@@ -250,9 +247,9 @@
     <!-- Edit User Modal -->
     <div id="edit-user-modal" class="modal-overlay" style="display:none;">
         <div class="modal-box">
-            <h3>تعديل بيانات الطالب</h3>
+            <h3>تعديل الاسم</h3>
             <input type="hidden" id="edit-uid">
-            <input type="text" id="edit-name" placeholder="الاسم الجديد" style="width:100%; padding:10px; margin-bottom:10px;">
+            <input type="text" id="edit-name" style="width:100%; padding:10px; margin-bottom:10px;">
             <button class="start-btn" onclick="confirmEditUser()">حفظ</button>
             <button class="back-btn" onclick="document.getElementById('edit-user-modal').style.display='none'">إلغاء</button>
         </div>
