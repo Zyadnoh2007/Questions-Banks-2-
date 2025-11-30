@@ -3,49 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nursing Platform Pro</title>
+  <title>Nursing Platform</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-  <!-- شريط الإعلانات -->
+  <!-- شريط الإعلانات (ميزة جديدة بنفس ستايل الموقع) -->
   <div id="news-ticker" class="news-ticker" style="display:none;">
-    <div class="ticker-content" id="ticker-text">📢 أهلاً بكم في المنصة...</div>
+    <div class="ticker-content" id="ticker-text"></div>
   </div>
 
-  <!-- Auth Modal (New Split System) -->
+  <!-- Auth Modal (نظام الدخول الجديد - مقسوم) -->
   <div id="auth-modal" class="modal-overlay">
     <div class="modal-box auth-box">
-        <div class="auth-header">
-            <h2 style="color:var(--primary-color); margin:0;">بوابة الدخول 🔐</h2>
-        </div>
+        <h2 style="color:var(--primary-color); margin-bottom:15px;">بوابة الطلاب 🔐</h2>
+        
+        <!-- تبويبات الدخول -->
         <div class="auth-tabs">
             <button class="auth-tab-btn active" onclick="switchAuthMode('login')">تسجيل دخول</button>
             <button class="auth-tab-btn" onclick="switchAuthMode('register')">حساب جديد</button>
         </div>
 
-        <!-- Login Section -->
+        <!-- فورم تسجيل الدخول -->
         <div id="login-form" class="auth-content">
-            <p>أهلاً بعودتك! ادخل المعرف الخاص بك</p>
-            <input type="text" id="login-username" placeholder="Username (English)" dir="ltr">
+            <input type="text" id="login-username" placeholder="اسم المستخدم (Username)" dir="ltr" style="text-align:center;">
             <p id="login-msg" class="error-msg"></p>
             <button class="start-btn" onclick="loginUser()">دخول</button>
         </div>
 
-        <!-- Register Section -->
+        <!-- فورم التسجيل الجديد -->
         <div id="register-form" class="auth-content" style="display:none;">
-            <p>بيانات الطالب الجديد</p>
             <input type="text" id="reg-fullname" placeholder="الاسم الثلاثي (بالعربي)">
-            <input type="text" id="reg-username" placeholder="Username (English - Unique)" dir="ltr">
+            <input type="text" id="reg-username" placeholder="اسم المستخدم (إنجليزي فقط)" dir="ltr" style="text-align:center;">
+            <p style="font-size:0.8rem; color:gray; margin-top:-5px;">* احفظ اسم المستخدم جيداً للدخول به لاحقاً.</p>
             <p id="reg-msg" class="error-msg"></p>
-            <button class="start-btn" onclick="registerUser()">تسجيل وحفظ</button>
+            <button class="start-btn" onclick="registerUser()">إنشاء حساب</button>
         </div>
     </div>
   </div>
 
-  <!-- Admin Login Modal -->
+  <!-- Admin Login -->
   <div id="admin-login-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box">
       <h2>دخول المشرفين 🔒</h2>
@@ -67,21 +66,24 @@
       </div>
       
       <h1 id="site-title">منصة التمريض التعليمية</h1>
-      <p id="welcome-message">جاري التحميل...</p>
+      <p id="welcome-message">أهلاً بك</p>
     </div>
 
-    <!-- Honor Board -->
-    <div id="honor-board" class="review-question" style="display:none; text-align:center; background: linear-gradient(to left, #fffbeb, #ffffff); border-color:#f59e0b;">
-        <h3 style="color:#d97706;">🏆 لوحة الشرف (الأوائل) 🏆</h3>
-        <div id="top-students-list" class="honor-list"></div>
+    <!-- لوحة الشرف (مخفية افتراضياً) -->
+    <div id="honor-board" class="review-question" style="display:none; text-align:center; background:linear-gradient(to bottom, #fffbeb, white); border-color:#fbbf24;">
+        <h3 style="color:#d97706; margin-top:0;">🏆 لوحة الشرف (الأوائل) 🏆</h3>
+        <div id="top-students-list" style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px;"></div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Main Navigation Tabs -->
     <div id="main-nav" class="tab-container"></div>
+    
+    <!-- Source Selection -->
     <div id="source-selection" class="source-container"></div>
     
+    <!-- Quiz List Area -->
     <div id="quiz-list-area" class="tab-content active" style="display:none;">
-        <!-- Fixed: Back button is now contained here -->
+        <!-- زر الرجوع هنا فقط -->
         <div style="margin-bottom: 20px;">
              <button class="back-btn" onclick="backToSources()">← تغيير المصدر</button>
         </div>
@@ -91,7 +93,7 @@
 
     <!-- Student Dashboard -->
     <div id="dashboard-view" class="dashboard-view" style="display:none;">
-        <h2 class="quiz-title">ملفك الشخصي</h2>
+        <h2 class="quiz-title">ملفي الشخصي 🚀</h2>
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-info"><span id="total-quizzes-taken">0</span><p>كويزات</p></div></div>
             <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-info"><span id="total-accuracy">0%</span><p>المستوى</p></div></div>
@@ -105,91 +107,102 @@
         <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- Admin Dashboard (Restored Layout) -->
+    <!-- Admin Dashboard -->
     <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h2 class="quiz-title" style="color:var(--secondary-color);">⚙️ لوحة التحكم</h2>
             <button class="start-btn" onclick="closeAdminDashboard()" style="background:#475569; width:auto;">خروج</button>
         </div>
 
+        <!-- Admin Tabs (نفس التصميم الأصلي) -->
         <div class="tab-container">
-            <button class="tab-btn active" onclick="switchAdminTab('results')">النتائج والتقارير</button>
+            <button class="tab-btn active" onclick="switchAdminTab('results')">النتائج</button>
             <button class="tab-btn" onclick="switchAdminTab('users')">الطلاب</button>
-            <button class="tab-btn" onclick="switchAdminTab('content')">المحتوى (Hybrid)</button>
+            <button class="tab-btn" onclick="switchAdminTab('content')">المحتوى</button>
             <button class="tab-btn" onclick="switchAdminTab('settings')">الإعدادات</button>
         </div>
 
-        <!-- 1. Results -->
+        <!-- 1. Results Tab -->
         <div id="admin-tab-results" class="admin-tab-content">
             <div class="filter-container" style="display:flex; gap:10px; margin-bottom:15px;">
-                <input type="text" id="results-search" placeholder="بحث باسم الطالب..." onkeyup="filterResultsAccordion()" style="padding:10px; flex-grow:1;">
-                <button class="start-btn" onclick="printReport()" style="background:#22c55e; width:auto;">طباعة تقرير</button>
-                <button class="start-btn" onclick="exportToExcel()" style="background:#10b981; width:auto;">Excel</button>
+                <input type="text" id="results-search" placeholder="بحث باسم الطالب..." onkeyup="filterResults()" style="padding:10px; flex-grow:1; border-radius:8px; border:1px solid #ccc;">
+                <button class="start-btn" onclick="printReport()" style="background:#22c55e; width:auto;">طباعة</button>
             </div>
-            <div id="results-accordion" class="accordion-container">
-                <p style="text-align:center;">تحميل...</p>
-            </div>
+            <!-- Accordion Container -->
+            <div id="results-accordion"></div>
         </div>
 
-        <!-- 2. Users -->
+        <!-- 2. Users Tab -->
         <div id="admin-tab-users" class="admin-tab-content" style="display:none;">
             <div class="filter-container" style="margin-bottom:15px;">
-                <input type="text" id="users-search" placeholder="بحث عن طالب..." onkeyup="filterUsersTable()" style="padding:10px; width:100%;">
+                <input type="text" id="users-search" placeholder="بحث عن طالب..." onkeyup="filterUsers()" style="padding:10px; width:100%; border-radius:8px; border:1px solid #ccc;">
             </div>
             <div class="history-table-container">
                 <table id="users-table">
-                    <thead><tr><th>الاسم</th><th>المعرف (User)</th><th>التاريخ</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+                    <thead><tr><th>الاسم</th><th>User ID</th><th>التاريخ</th><th>الحالة</th><th>إجراءات</th></tr></thead>
                     <tbody id="users-table-body"></tbody>
                 </table>
             </div>
         </div>
 
-        <!-- 3. Content (Hybrid System) -->
+        <!-- 3. Content Tab (Hybrid System Integrated) -->
         <div id="admin-tab-content" class="admin-tab-content" style="display:none;">
+            
             <!-- إضافة مادة -->
             <div class="review-question" style="background:white; border-color:var(--primary-color);">
-                <h3>1. إضافة مادة</h3>
+                <h3>1. إضافة مادة جديدة</h3>
                 <div style="display:flex; gap:10px;">
                     <input type="text" id="new-subject-name" placeholder="اسم المادة" style="flex:1;">
-                    <input type="text" id="new-subject-id" placeholder="ID" style="width:80px;">
+                    <input type="text" id="new-subject-id" placeholder="ID (Eng)" style="width:100px;">
                     <button class="start-btn" onclick="addNewSubject()" style="width:auto;">+</button>
                 </div>
             </div>
+
             <!-- إضافة مصدر -->
             <div class="review-question" style="background:white; border-color:var(--secondary-color);">
-                <h3>2. إضافة مصدر</h3>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <select id="source-subject-select" style="padding:10px;"></select>
-                    <input type="text" id="new-source-name" placeholder="اسم المصدر" style="flex:1;">
-                    <input type="text" id="new-source-id" placeholder="ID" style="width:80px;">
-                    <button class="start-btn" onclick="addNewSource()" style="width:auto;">+</button>
+                <h3>2. إضافة مصدر جديد</h3>
+                <div style="display:flex; gap:10px; flex-direction:column;">
+                    <select id="source-subject-select" style="padding:10px; border-radius:8px;"></select>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="new-source-name" placeholder="اسم المصدر" style="flex:1;">
+                        <input type="text" id="new-source-id" placeholder="ID (Eng)" style="width:100px;">
+                        <button class="start-btn" onclick="addNewSource()" style="width:auto;">+</button>
+                    </div>
                 </div>
             </div>
-            <!-- إضافة امتحان (Hybrid) -->
+
+            <!-- إضافة امتحان (التصميم الهجين داخل البوكس القديم) -->
             <div class="review-question" style="background:white; border-color:#22c55e;">
-                <h3>3. إضافة امتحان (النظام الهجين) 🧠</h3>
-                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-                    <select id="exam-subject-select" onchange="updateSourceSelect()" style="flex:1;"></select>
-                    <select id="exam-source-select" style="flex:1;"></select>
+                <h3>3. إضافة امتحان جديد 🧠</h3>
+                
+                <!-- البيانات الأساسية -->
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <select id="exam-subject-select" onchange="updateSourceSelect()" style="flex:1; padding:8px;"></select>
+                    <select id="exam-source-select" style="flex:1; padding:8px;"></select>
                 </div>
                 <div style="display:flex; gap:10px; margin-bottom:10px;">
                     <input type="text" id="new-exam-title" placeholder="عنوان الامتحان" style="flex:2;">
-                    <input type="number" id="new-exam-time" placeholder="الوقت (دقيقة)" style="flex:1;">
-                </div>
-                
-                <!-- أدوات البناء -->
-                <div style="background:#f1f5f9; padding:10px; border-radius:8px; margin-bottom:10px; display:flex; gap:10px; justify-content:center;">
-                    <button class="start-btn" onclick="addManualQuestion()" style="background:#3b82f6; width:auto; font-size:0.9rem;">+ سؤال يدوي (كارت)</button>
-                    <button class="start-btn" onclick="document.getElementById('smart-import-modal').style.display='flex'" style="background:#8b5cf6; width:auto; font-size:0.9rem;">⚡ استيراد نص</button>
+                    <select id="exam-timer-type" style="padding:8px; border-radius:8px;">
+                        <option value="open">وقت مفتوح</option>
+                        <option value="limit">وقت محدد</option>
+                    </select>
+                    <input type="number" id="new-exam-time" placeholder="دقيقة" style="width:70px; display:none;">
                 </div>
 
-                <!-- منطقة الكروت -->
-                <div id="builder-container" style="max-height:400px; overflow-y:auto; padding:5px;">
-                    <p style="text-align:center; color:gray; font-size:0.9rem;">الأسئلة ستظهر هنا...</p>
+                <!-- أزرار التحكم في الأسئلة -->
+                <div style="background:#f0fdf4; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #bbf7d0; display:flex; justify-content:center; gap:10px;">
+                    <button class="start-btn" onclick="addManualQuestion()" style="background:#3b82f6; width:auto; font-size:0.9rem;">+ سؤال يدوي (كارت)</button>
+                    <button class="start-btn" onclick="openSmartImport()" style="background:#8b5cf6; width:auto; font-size:0.9rem;">⚡ استيراد نص (Smart)</button>
+                </div>
+
+                <!-- منطقة عرض الكروت -->
+                <div id="builder-container" style="max-height:300px; overflow-y:auto; padding:5px; margin-bottom:10px; border:1px solid #eee; border-radius:8px;">
+                    <p style="text-align:center; color:gray; font-size:0.9rem;">لم تتم إضافة أسئلة بعد...</p>
                 </div>
                 
-                <div style="margin-top:15px; text-align:center;">
-                    <span id="q-count-label" style="font-weight:bold; margin-left:10px;">0 سؤال</span>
+                <!-- زر الحفظ -->
+                <div style="text-align:center;">
+                    <span id="q-count-label" style="font-weight:bold; margin-left:10px; color:#22c55e;">0 سؤال</span>
                     <button class="start-btn" onclick="saveHybridExam()" style="background:#22c55e;">💾 حفظ الامتحان النهائي</button>
                 </div>
             </div>
@@ -199,7 +212,7 @@
                 <h3>4. حذف المحتوى</h3>
                 <div class="delete-controls">
                     <select id="delete-type-select" onchange="updateDeleteDropdown()">
-                        <option value="none">-- اختر --</option>
+                        <option value="none">-- اختر نوع الحذف --</option>
                         <option value="quiz">امتحان</option>
                         <option value="subject">مادة</option>
                         <option value="source">مصدر</option>
@@ -210,49 +223,53 @@
             </div>
         </div>
 
-        <!-- 4. Settings -->
+        <!-- 4. Settings Tab -->
         <div id="admin-tab-settings" class="admin-tab-content" style="display:none;">
-            <div class="admin-setting-card">
-                <h3>إعلان الشريط المتحرك</h3>
-                <textarea id="setting-announcement" rows="2" placeholder="اكتب الإعلان هنا..."></textarea>
-                <button onclick="saveSettings('announcement')" class="start-btn" style="margin-top:10px; width:auto;">حفظ</button>
+            <div class="review-question" style="background:white; border-color:var(--primary-color);">
+                <h3>شريط الإعلانات</h3>
+                <textarea id="setting-announcement" rows="2" placeholder="اكتب نص الإعلان هنا..."></textarea>
+                <button onclick="saveSettings('announcement')" class="start-btn" style="width:auto; margin-top:10px;">حفظ الإعلان</button>
             </div>
-            <div class="admin-setting-card" style="margin-top:15px;">
+            <div class="review-question" style="background:white; border-color:#f59e0b;">
+                <h3>لوحة الشرف</h3>
                 <label class="switch-container">
                     <input type="checkbox" id="setting-honor-toggle">
                     <span class="slider round"></span>
                     <span class="switch-text">تفعيل لوحة الشرف</span>
                 </label>
-                <button onclick="saveSettings('honor')" class="start-btn" style="margin-top:10px; width:auto;">تأكيد</button>
+                <button onclick="saveSettings('honor')" class="start-btn" style="width:auto; margin-top:10px; background:#f59e0b;">حفظ الإعداد</button>
             </div>
         </div>
     </div>
 
     <!-- Modals -->
+    <!-- Smart Import Modal -->
     <div id="smart-import-modal" class="modal-overlay" style="display:none;">
         <div class="modal-box" style="max-width:600px; width:95%;">
             <h3>لصق الأسئلة (Smart Parser)</h3>
-            <textarea id="smart-import-text" rows="10" placeholder="الصق الأسئلة هنا..." style="width:100%; padding:10px;"></textarea>
-            <div class="modal-buttons">
+            <p style="font-size:0.9rem; color:gray;">انسخ الأسئلة من الملف وضعها هنا، وسيتعرف عليها النظام تلقائياً.</p>
+            <textarea id="smart-import-text" rows="10" placeholder="مثال:&#10;س1: السؤال...&#10;أ) اجابة&#10;ب) اجابة" style="width:100%; padding:10px; border:2px solid var(--border-color); border-radius:8px;"></textarea>
+            <div class="modal-buttons" style="margin-top:10px;">
                 <button class="start-btn" onclick="processSmartImport()">تحويل للكروت</button>
                 <button class="back-btn" onclick="document.getElementById('smart-import-modal').style.display='none'">إلغاء</button>
             </div>
         </div>
     </div>
 
+    <!-- Edit User Modal -->
     <div id="edit-user-modal" class="modal-overlay" style="display:none;">
         <div class="modal-box">
-            <h3>تعديل الاسم</h3>
+            <h3>تعديل بيانات الطالب</h3>
             <input type="hidden" id="edit-user-id">
-            <input type="text" id="edit-user-fullname">
+            <input type="text" id="edit-user-fullname" placeholder="الاسم الجديد">
             <div class="modal-buttons">
-                <button class="start-btn" onclick="saveUserEdit()">حفظ</button>
+                <button class="start-btn" onclick="saveUserEdit()">حفظ التعديل</button>
                 <button class="back-btn" onclick="document.getElementById('edit-user-modal').style.display='none'">إلغاء</button>
             </div>
         </div>
     </div>
 
-    <!-- Quiz & Results (unchanged structure) -->
+    <!-- Quiz & Results Container (UNCHANGED) -->
     <div id="quiz-container" class="quiz-container">
       <button class="back-btn go-back" onclick="backToQuizList()">← خروج</button>
       <div class="quiz-header">
@@ -272,7 +289,7 @@
       <h3>انتهى الاختبار!</h3>
       <div id="final-score" class="score"></div>
       <p id="score-message"></p>
-      <p id="upload-status" style="font-size:0.9rem; color:gray;"></p>
+      <p id="upload-status" style="font-size: 0.9rem; color: gray; margin-top:5px;"></p>
       <button id="review-btn" class="start-btn">مراجعة الإجابات</button>
       <button class="start-btn go-back" onclick="backToQuizList()">العودة للقائمة</button>
     </div>
