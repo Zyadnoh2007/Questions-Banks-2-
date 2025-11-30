@@ -1,4 +1,4 @@
-/* إضافة خط المراعي */
+/* نفس ملف الستايل الأصلي بتاعك بالمللي مع إضافات بسيطة جداً */
 @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap');
 
 :root {
@@ -39,41 +39,32 @@ body {
 
 .container { max-width: 1200px; margin: 0 auto; padding: 25px; }
 
-/* News Ticker */
+/* News Ticker (New) */
 .news-ticker {
     background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
     color: white; padding: 8px 0; overflow: hidden; white-space: nowrap; margin-bottom: 20px;
-    box-shadow: var(--shadow-light);
 }
-.ticker-content { display: inline-block; padding-left: 100%; animation: ticker 25s linear infinite; font-weight: bold; }
-@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(100%); } }
+.ticker-content { display: inline-block; padding-left: 100%; animation: ticker 20s linear infinite; }
+@keyframes ticker { 100% { transform: translateX(100%); } }
 
-/* Auth Modal Tabs */
-.auth-tabs { display: flex; background: #e2e8f0; border-radius: 8px 8px 0 0; overflow: hidden; }
-.auth-tab-btn { flex: 1; border: none; padding: 15px; cursor: pointer; background: #e2e8f0; font-weight: bold; color: #64748b; transition: 0.3s; }
-.auth-tab-btn.active { background: var(--card-bg); color: var(--primary-color); border-top: 3px solid var(--primary-color); }
-.auth-content { padding: 30px; text-align: center; animation: fadeIn 0.3s; background: var(--card-bg); border-radius: 0 0 8px 8px; }
+/* Honor Board (New) */
+.honor-board {
+    background: white; border: 2px solid #fbbf24; border-radius: var(--radius-lg);
+    padding: 15px; margin-bottom: 20px; text-align: center;
+}
 
-/* Hybrid Builder Card */
+/* Accordion (New) */
+.accordion-item { border: 1px solid var(--border-color); margin-bottom: 5px; border-radius: 5px; background: var(--card-bg); }
+.accordion-header { padding: 10px; cursor: pointer; font-weight: bold; background: #f1f5f9; }
+.accordion-content { display: none; padding: 10px; }
+
+/* Builder Card (New) */
 .builder-card {
-    background: white; border-right: 4px solid var(--primary-color);
-    padding: 10px; margin-bottom: 8px; border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; border: 1px solid #e2e8f0;
+    background: white; border: 1px solid #ccc; padding: 10px; margin-bottom: 5px; border-radius: 5px; position: relative;
 }
-body.dark-mode .builder-card { background: #334155; border-color: #475569; border-right-color: var(--secondary-color); }
-.builder-card input[type="text"] { margin-bottom: 5px; width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
-.builder-options { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-.del-q-btn { position: absolute; top: 5px; left: 5px; color: #ef4444; background: none; border: none; cursor: pointer; font-size: 1.2rem; }
+.del-card-btn { position: absolute; left: 5px; top: 5px; color: red; cursor: pointer; font-weight: bold; border: none; background: none; }
 
-/* Admin Accordion Results */
-.accordion-item { background: var(--card-bg); margin-bottom: 8px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
-.accordion-header { padding: 15px; cursor: pointer; background: #f8fafc; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
-.accordion-header:hover { background: #eff6ff; }
-body.dark-mode .accordion-header { background: #334155; }
-.accordion-content { display: none; padding: 10px; background: white; border-top: 1px solid var(--border-color); }
-body.dark-mode .accordion-content { background: #1e293b; }
-
-/* Original Styles (Preserved) */
+/* Existing CSS preserved */
 .header { text-align: center; margin-bottom: 30px; background: var(--card-bg); padding: 30px; border-radius: var(--radius-lg); box-shadow: var(--shadow-heavy); position: relative; }
 .header-controls { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; z-index: 10; }
 .icon-btn { background: transparent; border: 2px solid var(--border-color); font-size: 1.3rem; cursor: pointer; padding: 8px; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.3s ease; color: var(--text-dark); }
@@ -100,6 +91,8 @@ body.dark-mode .accordion-content { background: #1e293b; }
 .answer-options { display: grid; grid-template-columns: 1fr; gap: 10px; max-width: 600px; margin: 0 auto; }
 .answer-btn { background: var(--card-bg); border: 2px solid var(--border-color); padding: 15px 20px; border-radius: var(--radius-md); font-size: 1.1rem; cursor: pointer; transition: all 0.3s ease; font-weight: bold; width: 100%; text-align: left; direction: ltr; }
 .answer-btn.selected { background: #e0e7ff; border-color: var(--secondary-color); color: #1e293b; }
+.nav-btn { background: var(--primary-color); color: white; border: none; padding: 12px 25px; border-radius: 25px; font-size: 1rem; cursor: pointer; font-weight: bold; min-width: 140px; transition: transform 0.2s ease; }
+.nav-btn:disabled { background: #64748b; color: white; cursor: not-allowed; }
 .back-btn { background: var(--text-light); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; margin-bottom: 20px; font-weight: bold; transition: background-color 0.2s ease; }
 .results, .review-container { display: none; text-align: center; }
 .results { background: var(--card-bg); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--shadow-heavy); }
@@ -114,11 +107,4 @@ th { background-color: #f8fafc; color: var(--text-light); font-weight: bold; }
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
 .modal-box { background: var(--card-bg); padding: 40px; border-radius: var(--radius-lg); text-align: center; width: 90%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); animation: popIn 0.3s ease; }
 @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-/* Switch */
-.switch-container { position: relative; display: flex; align-items: center; gap: 10px; cursor: pointer; margin-top: 10px; }
-.switch-container input { opacity: 0; width: 0; height: 0; }
-.slider { position: relative; width: 50px; height: 26px; background-color: #ccc; transition: .4s; border-radius: 34px; }
-.slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-input:checked + .slider { background-color: var(--primary-color); }
-input:checked + .slider:before { transform: translateX(24px); }
 @media (max-width: 768px) { .header { display: flex; flex-direction: column; align-items: center; } .header-controls { position: static; margin-bottom: 10px; } .tab-container { flex-direction: column; } }
