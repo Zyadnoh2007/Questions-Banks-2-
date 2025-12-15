@@ -766,12 +766,13 @@ tr:hover { background-color: #f1f5f9; }
 
 .modal-box h2 { color: var(--primary-color); margin-bottom: 15px; }
 
+/* تحديث: تقليل المارجن عشان الحقول المتعددة */
 .modal-box input {
     width: 100%;
     padding: 12px;
     border: 2px solid var(--border-color);
     border-radius: var(--radius-md);
-    margin: 20px 0;
+    margin: 10px 0; /* تم تقليل المسافة من 20px لـ 10px */
     font-size: 1.1rem;
     text-align: center;
     background: var(--body-bg);
@@ -991,4 +992,4 @@ input:checked + .slider:before {
   
   .delete-controls { flex-direction: column; align-items: stretch; }
   .delete-controls select, .delete-controls button { width: 100%; }
-  }
+}
