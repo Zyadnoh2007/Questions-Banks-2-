@@ -61,7 +61,16 @@ let currentQuizSettings = {
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
     
-    // 1. Check Admin Session (New Logic)
+    // ✅ FIX: Apply Dark Mode FIRST (Before checking login or DB)
+    // هذا هو التعديل: وضعنا الكود في البداية لضمان عدم وميض اللون الأبيض
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        const toggleBtn = document.getElementById('theme-toggle');
+        if(toggleBtn) toggleBtn.textContent = '☀️';
+    }
+    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+    // 1. Check Admin Session
     if (localStorage.getItem('adminLoggedIn') === 'true') {
         document.getElementById('welcome-modal').style.display = 'none';
         document.getElementById('main-nav').style.display = 'none';
@@ -72,16 +81,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     else if (currentUsername && currentStudentName) {
         document.getElementById('welcome-modal').style.display = 'none';
         document.getElementById('welcome-message').innerHTML = `أهلاً بك يا دكتور/ة <b>${currentStudentName}</b> 👋`;
-        await verifyUserStatus(); 
+        // We verify status in background to not block UI
+        verifyUserStatus(); 
     } else {
         document.getElementById('welcome-modal').style.display = 'flex';
         toggleAuthView('login');
     }
 
     // 3. Load Content & Features
-    await fetchDynamicContent();
-    generateSubjectTabs();
-    initNotificationListener(); // Start listening for notifications
+    // Added try-catch to prevent errors from stopping the script
+    try {
+        await fetchDynamicContent();
+        generateSubjectTabs();
+        initNotificationListener(); 
+    } catch (e) {
+        console.error("Error loading content:", e);
+    }
     
     // 4. Event Listeners
     document.getElementById('next-btn').addEventListener('click', nextQuestion);
@@ -91,16 +106,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('review-container').style.display = 'none';
         document.getElementById('results').style.display = 'block';
     });
-
-    // 5. Dark Mode
-    if (localStorage.getItem('theme') === 'dark') {
-        document.body.classList.add('dark-mode');
-        document.getElementById('theme-toggle').textContent = '☀️';
-    }
-    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 });
 
-// --- Notification System (NEW) ---
+// --- Notification System ---
 function initNotificationListener() {
     if(!db) return;
     db.collection('settings').doc('notification').onSnapshot((doc) => {
@@ -123,6 +131,7 @@ function initNotificationListener() {
 
 function showNotificationBar(text, duration) {
     const bar = document.getElementById('top-notification-bar');
+    if(!bar) return;
     document.getElementById('notification-text').textContent = text;
     bar.style.display = 'block';
 
@@ -499,7 +508,13 @@ function showReview() {
     if(!currentQuizSettings.showResult) return; 
     const container = document.getElementById("review-content"); container.innerHTML = ''; currentQuiz.forEach((q, i) => { const uAns = userAnswers[i]; const isCorrect = uAns && uAns.isCorrect; let correctText = q.type === 'tf' ? (q.a ? 'True' : 'False') : q.options[q.a]; let userText = uAns ? (q.type === 'tf' ? (uAns.answer ? 'True' : 'False') : q.options[uAns.answer]) : 'لم يجب'; container.innerHTML += `<div class="review-question"><div class="question-number">س ${i+1}</div><div class="question-text">${q.q}</div><div class="review-option ${isCorrect ? 'correct' : 'user-incorrect'}">إجابتك: ${userText}</div>${!isCorrect ? `<div class="review-option correct">الصحيح: ${correctText}</div>` : ''}${q.explanation ? `<div class="explanation-box">💡 ${q.explanation}</div>` : ''}</div>`; }); document.getElementById('results').style.display = 'none'; document.getElementById('review-container').style.display = 'block'; 
 }
-function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); }
+function toggleTheme() { 
+    document.body.classList.toggle('dark-mode'); 
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light'); 
+    const toggleBtn = document.getElementById('theme-toggle');
+    if(toggleBtn) toggleBtn.textContent = isDark ? '☀️' : '🌙';
+}
 function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
 
 // --- Admin Panel (Updated with Session Persistence) ---
