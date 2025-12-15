@@ -17,6 +17,7 @@ try {
     console.log("Firebase Error ⚠️");
 }
 
+// --- Global Variables ---
 let subjectsConfig = [
     { id: 'microbiology', name: 'Microbiology' },
     { id: 'fundamental', name: 'Fundamental' },
@@ -35,7 +36,11 @@ let defaultSources = [
 let dbSubjects = []; 
 let dbSources = [];
 
+// Auth Data
 let currentStudentName = localStorage.getItem('studentName') || "";
+let currentUsername = localStorage.getItem('studentUsername') || "";
+
+// Quiz Data
 let currentSubject = subjectsConfig[0].id; 
 let currentSource = ''; 
 let currentQuizData = null;
@@ -46,18 +51,23 @@ let timerInterval = null;
 let secondsRemaining = 0;
 let isTimerDown = false; 
 
+// --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
-    if (currentStudentName) await verifyUserStatus(); 
+    // 1. Check Login State
+    if (currentUsername && currentStudentName) {
+        document.getElementById('welcome-modal').style.display = 'none';
+        document.getElementById('welcome-message').innerHTML = `أهلاً بك يا دكتور/ة <b>${currentStudentName}</b> 👋`;
+        await verifyUserStatus(); // Check if user is still valid in DB
+    } else {
+        document.getElementById('welcome-modal').style.display = 'flex';
+        toggleAuthView('login'); // Default to login view
+    }
+
+    // 2. Load Content
     await fetchDynamicContent();
     generateSubjectTabs();
     
-    if (!currentStudentName) {
-        document.getElementById('welcome-modal').style.display = 'flex';
-    } else {
-        document.getElementById('welcome-modal').style.display = 'none';
-        document.getElementById('welcome-message').textContent = `أهلاً بك يا دكتور/ة ${currentStudentName} 👋`;
-    }
-
+    // 3. Event Listeners
     document.getElementById('next-btn').addEventListener('click', nextQuestion);
     document.getElementById('prev-btn').addEventListener('click', prevQuestion);
     document.getElementById('review-btn').addEventListener('click', showReview);
@@ -66,6 +76,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('results').style.display = 'block';
     });
 
+    // 4. Dark Mode
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
         document.getElementById('theme-toggle').textContent = '☀️';
@@ -73,17 +84,132 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 });
 
-async function verifyUserStatus() {
-    if (!db) return;
+// --- Auth Functions (New) ---
+
+// Toggle between Login and Signup forms
+window.toggleAuthView = function(view) {
+    const errorP = document.getElementById('auth-error');
+    errorP.style.display = 'none';
+    
+    if (view === 'signup') {
+        document.getElementById('login-view').style.display = 'none';
+        document.getElementById('signup-view').style.display = 'block';
+    } else {
+        document.getElementById('signup-view').style.display = 'none';
+        document.getElementById('login-view').style.display = 'block';
+    }
+}
+
+// 1. Register User
+window.registerUser = async function() {
+    const fullname = document.getElementById('signup-fullname').value.trim();
+    let username = document.getElementById('signup-username').value.trim().toLowerCase();
+    const errorP = document.getElementById('auth-error');
+
+    // Validation
+    if (fullname.split(" ").length < 3) {
+        showError("❌ يرجى كتابة الاسم الثلاثي على الأقل.");
+        return;
+    }
+    if (username.length < 3 || !/^[a-z0-9_]+$/.test(username)) {
+        showError("❌ اسم المستخدم يجب أن يكون إنجليزي (حروف وأرقام) وبدون مسافات.");
+        return;
+    }
+
+    if (!db) { showError("⚠️ الاتصال بقاعدة البيانات غير متوفر."); return; }
+
+    showError("⏳ جاري إنشاء الحساب...", "blue");
+
     try {
-        const userDoc = await db.collection('users').doc(currentStudentName).get();
+        // Check if username exists (We use username as Document ID for uniqueness)
+        const userDocRef = db.collection('users').doc(username);
+        const docSnap = await userDocRef.get();
+
+        if (docSnap.exists) {
+            showError("❌ اسم المستخدم هذا مستخدم بالفعل، اختر اسماً آخر.");
+            return;
+        }
+
+        // Create new user
+        await userDocRef.set({
+            name: fullname,
+            username: username,
+            joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            allowReentry: true // Default allow
+        });
+
+        // Login Success
+        completeLogin(username, fullname);
+
+    } catch (e) {
+        console.error(e);
+        showError("حدث خطأ غير متوقع.");
+    }
+};
+
+// 2. Login User
+window.loginUser = async function() {
+    let username = document.getElementById('login-username').value.trim().toLowerCase();
+    
+    if (!username) { showError("❌ اكتب اسم المستخدم"); return; }
+    if (!db) { showError("⚠️ الاتصال بقاعدة البيانات غير متوفر."); return; }
+
+    showError("⏳ جاري التحقق...", "blue");
+
+    try {
+        const userDocRef = db.collection('users').doc(username);
+        const docSnap = await userDocRef.get();
+
+        if (!docSnap.exists) {
+            showError("❌ اسم المستخدم غير موجود. هل قمت بإنشاء حساب؟");
+            return;
+        }
+
+        const userData = docSnap.data();
+        
+        // Security Check (Optional: Block if banned)
+        // if (userData.isBanned) { showError("🚫 هذا الحساب محظور."); return; }
+
+        completeLogin(username, userData.name);
+
+    } catch (e) {
+        console.error(e);
+        showError("خطأ في الاتصال.");
+    }
+};
+
+function showError(msg, color="red") {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.style.color = color;
+    el.style.display = 'block';
+}
+
+function completeLogin(username, fullname) {
+    localStorage.setItem('studentUsername', username);
+    localStorage.setItem('studentName', fullname);
+    location.reload(); 
+}
+
+async function verifyUserStatus() {
+    if (!db || !currentUsername) return;
+    try {
+        const userDoc = await db.collection('users').doc(currentUsername).get();
         if (!userDoc.exists) {
-            localStorage.removeItem('studentName'); 
-            alert("⚠️ تم إيقاف حسابك من قبل إدارة المنصة.");
-            location.reload(); 
+            logout(); // User deleted from DB
         }
     } catch (e) { console.log(e); }
 }
+
+window.logout = function() {
+    if(confirm("تسجيل خروج؟")) {
+        localStorage.removeItem('studentName');
+        localStorage.removeItem('studentUsername');
+        location.reload();
+    }
+};
+
+// --- Content & Quiz Logic (Preserved) ---
 
 async function fetchDynamicContent() {
     if (!db) return;
@@ -161,6 +287,7 @@ async function loadQuizSource(sourceId, sourceName) {
     container.innerHTML = '<p style="text-align:center;">جاري البحث عن كويزات...</p>';
 
     let allQuizzes = {};
+    // Load local JS files (Legacy support)
     try {
         const scriptPath = `questions/${currentSubject}/${sourceId}.js`;
         await new Promise((resolve) => {
@@ -176,6 +303,7 @@ async function loadQuizSource(sourceId, sourceName) {
         });
     } catch(e) {}
 
+    // Load Firebase Quizzes
     if (db) {
         const qSnap = await db.collection('quizzes').where('subjectId', '==', currentSubject).where('sourceId', '==', sourceId).get();
         qSnap.forEach(doc => { allQuizzes[doc.id] = doc.data(); });
@@ -195,7 +323,8 @@ function renderQuizCards(data) {
 
     keys.forEach(quizKey => {
         const quiz = data[quizKey];
-        const historyKey = `${currentSubject}_${currentSource}_${quizKey}`;
+        // Use Username in history key to separate users on same device
+        const historyKey = `${currentUsername}_${currentSubject}_${currentSource}_${quizKey}`;
         const savedHistory = JSON.parse(localStorage.getItem('quizHistory')) || {};
         let badgeHtml = savedHistory[historyKey] ? `<div class="history-badge">✅ ${savedHistory[historyKey].score}/${savedHistory[historyKey].total}</div>` : '';
         
@@ -272,7 +401,9 @@ function finishQuiz(timeOut = false) {
     clearInterval(timerInterval);
     window.onbeforeunload = null;
     let score = userAnswers.filter(a => a && a.isCorrect).length;
-    const historyKey = `${currentSubject}_${currentSource}_${window.currentQuizKey}`;
+    
+    // Save Local History (per user)
+    const historyKey = `${currentUsername}_${currentSubject}_${currentSource}_${window.currentQuizKey}`;
     const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
     let entry = historyData[historyKey] || { score: 0, total: currentQuiz.length, highestScore: 0, attempts: 0, title: window.currentQuizTitle };
     entry.score = score; entry.total = currentQuiz.length; entry.title = window.currentQuizTitle;
@@ -280,7 +411,10 @@ function finishQuiz(timeOut = false) {
     entry.highestScore = Math.max(entry.highestScore || 0, score);
     historyData[historyKey] = entry;
     localStorage.setItem('quizHistory', JSON.stringify(historyData));
+    
+    // Save to Firebase
     saveScoreToFirebase(score, currentQuiz.length);
+    
     document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
     document.getElementById("score-message").textContent = timeOut ? "⏰ انتهى الوقت!" : (score === currentQuiz.length ? "ممتاز! 🌟" : "جيد، حاول مرة أخرى");
     document.getElementById('quiz-container').style.display = 'none';
@@ -319,83 +453,26 @@ function prevQuestion() { if (currentQuestionIndex > 0) { currentQuestionIndex--
 function updateNavigation() { document.getElementById("prev-btn").disabled = currentQuestionIndex === 0; document.getElementById("next-btn").textContent = currentQuestionIndex === currentQuiz.length - 1 ? "إنهاء" : "التالي"; }
 function backToQuizList() { clearInterval(timerInterval); document.getElementById('quiz-container').style.display = 'none'; document.getElementById('results').style.display = 'none'; document.getElementById('review-container').style.display = 'none'; document.getElementById('quiz-list-area').style.display = 'block'; if (currentQuizData) renderQuizCards(currentQuizData); window.onbeforeunload = null; }
 
-// 🔴 Logic for Registration + Allow Re-entry 🔴
-async function saveStudentName() {
-    const nameInput = document.getElementById('student-name-input');
-    const errorMsg = document.getElementById('login-error');
-    const rawName = nameInput.value.trim();
-    const parts = rawName.split(/\s+/);
-    
-    if (parts.length < 3) {
-        errorMsg.textContent = "❌ يجب إدخال الاسم الثلاثي";
-        errorMsg.style.display = 'block'; return;
-    }
-    if (!db) { completeLogin(rawName); return; }
-    
-    nameInput.disabled = true;
-    errorMsg.textContent = "⏳ جاري التحقق..."; errorMsg.style.display = 'block';
-    errorMsg.style.color = "blue";
-
-    try {
-        // 1. Check Strict Mode Setting
-        let strictMode = true; 
-        const configDoc = await db.collection('settings').doc('config').get();
-        if(configDoc.exists) strictMode = configDoc.data().strictNames;
-
-        const userDoc = await db.collection('users').doc(rawName).get();
-        
-        if (userDoc.exists) {
-            // 2. Check if allowed specifically
-            const userData = userDoc.data();
-            if (strictMode && !userData.allowReentry) {
-                errorMsg.textContent = "❌ الاسم مسجل بالفعل (تواصل مع المشرف لفك الحظر)";
-                errorMsg.style.color = "red";
-                nameInput.disabled = false;
-            } else {
-                // Allowed! (Consume the permission)
-                if (userData.allowReentry) {
-                    await db.collection('users').doc(rawName).update({ allowReentry: false });
-                }
-                completeLogin(rawName);
-            }
-        } else {
-            // New User
-            await db.collection('users').doc(rawName).set({ 
-                name: rawName, 
-                joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                allowReentry: false
-            });
-            completeLogin(rawName);
-        }
-    } catch (error) { errorMsg.textContent = "خطأ في الاتصال"; nameInput.disabled = false; console.log(error); }
+function saveScoreToFirebase(score, total) {
+    if (!db || !currentUsername) return;
+    db.collection("exam_results").add({
+        studentName: currentStudentName,
+        username: currentUsername, // Save Username too
+        subject: currentSubject,
+        quizTitle: window.currentQuizTitle,
+        score: score,
+        total: total,
+        percentage: Math.round((score/total)*100),
+        date: new Date().toLocaleString('ar-EG'),
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => document.getElementById('upload-status').textContent = "✅ تم الحفظ");
 }
 
-// 🔴 New Admin Function: Grant Access 🔴
-window.grantOneTimeAccess = async function() {
-    const name = document.getElementById('unblock-user-name').value.trim();
-    if(!name) { alert("اكتب اسم الطالب الأول"); return; }
-    
-    try {
-        const userDoc = await db.collection('users').doc(name).get();
-        if(!userDoc.exists) {
-            alert("⚠️ هذا الطالب غير مسجل أصلاً.");
-            return;
-        }
-        // Set flag to true
-        await db.collection('users').doc(name).update({ allowReentry: true });
-        alert(`✅ تم السماح للطالب (${name}) بالدخول مرة واحدة.`);
-        document.getElementById('unblock-user-name').value = "";
-    } catch(e) { alert("خطأ: " + e.message); }
-};
-
-function completeLogin(name) { currentStudentName = name; localStorage.setItem('studentName', currentStudentName); location.reload(); }
-function logout() { if(confirm("تسجيل خروج؟")) { localStorage.removeItem('studentName'); location.reload(); } }
-function saveScoreToFirebase(score, total) { if (!db) return; db.collection("exam_results").add({ studentName: currentStudentName, subject: currentSubject, quizTitle: window.currentQuizTitle, score: score, total: total, percentage: Math.round((score/total)*100), date: new Date().toLocaleString('ar-EG'), timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => document.getElementById('upload-status').textContent = "✅ تم الحفظ"); }
 function showReview() { const container = document.getElementById("review-content"); container.innerHTML = ''; currentQuiz.forEach((q, i) => { const uAns = userAnswers[i]; const isCorrect = uAns && uAns.isCorrect; let correctText = q.type === 'tf' ? (q.a ? 'True' : 'False') : q.options[q.a]; let userText = uAns ? (q.type === 'tf' ? (uAns.answer ? 'True' : 'False') : q.options[uAns.answer]) : 'لم يجب'; container.innerHTML += `<div class="review-question"><div class="question-number">س ${i+1}</div><div class="question-text">${q.q}</div><div class="review-option ${isCorrect ? 'correct' : 'user-incorrect'}">إجابتك: ${userText}</div>${!isCorrect ? `<div class="review-option correct">الصحيح: ${correctText}</div>` : ''}${q.explanation ? `<div class="explanation-box">💡 ${q.explanation}</div>` : ''}</div>`; }); document.getElementById('results').style.display = 'none'; document.getElementById('review-container').style.display = 'block'; }
 function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); }
 function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
 
-// --- Admin Panel ---
+// --- Admin Panel (Updated for Username) ---
 window.openDashboard = function() { document.getElementById('main-nav').style.display = 'none'; document.getElementById('source-selection').style.display = 'none'; document.getElementById('quiz-list-area').style.display = 'none'; document.getElementById('dashboard-view').style.display = 'block'; const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {}; let tQ=0, tA=0, tS=0, tP=0; const tbody = document.getElementById('history-table-body'); tbody.innerHTML = ''; Object.entries(historyData).forEach(([key, data]) => { tQ++; tA += data.attempts || 1; tS += data.score; tP += data.total; tbody.innerHTML += `<tr><td>${data.title || key}</td><td>${data.highestScore}</td><td>${data.score}</td><td>${data.attempts || 1}</td></tr>`; }); document.getElementById('total-quizzes-taken').textContent = tQ; document.getElementById('total-attempts').textContent = tA; document.getElementById('total-accuracy').textContent = tP ? Math.round((tS/tP)*100) + '%' : '0%'; };
 window.closeDashboard = function() { document.getElementById('dashboard-view').style.display = 'none'; document.getElementById('main-nav').style.display = 'flex'; selectSubject(currentSubject); };
 window.openAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'flex'; };
@@ -416,20 +493,10 @@ window.switchAdminTab = function(tabName) {
 
 window.fetchAdminSettings = async function() {
     if(!db) return;
-    const doc = await db.collection('settings').doc('config').get();
-    const toggle = document.getElementById('strict-mode-toggle');
-    if(doc.exists) {
-        toggle.checked = doc.data().strictNames;
-    } else {
-        toggle.checked = true; 
-    }
+    // Removed strict logic as username logic replaces it, but keeping the function to prevent errors
 };
-
 window.updateLoginSettings = async function() {
-    const isStrict = document.getElementById('strict-mode-toggle').checked;
-    try {
-        await db.collection('settings').doc('config').set({ strictNames: isStrict }, { merge: true });
-    } catch(e) { alert("خطأ في حفظ الإعدادات"); }
+    // Removed
 };
 
 window.toggleTimeInput = function(show) { document.getElementById('time-limit-input-container').style.display = show ? 'block' : 'none'; };
@@ -439,10 +506,45 @@ window.parseAndSaveExam = async function() { const subjectId = document.getEleme
 function parseQuestionsFromText(text) { const lines = text.split('\n').filter(l => l.trim()); let questions = []; let currentQ = null; lines.forEach(line => { line = line.trim(); if (line.match(/^(س|Q|\d+)[\.:\/]/) || line.includes('?')) { if (currentQ && currentQ.options.length > 1) questions.push(currentQ); currentQ = { q: line.replace(/^(س|Q|\d+)[\.:\/]\s*/, ''), options: [], a: 0, type: 'mcq' }; } else if (currentQ) { let isCorrect = line.startsWith('*'); let optionText = line.replace(/^[\*\-\)\.]\s*/, '').replace(/^[أ-يa-z][\)\.]\s*/, ''); if (isCorrect) currentQ.a = currentQ.options.length; currentQ.options.push(optionText); } }); if (currentQ && currentQ.options.length > 1) questions.push(currentQ); return questions; }
 window.updateDeleteDropdown = async function() { const type = document.getElementById('delete-type-select').value; const itemSelect = document.getElementById('delete-item-select'); itemSelect.innerHTML = ''; if(type === 'none') { itemSelect.style.display = 'none'; return; } itemSelect.style.display = 'block'; if (type === 'subject') { dbSubjects.forEach(sub => { itemSelect.innerHTML += `<option value="${sub.docId}">${sub.name}</option>`; }); if(dbSubjects.length === 0) itemSelect.innerHTML = '<option>لا توجد مواد</option>'; } else if (type === 'source') { dbSources.forEach(src => { itemSelect.innerHTML += `<option value="${src.docId}">${src.name}</option>`; }); if(dbSources.length === 0) itemSelect.innerHTML = '<option>لا توجد مصادر</option>'; } else if (type === 'quiz') { itemSelect.innerHTML = '<option>تحميل...</option>'; if(db) { const snaps = await db.collection('quizzes').get(); itemSelect.innerHTML = ''; if(snaps.empty) { itemSelect.innerHTML = '<option>فارغ</option>'; return; } snaps.forEach(doc => { const q = doc.data(); const subName = q.subjectId || 'عام'; itemSelect.innerHTML += `<option value="${doc.id}">${q.title} (${subName})</option>`; }); } } };
 window.deleteSelectedItem = async function() { const type = document.getElementById('delete-type-select').value; const id = document.getElementById('delete-item-select').value; if(type === 'none' || !id) return; if(!confirm("تأكيد الحذف؟")) return; let col = type === 'subject' ? 'subjects' : (type === 'source' ? 'sources' : 'quizzes'); try { await db.collection(col).doc(id).delete(); alert("تم الحذف"); location.reload(); } catch(e) { alert("خطأ: " + e.message); } };
-window.fetchAdminUsers = function() { const tbody = document.getElementById('users-table-body'); if (!db) { tbody.innerHTML = '<tr><td colspan="3">Firebase غير مفعل</td></tr>'; return; } tbody.innerHTML = '<tr><td colspan="3">جاري التحميل...</td></tr>'; db.collection("users").orderBy("joinedAt", "desc").get().then((snap) => { tbody.innerHTML = ''; if(snap.empty) { tbody.innerHTML = '<tr><td colspan="3">لا يوجد طلاب</td></tr>'; return; } snap.forEach(doc => { const d = doc.data(); const date = d.joinedAt ? new Date(d.joinedAt.toDate()).toLocaleDateString('ar-EG') : 'غير معروف'; tbody.innerHTML += `<tr><td>${d.name}</td><td>${date}</td><td><button class="btn-danger" style="padding:5px 10px; font-size:0.8rem;" onclick="deleteOneUser('${doc.id}')">حذف</button></td></tr>`; }); }); };
-window.deleteOneUser = function(userId) { if(!confirm(`هل أنت متأكد من حذف الطالب ${userId}؟`)) return; db.collection('users').doc(userId).delete().then(() => { alert("تم حذف الطالب."); fetchAdminUsers(); }).catch(err => alert("خطأ: " + err.message)); };
+
+// Updated: Fetch Users with Username Display
+window.fetchAdminUsers = function() { 
+    const tbody = document.getElementById('users-table-body'); 
+    if (!db) { tbody.innerHTML = '<tr><td colspan="3">Firebase غير مفعل</td></tr>'; return; } 
+    tbody.innerHTML = '<tr><td colspan="3">جاري التحميل...</td></tr>'; 
+    db.collection("users").orderBy("joinedAt", "desc").get().then((snap) => { 
+        tbody.innerHTML = ''; 
+        if(snap.empty) { tbody.innerHTML = '<tr><td colspan="3">لا يوجد طلاب</td></tr>'; return; } 
+        snap.forEach(doc => { 
+            const d = doc.data(); 
+            const date = d.joinedAt ? new Date(d.joinedAt.toDate()).toLocaleDateString('ar-EG') : 'غير معروف'; 
+            // Display: Name + Username (Doc ID)
+            const userInfo = `<div>${d.name}</div><div style="font-size:0.85rem; color:#64748b; font-family:monospace;">@${doc.id}</div>`;
+            tbody.innerHTML += `<tr><td>${userInfo}</td><td>${date}</td><td><button class="btn-danger" style="padding:5px 10px; font-size:0.8rem;" onclick="deleteOneUser('${doc.id}')">حذف</button></td></tr>`; 
+        }); 
+    }); 
+};
+
+window.deleteOneUser = function(userId) { if(!confirm(`هل أنت متأكد من حذف الطالب @${userId}؟`)) return; db.collection('users').doc(userId).delete().then(() => { alert("تم حذف الطالب."); fetchAdminUsers(); }).catch(err => alert("خطأ: " + err.message)); };
 window.filterUsersTable = function() { const f = document.getElementById("users-search").value.toUpperCase(); const r = document.getElementById("users-table").getElementsByTagName("tr"); for(let i=1;i<r.length;i++) { const td = r[i].getElementsByTagName("td")[0]; if(td) r[i].style.display = td.textContent.toUpperCase().indexOf(f) > -1 ? "" : "none"; } };
-window.fetchAdminData = function() { const tbody = document.getElementById('admin-table-body'); if (!db) { tbody.innerHTML = '<tr><td colspan="5">Firebase غير مفعل</td></tr>'; return; } tbody.innerHTML = '<tr><td colspan="5">تحميل...</td></tr>'; db.collection("exam_results").orderBy("timestamp", "desc").limit(100).get().then((snap) => { tbody.innerHTML = ''; if(snap.empty) { tbody.innerHTML = '<tr><td colspan="5">لا توجد نتائج</td></tr>'; return; } snap.forEach(doc => { const d = doc.data(); tbody.innerHTML += `<tr><td>${d.studentName}</td><td>${d.subject || '-'}</td><td>${d.quizTitle}</td><td>${d.score}/${d.total}</td><td dir="ltr">${d.date}</td></tr>`; }); }).catch(e => tbody.innerHTML = `<tr><td colspan="5">خطأ: ${e.message}</td></tr>`); };
+
+// Updated: Fetch Results with Username Display
+window.fetchAdminData = function() { 
+    const tbody = document.getElementById('admin-table-body'); 
+    if (!db) { tbody.innerHTML = '<tr><td colspan="5">Firebase غير مفعل</td></tr>'; return; } 
+    tbody.innerHTML = '<tr><td colspan="5">تحميل...</td></tr>'; 
+    db.collection("exam_results").orderBy("timestamp", "desc").limit(100).get().then((snap) => { 
+        tbody.innerHTML = ''; 
+        if(snap.empty) { tbody.innerHTML = '<tr><td colspan="5">لا توجد نتائج</td></tr>'; return; } 
+        snap.forEach(doc => { 
+            const d = doc.data(); 
+            // Show username if available
+            const nameDisplay = d.username ? `${d.studentName} <span style="font-size:0.8rem; color:gray">(${d.username})</span>` : d.studentName;
+            tbody.innerHTML += `<tr><td>${nameDisplay}</td><td>${d.subject || '-'}</td><td>${d.quizTitle}</td><td>${d.score}/${d.total}</td><td dir="ltr">${d.date}</td></tr>`; 
+        }); 
+    }).catch(e => tbody.innerHTML = `<tr><td colspan="5">خطأ: ${e.message}</td></tr>`); 
+};
+
 function populateAdminDropdowns() { const subSelects = [document.getElementById('source-subject-select'), document.getElementById('exam-subject-select')]; subSelects.forEach(s => s.innerHTML = ''); subjectsConfig.forEach(sub => { subSelects.forEach(s => s.innerHTML += `<option value="${sub.id}">${sub.name}</option>`); }); updateSourceSelect(); }
 window.updateSourceSelect = async function() { const subId = document.getElementById('exam-subject-select').value; const srcSelect = document.getElementById('exam-source-select'); srcSelect.innerHTML = ''; defaultSources.forEach(s => srcSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`); if(db) { const snap = await db.collection('sources').where('subjectId', '==', subId).get(); snap.forEach(doc => srcSelect.innerHTML += `<option value="${doc.data().id}">${doc.data().name}</option>`); } };
 window.adminResetAllResults = function() { if(confirm("حذف الكل؟") && db) db.collection("exam_results").get().then(s => { const b=db.batch(); s.docs.forEach(d=>b.delete(d.ref)); b.commit(); }).then(()=>alert("تم")); };
