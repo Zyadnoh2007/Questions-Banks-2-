@@ -29,7 +29,38 @@ body.dark-mode {
   --quiz-card-border: #6366f1;
 }
 
-/* تعديلات خاصة للوضع الليلي */
+/* --- إصلاحات شاملة للوضع الليلي للعناصر الجديدة --- */
+body.dark-mode .setting-box,
+body.dark-mode .visual-question-card {
+    background-color: #1e293b !important; /* خلفية كروت الإعدادات */
+    border-color: #334155 !important;
+    color: #f1f5f9;
+}
+
+body.dark-mode input, 
+body.dark-mode select, 
+body.dark-mode textarea {
+    background-color: #334155 !important;
+    border-color: #475569 !important;
+    color: #fff !important;
+}
+
+body.dark-mode .checkbox-label {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .vq-correct-select {
+    background-color: #312e81 !important; /* لون سيلكت الإجابة الصحيحة في الداكن */
+    color: #a5b4fc !important;
+    border-color: #4338ca !important;
+}
+
+body.dark-mode .editor-tab:hover:not(.active) {
+    background-color: #334155 !important;
+    color: white !important;
+}
+
+/* باقي التنسيقات للوضع الليلي */
 body.dark-mode .quiz-card:hover,
 body.dark-mode .source-card:hover {
   background-color: #334155;
@@ -109,7 +140,6 @@ body {
   min-height: 100vh;
   color: var(--text-dark);
   transition: background-color 0.3s ease, color 0.3s ease;
-  padding-top: 20px; /* To avoid overlap if notif bar is present */
 }
 
 .container {
@@ -118,43 +148,31 @@ body {
   padding: 25px;
 }
 
-/* --- Notification Bar (New) --- */
+/* --- Notification Bar (NEW) --- */
 .notification-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: #f59e0b; /* Amber for attention */
-    color: white;
+    background: #f59e0b; /* Amber */
+    color: #fff;
     text-align: center;
-    padding: 12px;
-    z-index: 9999;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
+    padding: 10px;
     font-weight: bold;
-    animation: slideDown 0.4s ease-out;
+    font-size: 1rem;
+    position: relative;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    animation: slideDown 0.5s ease;
+    z-index: 2000; /* Ensure it stays on top */
 }
 
 .close-notif {
-    background: rgba(255, 255, 255, 0.2);
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
     border: none;
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     cursor: pointer;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s;
-}
-
-.close-notif:hover {
-    background: rgba(255, 255, 255, 0.4);
+    font-weight: bold;
 }
 
 @keyframes slideDown {
