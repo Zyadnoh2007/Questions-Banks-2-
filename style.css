@@ -109,12 +109,57 @@ body {
   min-height: 100vh;
   color: var(--text-dark);
   transition: background-color 0.3s ease, color 0.3s ease;
+  padding-top: 20px; /* To avoid overlap if notif bar is present */
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 25px;
+}
+
+/* --- Notification Bar (New) --- */
+.notification-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f59e0b; /* Amber for attention */
+    color: white;
+    text-align: center;
+    padding: 12px;
+    z-index: 9999;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    font-weight: bold;
+    animation: slideDown 0.4s ease-out;
+}
+
+.close-notif {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.close-notif:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
 }
 
 /* --- Header (المعدل للموبايل) --- */
