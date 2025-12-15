@@ -766,13 +766,12 @@ tr:hover { background-color: #f1f5f9; }
 
 .modal-box h2 { color: var(--primary-color); margin-bottom: 15px; }
 
-/* تحديث: تقليل المارجن عشان الحقول المتعددة */
 .modal-box input {
     width: 100%;
     padding: 12px;
     border: 2px solid var(--border-color);
     border-radius: var(--radius-md);
-    margin: 10px 0; /* تم تقليل المسافة من 20px لـ 10px */
+    margin: 10px 0;
     font-size: 1.1rem;
     text-align: center;
     background: var(--body-bg);
@@ -809,7 +808,8 @@ textarea:focus {
 }
 
 /* Admin Inputs */
-.admin-tab-content input, 
+.admin-tab-content input[type="text"],
+.admin-tab-content input[type="number"],
 .admin-tab-content select {
     border: 1px solid var(--border-color);
     border-radius: 8px;
@@ -899,66 +899,152 @@ body.dark-mode .review-question h3 {
     color: var(--primary-color);
 }
 
-/* --- Toggle Switch (Settings) --- */
-.admin-setting-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
+/* --- NEW: Advanced Exam Settings Styles --- */
+
+/* Settings Grid */
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
 }
 
-.switch-container {
-    position: relative;
+.setting-box {
+    background: var(--body-bg);
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+body.dark-mode .setting-box {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+.setting-title {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 5px;
+}
+
+/* Date Inputs */
+.date-input-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.date-input-group label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+input[type="datetime-local"] {
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background: var(--card-bg);
+    color: var(--text-dark);
+}
+
+/* Checkboxes */
+.checkbox-label {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     cursor: pointer;
-    margin-top: 10px;
+    font-size: 0.95rem;
+    color: var(--text-dark);
 }
 
-.switch-container input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+.checkbox-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
 }
 
-.slider {
-    position: relative;
-    width: 50px;
-    height: 26px;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 34px;
+/* --- Editor Tabs --- */
+.editor-tabs-container {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 5px;
 }
 
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 20px;
-    width: 20px;
-    left: 4px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-input:checked + .slider {
-    background-color: var(--primary-color);
-}
-
-input:checked + .slider:before {
-    transform: translateX(24px);
-}
-
-.switch-text {
+.editor-tab {
+    padding: 8px 15px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
     font-weight: bold;
-    font-size: 1.1rem;
+    color: var(--text-light);
+    border-radius: 5px 5px 0 0;
+    transition: all 0.2s;
 }
 
-/* --- Mobile Adjustments (Final Header Fix) --- */
+.editor-tab.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.editor-tab:hover:not(.active) {
+    background: var(--border-color);
+}
+
+/* --- Visual Editor Cards --- */
+.visual-question-card {
+    background: var(--body-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    position: relative;
+    border-right: 4px solid var(--secondary-color);
+}
+
+.vq-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.vq-input-group {
+    margin-bottom: 8px;
+}
+
+.vq-input-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.vq-options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.vq-correct-select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--primary-color);
+    border-radius: 5px;
+    background: #eff6ff;
+    color: #1e3a8a;
+    font-weight: bold;
+}
+
+/* Mobile adjustments */
 @media (max-width: 768px) {
+  .settings-grid, .vq-options-grid {
+      grid-template-columns: 1fr;
+  }
+  
   .container { padding: 15px; }
   
   .header {
