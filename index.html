@@ -10,6 +10,12 @@
 </head>
 <body>
 
+  <!-- 🔔 Top Notification Bar (New) -->
+  <div id="top-notification-bar" class="notification-bar" style="display:none;">
+      <span id="notification-text"></span>
+      <button onclick="closeNotification()" class="close-notif" title="إغلاق">×</button>
+  </div>
+
   <!-- Auth Modal (Login / Sign Up) -->
   <div id="welcome-modal" class="modal-overlay">
     <div class="modal-box">
@@ -98,7 +104,7 @@
     <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; margin-bottom:20px;">
             <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة التحكم الشاملة</h2>
-            <button class="start-btn" onclick="closeAdminDashboard()" style="background:#475569; width:auto;">خروج</button>
+            <button class="start-btn" onclick="logoutAdmin()" style="background:#475569; width:auto;">تسجيل خروج</button>
         </div>
 
         <div class="tab-container" style="justify-content: center; margin-bottom: 20px;">
@@ -141,7 +147,7 @@
             </div>
         </div>
 
-        <!-- 3. Content (Updated for Advanced Exam Settings) -->
+        <!-- 3. Content -->
         <div id="admin-tab-content" class="admin-tab-content" style="display:none;">
             <!-- Add Subject -->
             <div class="review-question" style="background:white; border-color:var(--primary-color);">
@@ -165,7 +171,7 @@
                 </div>
             </div>
 
-            <!-- Add Exam (NEW ADVANCED UI) -->
+            <!-- Add Exam -->
             <div class="review-question" style="background:white; border-color:#22c55e;">
                 <h3>3. إضافة امتحان جديد (نظام متطور) 🧠</h3>
                 
@@ -259,12 +265,23 @@
             </div>
         </div>
 
-        <!-- 4. Settings -->
+        <!-- 4. Settings (Updated with Notification Bar) -->
         <div id="admin-tab-settings" class="admin-tab-content" style="display:none;">
+            
+            <div class="admin-setting-card">
+                <h3>📢 شريط الإشعارات</h3>
+                <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                    <input type="text" id="admin-notif-text" placeholder="اكتب التنبيه هنا..." style="flex-grow:1; padding:10px;">
+                    <button class="start-btn" onclick="postNotification()" style="width:auto; background:#f59e0b;">نشر</button>
+                </div>
+                <p style="font-size:0.8rem; color:gray; margin-top:5px;">سيظهر الشريط في أعلى الصفحة لجميع الطلاب لمدة دقيقتين ثم يختفي تلقائياً.</p>
+            </div>
+
             <div class="admin-setting-card">
                 <h3>ℹ️ معلومات النظام</h3>
                 <p>يعمل النظام الآن بتسجيل الدخول عبر (اسم المستخدم) الفريد.</p>
             </div>
+
             <div class="admin-danger-zone" style="background: #fee2e2; padding: 20px; border-radius: 10px; border: 1px solid #ef4444; text-align:center;">
                 <h3 style="color:#b91c1c;">⚠️ منطقة الخطر</h3>
                 <div style="display:flex; gap:20px; justify-content:center; margin-top:20px;">
@@ -316,4 +333,5 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
