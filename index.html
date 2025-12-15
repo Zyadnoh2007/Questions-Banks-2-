@@ -10,18 +10,35 @@
 </head>
 <body>
 
-  <!-- Welcome Modal -->
   <div id="welcome-modal" class="modal-overlay">
     <div class="modal-box">
-      <h2>مرحباً بك يا بطل 🩺</h2>
-      <p>من فضلك ادخل اسمك الثلاثي قبل البدء</p>
-      <input type="text" id="student-name-input" placeholder="مثال: أحمد محمد علي" />
-      <p id="login-error" style="color:red; font-size:0.9rem; display:none;"></p>
-      <button class="start-btn" onclick="saveStudentName()">دخول</button>
+      
+      <div id="login-view">
+        <h2>تسجيل الدخول 🔐</h2>
+        <p>أدخل اسم المستخدم الخاص بك</p>
+        <input type="text" id="login-username" placeholder="Username (e.g. zyad2007)" style="text-align: left; direction: ltr;" />
+        <button class="start-btn" onclick="loginUser()">دخول</button>
+        <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-light);">
+          طالب جديد؟ <a href="#" onclick="toggleAuthView('signup')" style="color: var(--primary-color); font-weight: bold; text-decoration: none;">أنشئ حساب الآن</a>
+        </p>
+      </div>
+
+      <div id="signup-view" style="display: none;">
+        <h2>حساب جديد ✨</h2>
+        <p>سجل بياناتك لمرة واحدة فقط</p>
+        <input type="text" id="signup-fullname" placeholder="الاسم الثلاثي (بالعربي)" />
+        <input type="text" id="signup-username" placeholder="اسم المستخدم (إنجليزي فقط)" style="text-align: left; direction: ltr;" />
+        <button class="start-btn" onclick="registerUser()">إنشاء الحساب</button>
+        <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-light);">
+          لديك حساب بالفعل؟ <a href="#" onclick="toggleAuthView('login')" style="color: var(--primary-color); font-weight: bold; text-decoration: none;">تسجيل الدخول</a>
+        </p>
+      </div>
+
+      <p id="auth-error" style="color: #ef4444; font-size: 0.95rem; display: none; margin-top: 10px; font-weight: bold;"></p>
+    
     </div>
   </div>
 
-  <!-- Admin Login -->
   <div id="admin-login-modal" class="modal-overlay" style="display: none;">
     <div class="modal-box">
       <h2>دخول المشرفين 🔒</h2>
@@ -46,7 +63,6 @@
       <p id="welcome-message">أهلاً بك</p>
     </div>
 
-    <!-- Main Content -->
     <div id="main-nav" class="tab-container"></div>
     <div id="source-selection" class="source-container"></div>
     <div id="quiz-list-area" class="tab-content active" style="display:none;">
@@ -55,7 +71,6 @@
         <div id="dynamic-cards-container" class="cards-grid"></div>
     </div>
 
-    <!-- Student Dashboard -->
     <div id="dashboard-view" class="dashboard-view" style="display:none;">
         <h2 class="quiz-title">إحصائياتي الشخصية 🚀</h2>
         <div class="stats-grid">
@@ -72,7 +87,6 @@
         <button class="start-btn go-back" onclick="closeDashboard()" style="margin-top:20px;">العودة للرئيسية</button>
     </div>
 
-    <!-- Admin Dashboard -->
     <div id="admin-dashboard-view" class="dashboard-view" style="display:none;">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; margin-bottom:20px;">
             <h2 class="quiz-title" style="color:var(--secondary-color);">👨‍💼 لوحة التحكم الشاملة</h2>
@@ -86,16 +100,15 @@
             <button class="tab-btn" onclick="switchAdminTab('settings')">⚙️ الإعدادات</button>
         </div>
 
-        <!-- 1. Results -->
         <div id="admin-tab-results" class="admin-tab-content">
             <div class="filter-container" style="display:flex; gap:10px; margin-bottom:15px;">
-                <input type="text" id="admin-search" placeholder="ابحث باسم الطالب..." onkeyup="filterAdminTable()" style="padding: 10px; flex-grow:1; border:1px solid #ccc; border-radius:8px;">
+                <input type="text" id="admin-search" placeholder="ابحث باسم الطالب أو اليوزر..." onkeyup="filterAdminTable()" style="padding: 10px; flex-grow:1; border:1px solid #ccc; border-radius:8px;">
                 <button class="start-btn" onclick="fetchAdminData()" style="background:#3b82f6; width:auto;">🔄 تحديث</button>
                 <button class="start-btn" onclick="exportToExcel()" style="background:#22c55e; width:auto;">📥 Excel</button>
             </div>
             <div class="history-table-container">
                 <table id="admin-table">
-                    <thead><tr><th>الطالب</th><th>المادة</th><th>الكويز</th><th>الدرجة</th><th>التاريخ</th></tr></thead>
+                    <thead><tr><th>الطالب (اليوزر)</th><th>المادة</th><th>الكويز</th><th>الدرجة</th><th>التاريخ</th></tr></thead>
                     <tbody id="admin-table-body">
                         <tr><td colspan="5" style="text-align:center">اضغط تحديث...</td></tr>
                     </tbody>
@@ -103,26 +116,15 @@
             </div>
         </div>
 
-        <!-- 2. Users (Updated with Manual Unblock) -->
         <div id="admin-tab-users" class="admin-tab-content" style="display:none;">
             
-            <!-- 🔴 قسم التصريح الاستثنائي الجديد 🔴 -->
-            <div class="review-question" style="background:white; border-color:#22c55e; margin-bottom:20px;">
-                <h3>🔓 تصريح دخول استثنائي</h3>
-                <p style="font-size:0.9rem; color:gray; margin-top:0;">لو الطالب "محظور" بسبب تكرار الاسم، اكتب اسمه هنا عشان تسمحله يدخل مرة تانية.</p>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="unblock-user-name" placeholder="اكتب اسم الطالب هنا..." style="padding:10px; flex-grow:1;">
-                    <button class="start-btn" onclick="grantOneTimeAccess()" style="background:#22c55e; width:auto;">✅ سماح بالدخول</button>
-                </div>
-            </div>
-
             <div class="filter-container" style="display:flex; gap:10px; margin-bottom:15px;">
                 <input type="text" id="users-search" placeholder="ابحث عن طالب..." onkeyup="filterUsersTable()" style="padding: 10px; flex-grow:1; border:1px solid #ccc; border-radius:8px;">
                 <button class="start-btn" onclick="fetchAdminUsers()" style="background:#3b82f6; width:auto;">🔄 تحديث</button>
             </div>
             <div class="history-table-container">
                 <table id="users-table">
-                    <thead><tr><th>اسم الطالب</th><th>تاريخ الانضمام</th><th>إجراءات</th></tr></thead>
+                    <thead><tr><th>الطالب (اليوزر)</th><th>تاريخ الانضمام</th><th>إجراءات</th></tr></thead>
                     <tbody id="users-table-body">
                         <tr><td colspan="3" style="text-align:center">جاري التحميل...</td></tr>
                     </tbody>
@@ -130,7 +132,6 @@
             </div>
         </div>
 
-        <!-- 3. Content -->
         <div id="admin-tab-content" class="admin-tab-content" style="display:none;">
             <div class="review-question" style="background:white; border-color:var(--primary-color);">
                 <h3>1. إضافة مادة جديدة</h3>
@@ -191,16 +192,10 @@
             </div>
         </div>
 
-        <!-- 4. Settings -->
         <div id="admin-tab-settings" class="admin-tab-content" style="display:none;">
             <div class="admin-setting-card">
-                <h3>🔐 إعدادات الدخول</h3>
-                <label class="switch-container">
-                    <input type="checkbox" id="strict-mode-toggle" onchange="updateLoginSettings()">
-                    <span class="slider round"></span>
-                    <span class="switch-text">منع تكرار الأسماء (وضع صارم)</span>
-                </label>
-                <p style="font-size:0.8rem; color:gray; margin-top:5px;">تفعيل: يمنع دخول أي اسم مسجل.<br>تعطيل: يسمح بالدخول المكرر.</p>
+                <h3>ℹ️ معلومات النظام</h3>
+                <p>يعمل النظام الآن بتسجيل الدخول عبر (اسم المستخدم) الفريد.</p>
             </div>
             <div class="admin-danger-zone" style="background: #fee2e2; padding: 20px; border-radius: 10px; border: 1px solid #ef4444; text-align:center;">
                 <h3 style="color:#b91c1c;">⚠️ منطقة الخطر</h3>
@@ -212,7 +207,6 @@
         </div>
     </div>
 
-    <!-- Quiz Elements -->
     <div id="quiz-container" class="quiz-container">
       <button class="back-btn go-back" onclick="backToQuizList()">← خروج</button>
       <div class="quiz-header">
@@ -253,5 +247,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
-
