@@ -39,7 +39,6 @@ let dbSources = [];
 // Auth Data
 let currentStudentName = localStorage.getItem('studentName') || "";
 let currentUsername = localStorage.getItem('studentUsername') || "";
-let isAdminLoggedIn = localStorage.getItem('adminLoggedIn') === 'true';
 
 // Quiz Data
 let currentSubject = subjectsConfig[0].id; 
@@ -61,17 +60,16 @@ let currentQuizSettings = {
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Check Notifications (Always runs)
-    listenForNotifications();
-
-    // 2. Check Admin Session
-    if (isAdminLoggedIn) {
-        showAdminDashboard();
-        return; // Stop here if admin
-    }
-
-    // 3. Check Student Session
-    if (currentUsername && currentStudentName) {
+    
+    // 1. Check Admin Session (New Logic)
+    if (localStorage.getItem('adminLoggedIn') === 'true') {
+        document.getElementById('welcome-modal').style.display = 'none';
+        document.getElementById('main-nav').style.display = 'none';
+        document.getElementById('admin-dashboard-view').style.display = 'block';
+        switchAdminTab(localStorage.getItem('lastAdminTab') || 'results');
+    } 
+    // 2. Check Student Login
+    else if (currentUsername && currentStudentName) {
         document.getElementById('welcome-modal').style.display = 'none';
         document.getElementById('welcome-message').innerHTML = `أهلاً بك يا دكتور/ة <b>${currentStudentName}</b> 👋`;
         await verifyUserStatus(); 
@@ -80,11 +78,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         toggleAuthView('login');
     }
 
-    // 4. Load Content
+    // 3. Load Content & Features
     await fetchDynamicContent();
     generateSubjectTabs();
+    initNotificationListener(); // Start listening for notifications
     
-    // 5. Event Listeners
+    // 4. Event Listeners
     document.getElementById('next-btn').addEventListener('click', nextQuestion);
     document.getElementById('prev-btn').addEventListener('click', prevQuestion);
     document.getElementById('review-btn').addEventListener('click', showReview);
@@ -93,6 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById('results').style.display = 'block';
     });
 
+    // 5. Dark Mode
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
         document.getElementById('theme-toggle').textContent = '☀️';
@@ -100,64 +100,62 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 });
 
-// --- Notification Logic (New) ---
-function listenForNotifications() {
+// --- Notification System (NEW) ---
+function initNotificationListener() {
     if(!db) return;
-    // Listen to 'settings/notification' document
-    db.collection('settings').doc('notification').onSnapshot(doc => {
+    db.collection('settings').doc('notification').onSnapshot((doc) => {
         if(doc.exists) {
             const data = doc.data();
-            if(!data.timestamp || !data.text) return;
-            
-            const notifTime = data.timestamp.toDate();
-            const now = new Date();
-            // Calculate difference in minutes
-            const diffInMinutes = (now - notifTime) / 1000 / 60;
-            
-            // Show only if created less than 2 minutes ago
-            if (diffInMinutes < 2) {
-                showNotificationBar(data.text);
-                // Auto hide after the remaining time
-                const remainingMs = (2 - diffInMinutes) * 60 * 1000;
-                setTimeout(closeNotification, remainingMs);
-            } else {
-                closeNotification();
+            if(!data || !data.text || !data.timestamp) return;
+
+            // Check time (2 minutes = 120,000 ms)
+            const notifTime = data.timestamp.toDate().getTime();
+            const now = new Date().getTime();
+            const timeDiff = now - notifTime;
+            const twoMinutes = 2 * 60 * 1000;
+
+            if(timeDiff < twoMinutes) {
+                showNotificationBar(data.text, twoMinutes - timeDiff);
             }
         }
     });
 }
 
-function showNotificationBar(text) {
+function showNotificationBar(text, duration) {
     const bar = document.getElementById('top-notification-bar');
     document.getElementById('notification-text').textContent = text;
-    bar.style.display = 'flex';
+    bar.style.display = 'block';
+
+    // Auto hide after remaining time
+    setTimeout(() => {
+        bar.style.display = 'none';
+    }, duration);
 }
 
 window.closeNotification = function() {
     document.getElementById('top-notification-bar').style.display = 'none';
 };
 
+// Admin Post Notification
 window.postNotification = async function() {
     const text = document.getElementById('admin-notif-text').value;
-    if(!text) return;
-    if(!db) return;
+    if(!text) { alert("اكتب نص الإشعار"); return; }
     
     try {
         await db.collection('settings').doc('notification').set({
             text: text,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-        alert("✅ تم النشر! سيظهر الإشعار للطلاب لمدة دقيقتين.");
-        document.getElementById('admin-notif-text').value = '';
-    } catch(e) {
-        alert("خطأ: " + e.message);
-    }
+        alert("✅ تم نشر الإشعار، سيظهر للطلاب لمدة دقيقتين.");
+        document.getElementById('admin-notif-text').value = "";
+    } catch(e) { alert("خطأ: " + e.message); }
 };
 
 // --- Auth Functions ---
 window.toggleAuthView = function(view) {
     const errorP = document.getElementById('auth-error');
     errorP.style.display = 'none';
+    
     if (view === 'signup') {
         document.getElementById('login-view').style.display = 'none';
         document.getElementById('signup-view').style.display = 'block';
@@ -249,7 +247,11 @@ async function selectSubject(subjectId) {
     document.getElementById('quiz-container').style.display = 'none';
     document.getElementById('results').style.display = 'none';
     document.getElementById('dashboard-view').style.display = 'none';
-    document.getElementById('admin-dashboard-view').style.display = 'none';
+    
+    // Hide Admin View if it was open via persistence logic
+    if(localStorage.getItem('adminLoggedIn') !== 'true') {
+        document.getElementById('admin-dashboard-view').style.display = 'none';
+    }
 }
 
 function renderSourceCard(src, container) {
@@ -311,12 +313,14 @@ function renderQuizCards(data) {
         if (quiz.timeLimit && quiz.timeLimit > 0) timeBadge = `<span style="font-size:0.8rem; background:#fecaca; padding:2px 8px; border-radius:10px; color:#b91c1c;">⏳ ${quiz.timeLimit} دقيقة</span>`;
         else timeBadge = `<span style="font-size:0.8rem; background:#dcfce7; padding:2px 8px; border-radius:10px; color:#15803d;">⏱️ مفتوح</span>`;
 
-        // Check availability
+        // Check availability (Date)
         let isAvailable = true;
         let lockMessage = "";
         const now = new Date();
         if(quiz.startDate && new Date(quiz.startDate) > now) { isAvailable = false; lockMessage = "🔒 لم يبدأ بعد"; }
         if(quiz.endDate && new Date(quiz.endDate) < now) { isAvailable = false; lockMessage = "🔒 انتهى الوقت"; }
+
+        // Check one-time attempt
         if(quiz.oneTime && savedHistory[historyKey]) { isAvailable = false; lockMessage = "🔒 محاولة واحدة فقط"; }
 
         const clickAction = isAvailable ? `onclick="startQuiz('${quizKey}')"` : `onclick="alert('${lockMessage}')" style="opacity:0.6; cursor:not-allowed;"`;
@@ -335,20 +339,22 @@ function renderQuizCards(data) {
     currentQuizData = data;
 }
 
-// --- Start Quiz Logic ---
+// --- NEW: Advanced Start Quiz Logic ---
 function startQuiz(quizKey) {
     const quiz = currentQuizData[quizKey];
     if (!quiz) return;
 
+    // Apply Settings
     currentQuizSettings = {
         preventBack: quiz.preventBack || false,
-        showResult: quiz.showResult !== false, 
+        showResult: quiz.showResult !== false, // Default true
         oneTime: quiz.oneTime || false
     };
 
     window.currentQuizKey = quizKey;
     window.currentQuizTitle = quiz.title;
     
+    // Shuffle Logic
     let qList = [...quiz.questions];
     if(quiz.shuffleQuestions) qList = shuffleArray(qList);
     currentQuiz = qList;
@@ -362,6 +368,7 @@ function startQuiz(quizKey) {
     
     if (timerInterval) clearInterval(timerInterval);
     
+    // Timer Logic
     const exitBtn = document.querySelector('#quiz-container .back-btn');
     const timeLimit = quiz.timeLimit || 0;
     
@@ -401,6 +408,7 @@ function finishQuiz(timeOut = false) {
     window.onbeforeunload = null;
     let score = userAnswers.filter(a => a && a.isCorrect).length;
     
+    // Save History
     const historyKey = `${currentUsername}_${currentSubject}_${currentSource}_${window.currentQuizKey}`;
     const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {};
     let entry = historyData[historyKey] || { score: 0, total: currentQuiz.length, highestScore: 0, attempts: 0, title: window.currentQuizTitle };
@@ -412,6 +420,7 @@ function finishQuiz(timeOut = false) {
     
     saveScoreToFirebase(score, currentQuiz.length);
     
+    // Handle Show Result Setting
     if (currentQuizSettings.showResult) {
         document.getElementById("final-score").textContent = `${score} / ${currentQuiz.length}`;
         document.getElementById("score-message").textContent = timeOut ? "⏰ انتهى الوقت!" : (score === currentQuiz.length ? "ممتاز! 🌟" : "جيد، حاول مرة أخرى");
@@ -455,6 +464,7 @@ function displayQuestion() {
 function selectOption(val) { userAnswers[currentQuestionIndex] = { answer: val, isCorrect: val === currentQuiz[currentQuestionIndex].a }; displayQuestion(); }
 function nextQuestion() { if (currentQuestionIndex < currentQuiz.length - 1) { currentQuestionIndex++; displayQuestion(); } else { finishQuiz(); } updateNavigation(); }
 function prevQuestion() { 
+    // Check setting
     if(currentQuizSettings.preventBack) return;
     if (currentQuestionIndex > 0) { currentQuestionIndex--; displayQuestion(); updateNavigation(); } 
 }
@@ -464,6 +474,7 @@ function updateNavigation() {
     prevBtn.disabled = currentQuestionIndex === 0 || currentQuizSettings.preventBack;
     if(currentQuizSettings.preventBack) prevBtn.style.opacity = "0.5";
     else prevBtn.style.opacity = "1";
+    
     document.getElementById("next-btn").textContent = currentQuestionIndex === currentQuiz.length - 1 ? "إنهاء" : "التالي"; 
 }
 
@@ -491,47 +502,61 @@ function showReview() {
 function toggleTheme() { document.body.classList.toggle('dark-mode'); localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light'); }
 function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; }
 
-// --- Admin Panel (Updated with Persistence) ---
-window.showAdminDashboard = function() {
-    document.getElementById('welcome-modal').style.display = 'none';
-    document.getElementById('main-nav').style.display = 'none';
-    document.getElementById('source-selection').style.display = 'none';
-    document.getElementById('quiz-list-area').style.display = 'none';
-    document.getElementById('admin-dashboard-view').style.display = 'block';
-    switchAdminTab('results');
-}
-
+// --- Admin Panel (Updated with Session Persistence) ---
 window.openDashboard = function() { document.getElementById('main-nav').style.display = 'none'; document.getElementById('source-selection').style.display = 'none'; document.getElementById('quiz-list-area').style.display = 'none'; document.getElementById('dashboard-view').style.display = 'block'; const historyData = JSON.parse(localStorage.getItem('quizHistory')) || {}; let tQ=0, tA=0, tS=0, tP=0; const tbody = document.getElementById('history-table-body'); tbody.innerHTML = ''; Object.entries(historyData).forEach(([key, data]) => { tQ++; tA += data.attempts || 1; tS += data.score; tP += data.total; tbody.innerHTML += `<tr><td>${data.title || key}</td><td>${data.highestScore}</td><td>${data.score}</td><td>${data.attempts || 1}</td></tr>`; }); document.getElementById('total-quizzes-taken').textContent = tQ; document.getElementById('total-attempts').textContent = tA; document.getElementById('total-accuracy').textContent = tP ? Math.round((tS/tP)*100) + '%' : '0%'; };
 window.closeDashboard = function() { document.getElementById('dashboard-view').style.display = 'none'; document.getElementById('main-nav').style.display = 'flex'; selectSubject(currentSubject); };
+
 window.openAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'flex'; };
 window.closeAdminLogin = function() { document.getElementById('admin-login-modal').style.display = 'none'; };
 
 window.checkAdminPassword = function() { 
     if (document.getElementById('admin-password-input').value === "admin123") { 
-        localStorage.setItem('adminLoggedIn', 'true'); 
         closeAdminLogin(); 
-        showAdminDashboard();
+        
+        // Save Session
+        localStorage.setItem('adminLoggedIn', 'true');
+        
+        document.getElementById('main-nav').style.display = 'none'; 
+        document.getElementById('source-selection').style.display = 'none'; 
+        document.getElementById('quiz-list-area').style.display = 'none'; 
+        document.getElementById('admin-dashboard-view').style.display = 'block'; 
+        switchAdminTab('results'); 
     } else { 
         alert("خطأ!"); 
     } 
 };
 
-window.logoutAdmin = function() { 
-    localStorage.removeItem('adminLoggedIn'); 
-    location.reload(); 
+window.logoutAdmin = function() {
+    if(confirm("تسجيل خروج من لوحة المشرف؟")) {
+        localStorage.removeItem('adminLoggedIn');
+        localStorage.removeItem('lastAdminTab');
+        location.reload();
+    }
 };
 
-window.closeAdminDashboard = function() { document.getElementById('admin-dashboard-view').style.display = 'none'; document.getElementById('main-nav').style.display = 'flex'; selectSubject(currentSubject); };
-
+// --- Updated: Tab Switcher with Persistence ---
 window.switchAdminTab = function(tabName) {
     document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
     document.getElementById(`admin-tab-${tabName}`).style.display = 'block';
-    document.querySelectorAll('#admin-dashboard-view .tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    
+    document.querySelectorAll('#admin-dashboard-view .tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if(btn.textContent.includes(getTabTitle(tabName))) btn.classList.add('active'); // loose match
+    });
+    
+    // Save current tab
+    localStorage.setItem('lastAdminTab', tabName);
+
     if(tabName === 'content') populateAdminDropdowns();
     if(tabName === 'results') fetchAdminData();
     if(tabName === 'users') fetchAdminUsers();
 };
+
+function getTabTitle(tab) {
+    const map = { 'results': 'النتائج', 'users': 'الطلاب', 'content': 'المحتوى', 'settings': 'الإعدادات' };
+    return map[tab] || '';
+}
+
 
 window.toggleTimeInput = function(show) { document.getElementById('time-limit-input-container').style.display = show ? 'block' : 'none'; };
 window.addNewSubject = async function() { const name = document.getElementById('new-subject-name').value; const id = document.getElementById('new-subject-id').value; if(!name || !id) { alert("بيانات ناقصة"); return; } try { await db.collection('subjects').add({ id, name }); alert("تم!"); location.reload(); } catch(e) { alert("خطأ"); } };
@@ -539,6 +564,7 @@ window.addNewSource = async function() { const subjectId = document.getElementBy
 
 // --- NEW: Visual Editor & Final Save Logic ---
 
+// 1. Switch Editor Modes
 window.switchEditorMode = function(mode) {
     document.querySelectorAll('.editor-tab').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.editor-content').forEach(c => c.style.display = 'none');
@@ -552,6 +578,7 @@ window.switchEditorMode = function(mode) {
     }
 };
 
+// 2. Convert Logic
 window.convertAndSwitchToVisual = function() {
     const rawText = document.getElementById('raw-exam-text').value;
     const questions = parseQuestionsFromText(rawText);
@@ -559,6 +586,7 @@ window.convertAndSwitchToVisual = function() {
     switchEditorMode('visual');
 };
 
+// 3. Render Visual Cards
 function renderVisualEditor(questions) {
     const container = document.getElementById('visual-questions-container');
     container.innerHTML = '';
@@ -607,11 +635,13 @@ window.addVisualQuestion = function() {
 
 window.deleteVisualQuestion = function(btn) {
     btn.closest('.visual-question-card').remove();
+    // Re-index titles
     document.querySelectorAll('.visual-question-card').forEach((card, i) => {
         card.querySelector('.vq-header span').textContent = `سؤال ${i+1}`;
     });
 };
 
+// 4. Gather Data from Visual Editor
 function gatherVisualData() {
     const cards = document.querySelectorAll('.visual-question-card');
     let questions = [];
@@ -624,7 +654,7 @@ function gatherVisualData() {
         if (qText && opts[0] && opts[1]) {
             questions.push({
                 q: qText,
-                options: opts.filter(o => o), 
+                options: opts.filter(o => o), // Remove empty options
                 a: correct,
                 type: 'mcq'
             });
@@ -633,11 +663,13 @@ function gatherVisualData() {
     return questions;
 }
 
+// 5. Final Save Function (Replaces parseAndSaveExam)
 window.saveExamFinal = async function() {
     const subjectId = document.getElementById('exam-subject-select').value;
     const sourceId = document.getElementById('exam-source-select').value;
     const title = document.getElementById('new-exam-title').value;
     
+    // Time & Advanced Settings
     const startDate = document.getElementById('exam-start-date').value || null;
     const endDate = document.getElementById('exam-end-date').value || null;
     const timeLimit = parseInt(document.getElementById('new-exam-time').value) || 0;
@@ -649,10 +681,12 @@ window.saveExamFinal = async function() {
 
     if (!title) { alert("يرجى كتابة عنوان الامتحان"); return; }
 
+    // Decide source of questions (Visual Editor is Primary now if visible)
     let questions = [];
     if (document.getElementById('editor-visual-mode').style.display !== 'none') {
         questions = gatherVisualData();
     } else {
+        // If user stayed in Text mode, convert now
         const rawText = document.getElementById('raw-exam-text').value;
         questions = parseQuestionsFromText(rawText);
     }
@@ -678,6 +712,7 @@ window.saveExamFinal = async function() {
 
 function parseQuestionsFromText(text) { const lines = text.split('\n').filter(l => l.trim()); let questions = []; let currentQ = null; lines.forEach(line => { line = line.trim(); if (line.match(/^(س|Q|\d+)[\.:\/]/) || line.includes('?')) { if (currentQ && currentQ.options.length > 1) questions.push(currentQ); currentQ = { q: line.replace(/^(س|Q|\d+)[\.:\/]\s*/, ''), options: [], a: 0, type: 'mcq' }; } else if (currentQ) { let isCorrect = line.startsWith('*'); let optionText = line.replace(/^[\*\-\)\.]\s*/, '').replace(/^[أ-يa-z][\)\.]\s*/, ''); if (isCorrect) currentQ.a = currentQ.options.length; currentQ.options.push(optionText); } }); if (currentQ && currentQ.options.length > 1) questions.push(currentQ); return questions; }
 
+// --- Delete & Admin Utils ---
 window.updateDeleteDropdown = async function() { const type = document.getElementById('delete-type-select').value; const itemSelect = document.getElementById('delete-item-select'); itemSelect.innerHTML = ''; if(type === 'none') { itemSelect.style.display = 'none'; return; } itemSelect.style.display = 'block'; if (type === 'subject') { dbSubjects.forEach(sub => { itemSelect.innerHTML += `<option value="${sub.docId}">${sub.name}</option>`; }); if(dbSubjects.length === 0) itemSelect.innerHTML = '<option>لا توجد مواد</option>'; } else if (type === 'source') { dbSources.forEach(src => { itemSelect.innerHTML += `<option value="${src.docId}">${src.name}</option>`; }); if(dbSources.length === 0) itemSelect.innerHTML = '<option>لا توجد مصادر</option>'; } else if (type === 'quiz') { itemSelect.innerHTML = '<option>تحميل...</option>'; if(db) { const snaps = await db.collection('quizzes').get(); itemSelect.innerHTML = ''; if(snaps.empty) { itemSelect.innerHTML = '<option>فارغ</option>'; return; } snaps.forEach(doc => { const q = doc.data(); const subName = q.subjectId || 'عام'; itemSelect.innerHTML += `<option value="${doc.id}">${q.title} (${subName})</option>`; }); } } };
 window.deleteSelectedItem = async function() { const type = document.getElementById('delete-type-select').value; const id = document.getElementById('delete-item-select').value; if(type === 'none' || !id) return; if(!confirm("تأكيد الحذف؟")) return; let col = type === 'subject' ? 'subjects' : (type === 'source' ? 'sources' : 'quizzes'); try { await db.collection(col).doc(id).delete(); alert("تم الحذف"); location.reload(); } catch(e) { alert("خطأ: " + e.message); } };
 
